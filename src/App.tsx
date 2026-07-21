@@ -97,6 +97,7 @@ function wordsPerSecond(text: string) {
   const words = text.trim().split(/\s+/).filter(Boolean).length
   return Math.max(15, Math.round((words / 130) * 60))
 }
+function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
     image.crossOrigin = 'anonymous'
