@@ -210,7 +210,10 @@ function App() {
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [previewImageIndex, setPreviewImageIndex] = useState(0)
+  const [isVideoPreviewPlaying, setIsVideoPreviewPlaying] = useState(false)
+  const [videoPreviewSceneIdx, setVideoPreviewSceneIdx] = useState(0)
   const renderAbortRef = useRef(false)
+  const videoPreviewAbortRef = useRef(false)
   const totalDuration = scenes.reduce((total, scene) => total + scene.duration, 0)
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? scenes[0]
   const selectedSceneIndex = scenes.findIndex((scene) => scene.id === selectedScene.id)
@@ -218,6 +221,8 @@ function App() {
   const cloudyLogo = new URL('./assets/branding/cloudy-logo.png', import.meta.url).href
   const apiHeaders: Record<string, string> = { Accept: 'application/vnd.github+json' }
   const imgsPerScene = repository?.assets.length ? Math.max(1, Math.ceil(repository.assets.length / scenes.length)) : 1
+  const videoPreviewScene = scenes[videoPreviewSceneIdx] ?? scenes[0]
+  const videoPreviewAsset = repository?.assets.length ? (repository.assets.slice(videoPreviewSceneIdx * imgsPerScene, videoPreviewSceneIdx * imgsPerScene + imgsPerScene)[0] ?? null) : null
   const sceneImages = repository?.assets.length ? repository.assets.slice(selectedSceneIndex * imgsPerScene, selectedSceneIndex * imgsPerScene + imgsPerScene) : []
   const previewAsset = sceneImages.length ? sceneImages[previewImageIndex % sceneImages.length] : null
 
@@ -549,6 +554,45 @@ function App() {
     setStatus(femaleVoice ? `Cloudy is speaking with ${femaleVoice.name}.` : 'No female voice found. Using browser default.')
   }
 
+  async function startVideoPreview() {
+    if (isVideoPreviewPlaying) return
+    videoPreviewAbortRef.current = false
+    setIsVideoPreviewPlaying(true)
+    setVideoPreviewSceneIdx(0)
+    const voice = await resolveVoice()
+    for (let i = 0; i < scenes.length; i++) {
+      if (videoPreviewAbortRef.current) break
+      setVideoPreviewSceneIdx(i)
+      await new Promise<void>((resolve) => {
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(scenes[i].narration)
+        utterance.voice = voice
+        utterance.lang = voice?.lang ?? 'en-US'
+        utterance.rate = 0.95
+        utterance.pitch = 1.1
+        utterance.onstart = () => setIsSpeaking(true)
+        utterance.onend = () => { setIsSpeaking(false); resolve() }
+        utterance.onerror = () => { setIsSpeaking(false); resolve() }
+        window.speechSynthesis.speak(utterance)
+      })
+      if (!videoPreviewAbortRef.current && i < scenes.length - 1) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 350))
+      }
+    }
+    window.speechSynthesis.cancel()
+    setIsSpeaking(false)
+    setIsVideoPreviewPlaying(false)
+    setVideoPreviewSceneIdx(0)
+  }
+
+  function stopVideoPreview() {
+    videoPreviewAbortRef.current = true
+    window.speechSynthesis.cancel()
+    setIsSpeaking(false)
+    setIsVideoPreviewPlaying(false)
+    setVideoPreviewSceneIdx(0)
+  }
+
   return <main className="app-shell">
     <header className="topbar"><a className="brand" href="https://github.com/Cloud2BR-TEC/Cloudy-overview-videos" target="_blank" rel="noreferrer"><img src={cloudyLogo} alt="Cloudy" /><span><strong>Cloudy</strong><small>Repository Video Studio</small></span></a><div className="project-state"><span className={isSaved ? 'saved-dot' : 'unsaved-dot'}></span>{isSaved ? 'Saved locally' : 'Unsaved changes'}</div><button className="secondary-button" type="button" onClick={exportProject}>Download project setup</button><button className="primary-button" type="button" onClick={saveProject}>Save project</button></header>
     <section className="workspace"><aside className="rail" aria-label="Project workflow"><div className="rail-item active"><span>01</span><strong>Source</strong></div><div className="rail-item"><span>02</span><strong>Story</strong></div><div className="rail-item"><span>03</span><strong>Voice</strong></div><div className="rail-item"><span>04</span><strong>Export</strong></div></aside><section className="content-column">
@@ -556,6 +600,7 @@ function App() {
       <section className="repository-form"><p className="eyebrow">Public repository</p><label htmlFor="repository-url">GitHub repository URL</label><div className="url-entry"><input id="repository-url" type="url" value={repositoryUrl} onChange={(event) => setRepositoryUrl(event.target.value)} placeholder="https://github.com/owner/repository" /><button className="primary-button" type="button" onClick={() => void loadRepository(repositoryUrl)} disabled={isLoading}>{isLoading ? 'Reading...' : 'Generate explainer'}</button></div><p>Cloudy reads public repository details only. Private repositories are not available in this browser-only version.</p></section>
       {repository && <section className="repository-card" aria-label="Repository source"><div className="repository-title"><div><p className="eyebrow">Source evidence</p><h2>{repository.fullName}</h2><p>{repository.description}</p></div></div><div className="metadata-grid"><span><small>Default branch</small>{repository.defaultBranch}</span><span><small>Primary language</small>{repository.language ?? 'Not detected'}</span><span><small>License</small>{repository.license}</span><span><small>Signals</small>{repository.stars} stars · {repository.openIssues} issues</span></div>{repository.assets.length > 0 && <div className="asset-strip">{repository.assets.map((asset) => <img key={asset} src={asset} alt="Repository source asset" />)}</div>}{repository.topics.length > 0 && <div className="tags">{repository.topics.slice(0, 6).map((topic) => <span key={topic}>{topic}</span>)}</div>}</section>}
       {repository ? <section className="story-area"><div className="story-head"><div><p className="eyebrow">Storyboard</p><h2>Cloudy’s explainer</h2></div><div className={`duration-pill ${inTargetRange ? 'ready' : ''}`}>{durationLabel(totalDuration)} <small>{inTargetRange ? 'Within 8-12 minute target' : 'Target: 8-12 min'}</small></div></div><div className="story-grid"><ol className="scene-list">{scenes.map((scene) => <li key={scene.id}><button type="button" className={scene.id === selectedScene.id ? 'scene selected' : 'scene'} onClick={() => { setIsPreviewPlaying(false); setSelectedSceneId(scene.id) }}><span className="scene-number">{String(scene.id).padStart(2, '0')}</span><span><strong>{scene.title}</strong><small>{scene.visual}</small></span><time>{durationLabel(scene.duration)}</time></button></li>)}</ol><article className="scene-editor"><div className="preview-stage"><div className={`slide-stage ${isPreviewPlaying ? 'is-playing' : ''}`}>{previewAsset && <img className="slide-bg" src={previewAsset} alt="" />}<div className="slide-left"><p className="slide-scene-label">Scene {String(selectedScene.id).padStart(2,'0')} of {scenes.length}</p><h2 className="slide-title">{selectedScene.title}</h2><ul className="slide-bullets">{(selectedScene.bullets?.length ? selectedScene.bullets : extractBullets(selectedScene.narration)).map((bullet, i) => <li key={i}>{bullet}</li>)}</ul></div><div className="slide-right"><div className={`slide-cloudy ${isSpeaking ? 'speaking' : ''}`}><CloudyAvatar speaking={isSpeaking} size={96} /></div>{isSpeaking && <span className="talk-badge"><span className="talk-bars"><span></span><span></span><span></span></span>Cloudy is speaking</span>}</div><div className="slide-narration"><span className="slide-narration-label">Cloudy narration</span><p>{selectedScene.narration}</p></div></div><div className="scene-caption"><span>Scene {selectedScene.id}</span><strong>{selectedScene.visual}</strong></div></div><div className="preview-controls"><button className="secondary-button" type="button" onClick={() => setIsPreviewPlaying((playing) => !playing)}>{isPreviewPlaying ? 'Pause generated preview' : 'Play generated preview'}</button><span>{isPreviewPlaying ? 'Cloudy is moving through the storyboard.' : 'Play to preview Cloudy and the selected repository visuals.'}</span></div><div className="editor-fields"><label>Scene title<input value={selectedScene.title} onChange={(event) => updateScene('title', event.target.value)} /></label><label>Cloudy narration<textarea rows={4} value={selectedScene.narration} onChange={(event) => updateScene('narration', event.target.value)} /></label><div className="duration-info"><span className="duration-info-label">Read time at 1× speed</span><span className="duration-info-value">{durationLabel(selectedScene.duration)}<small> ({selectedScene.narration.trim().split(/\s+/).filter(Boolean).length} words · {selectedScene.duration}s)</small></span></div><button className="secondary-button voice-button" type="button" onClick={() => void previewVoice()}>Preview female voice</button></div></article></div></section> : <section className="story-placeholder"><p className="eyebrow">Storyboard</p><h2>Generate an explainer to begin</h2><p>Paste a public GitHub repository URL above and select <strong>Generate explainer</strong>. Cloudy will read the repository and build a live, editable storyboard here.</p></section>}
+      {repository && <section className="video-preview-section"><div className="video-preview-head"><div><p className="eyebrow">Full video preview</p><h2>Cloudy presents all scenes with voice</h2></div><div className="video-preview-controls">{isVideoPreviewPlaying ? <button className="primary-button" type="button" onClick={stopVideoPreview}>Stop preview</button> : <button className="primary-button" type="button" onClick={() => void startVideoPreview()}>&#9654; Play full video with voice</button>}<span className="video-preview-hint">{isVideoPreviewPlaying ? `Scene ${videoPreviewSceneIdx + 1} of ${scenes.length} — Cloudy is presenting` : 'All scenes play in order with the female voice reading each narration.'}</span></div></div><div className={`video-player-slide slide-stage ${isVideoPreviewPlaying ? 'is-playing' : ''}`}>{videoPreviewAsset && <img className="slide-bg" src={videoPreviewAsset} alt="" />}<div className="slide-left"><p className="slide-scene-label">Scene {String(videoPreviewSceneIdx + 1).padStart(2,'0')} of {scenes.length}{isVideoPreviewPlaying ? ' · speaking…' : ''}</p><h2 className="slide-title">{videoPreviewScene.title}</h2><ul className="slide-bullets">{(videoPreviewScene.bullets?.length ? videoPreviewScene.bullets : extractBullets(videoPreviewScene.narration)).map((b,i) => <li key={i}>{b}</li>)}</ul></div><div className="slide-right"><div className={`slide-cloudy ${isVideoPreviewPlaying && isSpeaking ? 'speaking' : ''}`}><CloudyAvatar speaking={isVideoPreviewPlaying && isSpeaking} size={110} /></div>{isVideoPreviewPlaying && isSpeaking && <span className="talk-badge"><span className="talk-bars"><span></span><span></span><span></span></span>Speaking</span>}</div><div className="slide-narration"><span className="slide-narration-label">{isVideoPreviewPlaying ? 'Now reading' : 'Scene narration'}</span><p>{videoPreviewScene.narration}</p></div></div><div className="video-scene-progress">{scenes.map((scene, i) => <button key={scene.id} type="button" className={`vsp-dot ${i < videoPreviewSceneIdx ? 'done' : i === videoPreviewSceneIdx ? 'active' : ''}`} onClick={() => { if (!isVideoPreviewPlaying) setVideoPreviewSceneIdx(i) }} title={scene.title}>{String(i+1).padStart(2,'0')}</button>)}</div></section>}
     </section>{repository ? <aside className="review-panel"><div><p className="eyebrow">Ready to export</p><h2>Local package</h2></div><ul className="checklist"><li className="done">Repository source captured</li><li className={inTargetRange ? 'done' : ''}>8-12 minute runtime</li><li className="done">Editable Cloudy narration</li><li className={repository.assets.length ? 'done' : ''}>Source visuals selected</li><li className="done">Captions ready to export</li></ul><div className="export-actions">{isRenderingVideo ? <button className="primary-button" type="button" onClick={cancelVideoExport}>Cancel video render {renderProgress}%</button> : <button className="primary-button" type="button" onClick={() => void exportVideo()}>Download video</button>}<button className="secondary-button" type="button" onClick={exportCaptions}>Download captions</button><button className="secondary-button" type="button" onClick={exportProject}>Download project setup</button></div></aside> : <aside className="review-panel placeholder"><div><p className="eyebrow">Ready to export</p><h2>Nothing to export yet</h2><p>Generate an explainer first. Export options for video, captions, and the project file appear once Cloudy has read a repository.</p></div></aside>}</section>
   </main>
 }
