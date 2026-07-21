@@ -72,6 +72,21 @@ function wrapCanvasText(context: CanvasRenderingContext2D, text: string, maxWidt
   if (line) lines.push(line)
   return lines
 }
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('Image failed to load'))
+    image.src = src
+  })
+}
+function drawCoverImage(context: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, width: number, height: number, zoom: number) {
+  const scale = Math.max(width / image.width, height / image.height) * zoom
+  const drawWidth = image.width * scale
+  const drawHeight = image.height * scale
+  context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight)
+}
 
 function App() {
   const [repositoryUrl, setRepositoryUrl] = useState(starterRepository)
@@ -167,6 +182,9 @@ function App() {
     canvas.height = 1080
     const context = canvas.getContext('2d')
     if (!context) return
+    setStatus('Loading repository visuals for your video...')
+    const cloudyImage = await loadImage(cloudyLogo).catch(() => null)
+    const assetImages = repository?.assets.length ? await Promise.all(repository.assets.map((asset) => loadImage(asset).catch(() => null))) : []
     const stream = canvas.captureStream(30)
     const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6_000_000 })
     const chunks: BlobPart[] = []
@@ -182,45 +200,108 @@ function App() {
 
     const drawFrame = (elapsedSeconds: number) => {
       let sceneOffset = 0
-      const scene = scenes.find((item) => {
+      let sceneIndex = scenes.length - 1
+      const scene = scenes.find((item, index) => {
         sceneOffset += item.duration
-        return elapsedSeconds < sceneOffset
+        if (elapsedSeconds < sceneOffset) { sceneIndex = index; return true }
+        return false
       }) ?? scenes[scenes.length - 1]
       const sceneElapsed = elapsedSeconds - (sceneOffset - scene.duration)
+      const sceneProgress = Math.min(1, sceneElapsed / scene.duration)
       const pulse = 0.5 + Math.sin(sceneElapsed * 1.2) * 0.5
+      const entrance = Math.min(1, sceneElapsed / 0.6)
+      const eased = 1 - (1 - entrance) ** 3
+
       const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height)
       gradient.addColorStop(0, '#123b39')
       gradient.addColorStop(0.55, '#1d5b51')
       gradient.addColorStop(1, '#d76639')
       context.fillStyle = gradient
       context.fillRect(0, 0, canvas.width, canvas.height)
+
+      const sceneImage = assetImages.length ? assetImages[sceneIndex % assetImages.length] : null
+      if (sceneImage) {
+        context.save()
+        context.globalAlpha = 0.5 + eased * 0.18
+        drawCoverImage(context, sceneImage, 0, 0, canvas.width, canvas.height, 1 + sceneProgress * 0.08)
+        context.restore()
+        const overlay = context.createLinearGradient(0, 0, 0, canvas.height)
+        overlay.addColorStop(0, 'rgba(10, 31, 29, .74)')
+        overlay.addColorStop(0.5, 'rgba(10, 31, 29, .3)')
+        overlay.addColorStop(1, 'rgba(10, 31, 29, .84)')
+        context.fillStyle = overlay
+        context.fillRect(0, 0, canvas.width, canvas.height)
+      }
+
       context.fillStyle = `rgba(255, 255, 255, ${0.04 + pulse * 0.05})`
       for (let column = -240; column < canvas.width + 240; column += 120) context.fillRect(column + sceneElapsed * 18, 0, 2, canvas.height)
+
       context.fillStyle = '#f5f7f3'
       context.font = '700 32px Manrope, sans-serif'
       context.fillText('CLOUDY REPOSITORY VIDEO STUDIO', 112, 110)
       context.fillStyle = '#f5a975'
       context.font = '700 26px Manrope, sans-serif'
-      context.fillText(`SCENE ${String(scene.id).padStart(2, '0')}  /  ${durationLabel(scene.duration)}`, 112, 166)
+      context.fillText(`SCENE ${String(scene.id).padStart(2, '0')} OF ${scenes.length}  /  ${durationLabel(scene.duration)}`, 112, 166)
+      scenes.forEach((_, index) => {
+        context.fillStyle = index === sceneIndex ? '#f5a975' : 'rgba(255, 255, 255, .35)'
+        context.beginPath()
+        context.arc(112 + index * 26, 196, index === sceneIndex ? 7 : 5, 0, Math.PI * 2)
+        context.fill()
+      })
+
+      context.save()
+      context.globalAlpha = eased
+      context.translate((1 - eased) * -70, 0)
       context.fillStyle = '#ffffff'
       context.font = '800 94px Manrope, sans-serif'
       const titleLines = wrapCanvasText(context, scene.title, 1_270)
       titleLines.slice(0, 3).forEach((line, index) => context.fillText(line, 112, 322 + index * 112))
+      context.restore()
+
       context.fillStyle = '#d9ebe2'
       context.font = '500 38px Manrope, sans-serif'
       wrapCanvasText(context, scene.visual, 1_080).slice(0, 2).forEach((line, index) => context.fillText(line, 112, 690 + index * 50))
+
+      if (repository?.topics.length) {
+        let chipX = 112
+        context.font = '700 22px Manrope, sans-serif'
+        repository.topics.slice(0, 4).forEach((topic) => {
+          const chipWidth = context.measureText(topic).width + 36
+          context.fillStyle = 'rgba(255, 255, 255, .16)'
+          context.fillRect(chipX, 748, chipWidth, 42)
+          context.fillStyle = '#f5f7f3'
+          context.fillText(topic, chipX + 18, 776)
+          chipX += chipWidth + 12
+        })
+      }
+
       context.fillStyle = 'rgba(10, 31, 29, .76)'
       context.fillRect(88, 808, 1_744, 190)
       context.fillStyle = '#ffffff'
       context.font = '500 34px Manrope, sans-serif'
       wrapCanvasText(context, scene.narration, 1_590).slice(0, 3).forEach((line, index) => context.fillText(line, 132, 872 + index * 44))
+
+      const bob = Math.sin(elapsedSeconds * 1.6) * 10
+      if (cloudyImage) {
+        context.save()
+        context.translate(1_725, 182 + bob)
+        context.drawImage(cloudyImage, -58, -58, 116, 116)
+        context.restore()
+      } else {
+        context.fillStyle = '#f5a975'
+        context.beginPath()
+        context.arc(1_725, 182 + bob, 56 + pulse * 6, 0, Math.PI * 2)
+        context.fill()
+        context.fillStyle = '#173d3a'
+        context.font = '800 26px Manrope, sans-serif'
+        context.fillText('C', 1_716, 191 + bob)
+      }
+
+      const overallProgress = Math.min(1, elapsedSeconds / totalSeconds)
+      context.fillStyle = 'rgba(255, 255, 255, .18)'
+      context.fillRect(0, canvas.height - 8, canvas.width, 8)
       context.fillStyle = '#f5a975'
-      context.beginPath()
-      context.arc(1_725, 182, 56 + pulse * 6, 0, Math.PI * 2)
-      context.fill()
-      context.fillStyle = '#173d3a'
-      context.font = '800 26px Manrope, sans-serif'
-      context.fillText('C', 1_716, 191)
+      context.fillRect(0, canvas.height - 8, canvas.width * overallProgress, 8)
     }
 
     const renderFrame = () => {
