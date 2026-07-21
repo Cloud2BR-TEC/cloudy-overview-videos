@@ -538,6 +538,12 @@ function App() {
     })
   }
 
+  function stopVoice() {
+    window.speechSynthesis.cancel()
+    setIsSpeaking(false)
+    setStatus('Voice preview stopped.')
+  }
+
   async function previewVoice() {
     window.speechSynthesis.cancel()
     const femaleVoice = await resolveVoice()
@@ -593,7 +599,7 @@ function App() {
     setVideoPreviewSceneIdx(0)
   }
 
-  return <main className="app-shell">
+  return <main className="app-shell">{isSpeaking && !isVideoPreviewPlaying ? <button className="secondary-button voice-button" type="button" onClick={stopVoice}>&#9646;&#9646; Stop voice</button> : <button className="secondary-button voice-button" type="button" onClick={() => void previewVoice()} disabled={isVideoPreviewPlaying}>Preview female voice</button>}
     <header className="topbar"><a className="brand" href="https://github.com/Cloud2BR-TEC/Cloudy-overview-videos" target="_blank" rel="noreferrer"><img src={cloudyLogo} alt="Cloudy" /><span><strong>Cloudy</strong><small>Repository Video Studio</small></span></a><div className="project-state"><span className={isSaved ? 'saved-dot' : 'unsaved-dot'}></span>{isSaved ? 'Saved locally' : 'Unsaved changes'}</div><button className="secondary-button" type="button" onClick={exportProject}>Download project setup</button><button className="primary-button" type="button" onClick={saveProject}>Save project</button></header>
     <section className="workspace"><aside className="rail" aria-label="Project workflow"><div className="rail-item active"><span>01</span><strong>Source</strong></div><div className="rail-item"><span>02</span><strong>Story</strong></div><div className="rail-item"><span>03</span><strong>Voice</strong></div><div className="rail-item"><span>04</span><strong>Export</strong></div></aside><section className="content-column">
       <div className="section-heading"><div><p className="eyebrow">Cloudy overview video</p><h1>Choose the repository Cloudy will explain.</h1></div><p className="status" aria-live="polite">{status}</p></div>
