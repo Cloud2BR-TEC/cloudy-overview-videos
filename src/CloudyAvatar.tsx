@@ -35,7 +35,7 @@ export default function CloudyAvatar({
       width={size}
       height={Math.round(size * 95 / 120)}
       xmlns="http://www.w3.org/2000/svg"
-      style={{ display: 'block', overflow: 'visible' }}
+      style={{ display: 'block', overflow: 'hidden' }}
       aria-label="Cloudy"
     >
       <defs>
@@ -54,18 +54,6 @@ export default function CloudyAvatar({
           <stop offset="50%" stopColor="#f6f7f8" />
           <stop offset="100%" stopColor="#c8d2d8" />
         </radialGradient>
-        {/* 3-D sphere gradient – mid puffs */}
-        <radialGradient id={`puff-b-${uid}`} cx="38%" cy="30%" r="68%">
-          <stop offset="0%" stopColor="#f8f9fa" />
-          <stop offset="55%" stopColor="#ecedef" />
-          <stop offset="100%" stopColor="#c0c8ce" />
-        </radialGradient>
-        {/* 3-D sphere gradient – lower/side puffs (slightly darker) */}
-        <radialGradient id={`puff-c-${uid}`} cx="40%" cy="35%" r="65%">
-          <stop offset="0%" stopColor="#f2f3f5" />
-          <stop offset="60%" stopColor="#e5e7ea" />
-          <stop offset="100%" stopColor="#b8c0c6" />
-        </radialGradient>
         {/* Bottom fill */}
         <linearGradient id={`bottom-${uid}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#ecedef" />
@@ -79,31 +67,20 @@ export default function CloudyAvatar({
         )}
       </defs>
 
-      {/* ── Cloud body (back → front) ── */}
+      {/* ── Continuous cloud body ── */}
       <g filter={`url(#shadow-${uid})`}>
-        {/* Back row – darkest */}
-        <circle cx="22" cy="72" r="15" fill={`url(#puff-c-${uid})`} />
-        <circle cx="98" cy="72" r="15" fill={`url(#puff-c-${uid})`} />
-        {/* Mid-low row */}
-        <circle cx="34" cy="68" r="20" fill={`url(#puff-b-${uid})`} />
-        <circle cx="86" cy="68" r="20" fill={`url(#puff-b-${uid})`} />
-        {/* Mid row */}
-        <circle cx="46" cy="60" r="24" fill={`url(#puff-b-${uid})`} />
-        <circle cx="74" cy="60" r="24" fill={`url(#puff-b-${uid})`} />
-        {/* Top centre – the face puff, biggest + brightest */}
-        <circle cx="60" cy="47" r="28" fill={`url(#puff-a-${uid})`} />
-        {/* Flat bottom to seal the cloud */}
-        <rect x="14" y="70" width="92" height="24" rx="10" fill={`url(#bottom-${uid})`} />
+        <path
+          d="M18 88 C8 84 7 69 15 61 C20 56 26 54 32 56 C34 44 44 35 55 35 C67 35 77 43 79 54 C85 50 94 51 100 57 C112 69 106 88 93 91 C72 95 42 95 20 91 Z"
+          fill={`url(#puff-a-${uid})`}
+          stroke="rgba(150,165,175,0.2)"
+          strokeWidth="2"
+        />
+        <path d="M17 78 C34 87 84 88 103 77 C100 90 93 93 60 93 C29 93 20 90 17 78 Z" fill={`url(#bottom-${uid})`} opacity="0.58" />
 
         {/* Specular highlights */}
         <ellipse cx="51" cy="38" rx="7" ry="4.5" fill="rgba(255,255,255,0.75)" transform="rotate(-18 51 38)" />
-        <ellipse cx="38" cy="53" rx="5" ry="3" fill="rgba(255,255,255,0.55)" transform="rotate(-18 38 53)" />
-        <ellipse cx="82" cy="53" rx="5" ry="3" fill="rgba(255,255,255,0.55)" transform="rotate(-18 82 53)" />
-
-        {/* Soft ambient-occlusion rings where puffs meet */}
-        <circle cx="60" cy="47" r="28" fill="none" stroke="rgba(150,165,175,0.12)" strokeWidth="3" />
-        <circle cx="46" cy="60" r="24" fill="none" stroke="rgba(150,165,175,0.10)" strokeWidth="2" />
-        <circle cx="74" cy="60" r="24" fill="none" stroke="rgba(150,165,175,0.10)" strokeWidth="2" />
+        <ellipse cx="30" cy="65" rx="6" ry="3.5" fill="rgba(255,255,255,0.48)" transform="rotate(-18 30 65)" />
+        <ellipse cx="87" cy="60" rx="5" ry="3" fill="rgba(255,255,255,0.42)" transform="rotate(-18 87 60)" />
       </g>
 
       {/* ── Graduation cap ── */}
