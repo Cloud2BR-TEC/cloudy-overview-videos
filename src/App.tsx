@@ -288,12 +288,6 @@ function App() {
     finally { setIsLoading(false) }
   }
 
-  function generateStoryboard() {
-    if (!repository) return
-    setScenes(buildScenes(repository))
-    setIsSaved(false)
-    setStatus('Storyboard refreshed from repository content.')
-  }
   function updateScene(field: 'title' | 'narration', value: string) {
     setScenes((current) => current.map((scene) => {
       if (scene.id !== selectedScene.id) return scene
