@@ -24,7 +24,6 @@ type Scene = {
 }
 
 const starterRepository = 'https://github.com/Cloud2BR-TEC/ai-academy-101-ml'
-const projectKey = 'cloudy-video-project'
 
 function wordsToSeconds(text: string) {
   const words = text.trim().split(/\s+/).filter(Boolean).length
@@ -137,14 +136,6 @@ function parseReadmeSections(readme: string): Array<{ heading: string; body: str
   }
   flush()
   return sections
-}
-function isSceneCollection(value: unknown): value is Scene[] {
-  return Array.isArray(value) && value.length > 0 && value.every((scene) => typeof scene === 'object' && scene !== null && typeof scene.id === 'number' && typeof scene.title === 'string' && typeof scene.duration === 'number' && typeof scene.narration === 'string' && typeof scene.visual === 'string')
-}
-function isRepository(value: unknown): value is Repository {
-  if (typeof value !== 'object' || value === null) return false
-  const record = value as Record<string, unknown>
-  return typeof record.fullName === 'string' && typeof record.description === 'string' && Array.isArray(record.topics) && record.topics.every((topic) => typeof topic === 'string') && (typeof record.language === 'string' || record.language === null) && typeof record.defaultBranch === 'string' && typeof record.license === 'string' && typeof record.stars === 'number' && typeof record.openIssues === 'number' && typeof record.readme === 'string' && Array.isArray(record.assets) && record.assets.every((asset) => typeof asset === 'string')
 }
 function downloadFile(name: string, contents: string, type: string) {
   const url = URL.createObjectURL(new Blob([contents], { type }))
@@ -270,7 +261,6 @@ function App() {
   const [selectedSceneId, setSelectedSceneId] = useState(1)
   const [status, setStatus] = useState('Paste a public GitHub repository URL to create Cloudy’s explainer.')
   const [isLoading, setIsLoading] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
   const [isRenderingVideo, setIsRenderingVideo] = useState(false)
   const [renderProgress, setRenderProgress] = useState(0)
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -283,6 +273,10 @@ function App() {
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? scenes[0]
   const selectedSceneIndex = scenes.findIndex((scene) => scene.id === selectedScene.id)
   const inTargetRange = totalDuration >= 480 && totalDuration <= 720
+  const narrationReady = scenes.length > 0 && scenes.every((scene) => scene.title.trim().length > 0 && scene.narration.trim().length > 0)
+  const visualsReady = Boolean(repository?.assets.length)
+  const captionsReady = narrationReady && scenes.every((scene) => Number.isFinite(scene.duration) && scene.duration > 0)
+  const isExportReady = Boolean(repository) && inTargetRange && narrationReady && visualsReady && captionsReady
   const cloudyLogo = new URL('./assets/branding/cloudy-logo.png', import.meta.url).href
   const apiHeaders: Record<string, string> = {
     Accept: 'application/vnd.github+json',
@@ -294,34 +288,6 @@ function App() {
   const previewAsset = sceneImages.length ? sceneImages[previewImageIndex % sceneImages.length] : null
   const presentedScene = isVideoPreviewPlaying ? videoPreviewScene : selectedScene
   const presentedAsset = isVideoPreviewPlaying ? videoPreviewAsset : previewAsset
-
-  useEffect(() => {
-    try {
-      const savedProject = window.localStorage.getItem(projectKey)
-      if (!savedProject) return
-      const project = JSON.parse(savedProject) as unknown
-      if (typeof project !== 'object' || project === null) throw new Error('Invalid saved project')
-      const saved = project as {
-        repositoryUrl?: unknown
-        repository?: unknown
-        scenes?: unknown
-      }
-      if (typeof saved.repositoryUrl === 'string') setRepositoryUrl(saved.repositoryUrl)
-      if (isRepository(saved.repository)) setRepository(saved.repository)
-      const savedScenes = saved.scenes
-      if (isSceneCollection(savedScenes)) {
-        setScenes(
-          savedScenes.map((s) => ({
-            ...s,
-            bullets: s.bullets?.length ? s.bullets : extractBullets(s.narration),
-          })),
-        )
-        setIsSaved(true)
-      }
-    } catch {
-      window.localStorage.removeItem(projectKey)
-    }
-  }, [])
 
   useEffect(() => {
     setPreviewImageIndex(0)
@@ -398,7 +364,6 @@ function App() {
       setScenes(buildScenes(newRepo))
       const imageNote = assets.length ? `Found ${assets.length} image${assets.length === 1 ? '' : 's'} from the repository.` : 'No images found — Cloudy will present with a branded placeholder.'
       setStatus(`Storyboard ready. ${imageNote}`)
-      setIsSaved(false)
     } catch {
       setRepository(null)
       setStatus('The repository could not be read. Check repository access and try again.')
@@ -419,18 +384,20 @@ function App() {
         return updated
       }),
     )
-    setIsSaved(false)
-  }
-  function saveProject() {
-    window.localStorage.setItem(projectKey, JSON.stringify({ repositoryUrl, repository, scenes }))
-    setIsSaved(true)
-    setStatus('Project saved only in this browser.')
   }
   function exportProject() {
+    if (!isExportReady) {
+      setStatus('Complete every export requirement before downloading the project setup.')
+      return
+    }
     downloadFile('cloudy-video-project.json', JSON.stringify({ repositoryUrl, repository, scenes }, null, 2), 'application/json')
     setStatus('Project JSON downloaded.')
   }
   function exportCaptions() {
+    if (!isExportReady) {
+      setStatus('Complete every export requirement before downloading captions.')
+      return
+    }
     let cursor = 0
     const content = scenes
       .map((scene, index) => {
@@ -443,6 +410,10 @@ function App() {
     setStatus('Editable SRT captions downloaded.')
   }
   async function exportVideo() {
+    if (!isExportReady) {
+      setStatus('Complete every export requirement before downloading the video.')
+      return
+    }
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
       setStatus('This browser cannot create a video file. Use a current Chromium browser.')
       return
@@ -755,15 +726,9 @@ function App() {
           </span>
         </a>
         <div className="project-state">
-          <span className={isSaved ? 'saved-dot' : 'unsaved-dot'}></span>
-          {isSaved ? 'Saved locally' : 'Unsaved changes'}
+          <span className={isExportReady ? 'saved-dot' : 'unsaved-dot'}></span>
+          {isExportReady ? 'Downloads ready' : 'Downloads locked'}
         </div>
-        <button className="secondary-button" type="button" onClick={exportProject}>
-          Download project setup
-        </button>
-        <button className="primary-button" type="button" onClick={saveProject}>
-          Save project
-        </button>
       </header>
       <section className="workspace">
         <aside className="rail" aria-label="Project workflow">
@@ -991,46 +956,37 @@ function App() {
             </section>
           )}
         </section>
-        {repository ? (
-          <aside className="review-panel">
-            <div>
-              <p className="eyebrow">Ready to export</p>
-              <h2>Local package</h2>
-            </div>
-            <ul className="checklist">
-              <li className="done">Repository source captured</li>
-              <li className={inTargetRange ? 'done' : ''}>8-12 minute runtime</li>
-              <li className="done">Editable Cloudy narration</li>
-              <li className={repository.assets.length ? 'done' : ''}>Source visuals selected</li>
-              <li className="done">Captions ready to export</li>
-            </ul>
-            <div className="export-actions">
-              {isRenderingVideo ? (
-                <button className="primary-button" type="button" onClick={cancelVideoExport}>
-                  Cancel video render {renderProgress}%
-                </button>
-              ) : (
-                <button className="primary-button" type="button" onClick={() => void exportVideo()}>
-                  Download video
-                </button>
-              )}
-              <button className="secondary-button" type="button" onClick={exportCaptions}>
-                Download captions
+        <aside className={`review-panel ${repository ? '' : 'placeholder'}`}>
+          <div>
+            <p className="eyebrow">Export requirements</p>
+            <h2>{isExportReady ? 'Downloads ready' : 'Complete before download'}</h2>
+            {!isExportReady && <p>All requirements below must be complete before video, captions, or project files can be downloaded.</p>}
+          </div>
+          <ul className="checklist">
+            <li className={repository ? 'done' : ''}>Repository source captured</li>
+            <li className={inTargetRange ? 'done' : ''}>8-12 minute runtime</li>
+            <li className={narrationReady ? 'done' : ''}>Every section has title and narration</li>
+            <li className={visualsReady ? 'done' : ''}>Source visuals selected</li>
+            <li className={captionsReady ? 'done' : ''}>Caption timings ready</li>
+          </ul>
+          <div className="export-actions">
+            {isRenderingVideo ? (
+              <button className="primary-button" type="button" onClick={cancelVideoExport}>
+                Cancel video render {renderProgress}%
               </button>
-              <button className="secondary-button" type="button" onClick={exportProject}>
-                Download project setup
+            ) : (
+              <button className="primary-button" type="button" onClick={() => void exportVideo()} disabled={!isExportReady}>
+                Download video
               </button>
-            </div>
-          </aside>
-        ) : (
-          <aside className="review-panel placeholder">
-            <div>
-              <p className="eyebrow">Ready to export</p>
-              <h2>Nothing to export yet</h2>
-              <p>Generate an explainer first. Export options for video, captions, and the project file appear once Cloudy has read a repository.</p>
-            </div>
-          </aside>
-        )}
+            )}
+            <button className="secondary-button" type="button" onClick={exportCaptions} disabled={!isExportReady}>
+              Download captions
+            </button>
+            <button className="secondary-button" type="button" onClick={exportProject} disabled={!isExportReady}>
+              Download project setup
+            </button>
+          </div>
+        </aside>
       </section>
     </main>
   )

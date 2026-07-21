@@ -11,14 +11,9 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: bo
 
   componentDidCatch(_error: Error, _info: ErrorInfo) {}
 
-  resetApplication() {
-    window.localStorage.removeItem('cloudy-video-project')
-    window.location.reload()
-  }
-
   render() {
     if (this.state.hasError) {
-      return <main className="startup-recovery"><section><p>Cloudy Repository Video Studio</p><h1>Cloudy needs a fresh local start.</h1><button type="button" onClick={() => this.resetApplication()}>Reset local project data</button></section></main>
+      return <main className="startup-recovery"><section><p>Cloudy Repository Video Studio</p><h1>Cloudy could not start.</h1><button type="button" onClick={() => window.location.reload()}>Reload application</button></section></main>
     }
 
     return this.props.children
