@@ -51,3 +51,70 @@
 	.unified-stage .slide-right { padding: 16px 8px; }
 	.unified-stage .talk-badge { font-size: 8px; }
 }
+
+/* High-contrast blue workspace theme */
+.app-shell { color: #102a3b; background: linear-gradient(135deg, #d9e8f2 0%, #edf5f9 48%, #d5e6ef 100%); }
+.topbar { border-color: #2b5976; background: #102f49; box-shadow: 0 3px 12px rgba(8, 35, 54, .18); }
+.brand { color: #f5fbff; }
+.brand small, .project-state { color: #c6dce9; }
+.primary-button { background: #09658f; color: #fff; }
+.primary-button:hover { background: #074b6c; }
+.primary-button:disabled { background: #b8c7d1; color: #354b58; }
+.secondary-button { border-color: #6f9bb5; background: #e8f3f8; color: #123f59; }
+.secondary-button:hover { background: #cfe7f2; }
+.secondary-button:disabled { border-color: #b7c7d1; background: #d8e3e9; color: #465d6a; }
+.rail { border-color: #2b5976; background: #194864; }
+.rail-item { color: #bcd5e4; }
+.rail-item.active { color: #fff; border-color: #f08a5b; background: #225c7a; }
+.content-column { color: #102a3b; }
+.section-heading h1, .story-head h2 { color: #102a3b; }
+.eyebrow { color: #a53f20; }
+.status { color: #3e5c6d; }
+.repository-form { border-color: #88abc0; background: #cfe3ee; box-shadow: 0 8px 22px rgba(26, 73, 99, .1); }
+.repository-form p { color: #36586b; }
+.url-entry input { border-color: #6f99b1; background: #f7fbfd; color: #102f43; }
+.repository-card, .empty-evidence { border-color: #91afc1; background: #e7f2f7; box-shadow: 0 8px 22px rgba(26, 73, 99, .08); }
+.repository-title > div > p:last-child, .empty-evidence { color: #365668; }
+.metadata-grid { border-color: #b3cbd8; }
+.metadata-grid span { color: #17384b; }
+.metadata-grid small { color: #4e6877; }
+.tags span { background: #bcddea; color: #173f54; }
+.asset-strip img { border-color: #6f99b1; background: #d7e8f1; }
+.duration-pill { border-color: #e89a6e; background: #ffe7d8; color: #783116; }
+.duration-pill.ready { border-color: #55a987; background: #ccebdd; color: #15543d; }
+.story-grid { border-color: #7fa5bb; background: #dcebf3; box-shadow: 0 10px 28px rgba(20, 63, 87, .12); }
+.scene-list { border-color: #8eafc1; background: #c9dfeb; }
+.scene { border-color: #a8c4d2; color: #35576a; }
+.scene:hover { background: #b8d8e8; color: #102f43; }
+.scene.selected { background: #9dcbe0; color: #0b2e43; box-shadow: inset 4px 0 0 #d85f36; }
+.scene-number, .scene time { color: #526d7c; }
+.scene-editor { background: #e7f2f7; }
+.presentation-toolbar strong { color: #173f55; }
+.unified-stage { border-color: #315f78; background: #123b56; }
+.unified-stage .slide-bg { opacity: .18; filter: saturate(.72) brightness(.72); }
+.unified-stage .slide-left { background: rgba(10, 45, 66, .83); }
+.unified-stage .slide-title { color: #fff; }
+.unified-stage .slide-bullets li { color: #e0f2f8; }
+.unified-stage .slide-bullets li::before, .unified-stage .slide-scene-label, .unified-stage .slide-narration-label { color: #ff9d70; }
+.unified-stage .slide-right { border-color: #47758d; background: #1b5875; }
+.unified-stage .slide-narration { border-color: #47758d; background: #092b40; }
+.unified-stage .slide-narration p { color: #e8f5fa; }
+.unified-stage .talk-badge { background: #d9eef6; color: #123f59; }
+.video-scene-progress { background: #c8deea; }
+.scene-editor > .video-scene-progress { border-color: #7fa5bb; }
+.vsp-dot { border-color: #7197ad; color: #254b60; }
+.vsp-dot:hover { background: #b1d2e2; }
+.vsp-dot.active { border-color: #0b577c; background: #0b577c; color: #fff; }
+.vsp-dot.done { border-color: #4c9d7c; background: #bfe4d2; color: #15543d; }
+.editor-fields input, .editor-fields textarea { border-color: #7299b0; background: #f6fbfd; color: #102f43; }
+.duration-info { border-color: #9ab8c8; background: #d6e8f1; }
+.duration-info-label, .duration-info-value { color: #264b5f; }
+.review-panel { border-color: #87aabd; background: #c8dfeb; }
+.review-panel h2 { color: #102f43; }
+.review-panel.placeholder p { color: #35586b; }
+.checklist li { border-color: #a5c0cf; color: #4e6877; }
+.checklist li::before { border-color: #6f8fa1; background: #dceaf1; }
+.checklist li.done { color: #174d3b; }
+.checklist li.done::before { border-color: #278064; background: #278064; box-shadow: inset 0 0 0 3px #d9eee5; }
+.story-placeholder { border-color: #7fa5bb; background: #d9eaf2; color: #35586b; }
+.story-placeholder h2 { color: #102f43; }
