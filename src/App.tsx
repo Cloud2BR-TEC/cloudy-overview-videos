@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 type Repository = { fullName: string; description: string; topics: string[]; language: string | null; defaultBranch: string; license: string; stars: number; openIssues: number; readme: string; assets: string[] }
@@ -57,6 +57,21 @@ function downloadFile(name: string, contents: string, type: string) {
   link.click()
   URL.revokeObjectURL(url)
 }
+function wrapCanvasText(context: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  const lines: string[] = []
+  let line = ''
+  for (const word of text.split(/\s+/)) {
+    const candidate = line ? `${line} ${word}` : word
+    if (context.measureText(candidate).width > maxWidth && line) {
+      lines.push(line)
+      line = word
+    } else {
+      line = candidate
+    }
+  }
+  if (line) lines.push(line)
+  return lines
+}
 
 function App() {
   const [repositoryUrl, setRepositoryUrl] = useState(starterRepository)
@@ -66,6 +81,9 @@ function App() {
   const [status, setStatus] = useState('Paste a public GitHub repository URL to create Cloudy’s explainer.')
   const [isLoading, setIsLoading] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [isRenderingVideo, setIsRenderingVideo] = useState(false)
+  const [renderProgress, setRenderProgress] = useState(0)
+  const renderAbortRef = useRef(false)
   const totalDuration = scenes.reduce((total, scene) => total + scene.duration, 0)
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? scenes[0]
   const inTargetRange = totalDuration >= 480 && totalDuration <= 720
@@ -125,6 +143,102 @@ function App() {
   function saveProject() { window.localStorage.setItem(projectKey, JSON.stringify({ repositoryUrl, repository, scenes })); setIsSaved(true); setStatus('Project saved only in this browser.') }
   function exportProject() { downloadFile('cloudy-video-project.json', JSON.stringify({ repositoryUrl, repository, scenes }, null, 2), 'application/json'); setStatus('Project JSON downloaded.') }
   function exportCaptions() { let cursor = 0; const content = scenes.map((scene, index) => { const start = timestamp(cursor); cursor += scene.duration; return `${index + 1}\n${start} --> ${timestamp(cursor)}\n${scene.narration}` }).join('\n\n'); downloadFile('cloudy-captions.srt', content, 'application/x-subrip'); setStatus('Editable SRT captions downloaded.') }
+  async function exportVideo() {
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+      setStatus('This browser cannot create a video file. Use a current Chromium browser.')
+      return
+    }
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm'
+    const canvas = document.createElement('canvas')
+    canvas.width = 1920
+    canvas.height = 1080
+    const context = canvas.getContext('2d')
+    if (!context) return
+    const stream = canvas.captureStream(30)
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6_000_000 })
+    const chunks: BlobPart[] = []
+    recorder.addEventListener('dataavailable', (event) => { if (event.data.size) chunks.push(event.data) })
+    const videoReady = new Promise<Blob>((resolve) => recorder.addEventListener('stop', () => resolve(new Blob(chunks, { type: 'video/webm' })), { once: true }))
+    const totalSeconds = scenes.reduce((total, scene) => total + scene.duration, 0)
+    const startedAt = performance.now()
+    renderAbortRef.current = false
+    setIsRenderingVideo(true)
+    setRenderProgress(0)
+    setStatus('Rendering your YouTube video in this browser. Keep this tab open.')
+    recorder.start(1_000)
+
+    const drawFrame = (elapsedSeconds: number) => {
+      let sceneOffset = 0
+      const scene = scenes.find((item) => {
+        sceneOffset += item.duration
+        return elapsedSeconds < sceneOffset
+      }) ?? scenes[scenes.length - 1]
+      const sceneElapsed = elapsedSeconds - (sceneOffset - scene.duration)
+      const pulse = 0.5 + Math.sin(sceneElapsed * 1.2) * 0.5
+      const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height)
+      gradient.addColorStop(0, '#123b39')
+      gradient.addColorStop(0.55, '#1d5b51')
+      gradient.addColorStop(1, '#d76639')
+      context.fillStyle = gradient
+      context.fillRect(0, 0, canvas.width, canvas.height)
+      context.fillStyle = `rgba(255, 255, 255, ${0.04 + pulse * 0.05})`
+      for (let column = -240; column < canvas.width + 240; column += 120) context.fillRect(column + sceneElapsed * 18, 0, 2, canvas.height)
+      context.fillStyle = '#f5f7f3'
+      context.font = '700 32px Manrope, sans-serif'
+      context.fillText('CLOUDY REPOSITORY VIDEO STUDIO', 112, 110)
+      context.fillStyle = '#f5a975'
+      context.font = '700 26px Manrope, sans-serif'
+      context.fillText(`SCENE ${String(scene.id).padStart(2, '0')}  /  ${durationLabel(scene.duration)}`, 112, 166)
+      context.fillStyle = '#ffffff'
+      context.font = '800 94px Manrope, sans-serif'
+      const titleLines = wrapCanvasText(context, scene.title, 1_270)
+      titleLines.slice(0, 3).forEach((line, index) => context.fillText(line, 112, 322 + index * 112))
+      context.fillStyle = '#d9ebe2'
+      context.font = '500 38px Manrope, sans-serif'
+      wrapCanvasText(context, scene.visual, 1_080).slice(0, 2).forEach((line, index) => context.fillText(line, 112, 690 + index * 50))
+      context.fillStyle = 'rgba(10, 31, 29, .76)'
+      context.fillRect(88, 808, 1_744, 190)
+      context.fillStyle = '#ffffff'
+      context.font = '500 34px Manrope, sans-serif'
+      wrapCanvasText(context, scene.narration, 1_590).slice(0, 3).forEach((line, index) => context.fillText(line, 132, 872 + index * 44))
+      context.fillStyle = '#f5a975'
+      context.beginPath()
+      context.arc(1_725, 182, 56 + pulse * 6, 0, Math.PI * 2)
+      context.fill()
+      context.fillStyle = '#173d3a'
+      context.font = '800 26px Manrope, sans-serif'
+      context.fillText('C', 1_716, 191)
+    }
+
+    const renderFrame = () => {
+      const elapsedSeconds = (performance.now() - startedAt) / 1_000
+      drawFrame(elapsedSeconds)
+      setRenderProgress(Math.min(100, Math.round((elapsedSeconds / totalSeconds) * 100)))
+      if (renderAbortRef.current || elapsedSeconds >= totalSeconds) {
+        recorder.stop()
+        return
+      }
+      window.requestAnimationFrame(renderFrame)
+    }
+
+    window.requestAnimationFrame(renderFrame)
+    const video = await videoReady
+    stream.getTracks().forEach((track) => track.stop())
+    setIsRenderingVideo(false)
+    setRenderProgress(0)
+    if (renderAbortRef.current) {
+      setStatus('Video rendering cancelled.')
+      return
+    }
+    const url = URL.createObjectURL(video)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'cloudy-youtube-video.webm'
+    link.click()
+    URL.revokeObjectURL(url)
+    setStatus('YouTube-ready WebM video downloaded. Captions are embedded on screen.')
+  }
+  function cancelVideoExport() { renderAbortRef.current = true; setStatus('Stopping video render...') }
   function previewVoice() {
     const voices = window.speechSynthesis.getVoices()
     const femaleVoice = voices.find((voice) => /zira|samantha|victoria|ava|aria|female|hazel|susan/i.test(voice.name)) ?? voices.find((voice) => voice.lang.startsWith('en'))
@@ -138,13 +252,13 @@ function App() {
   }
 
   return <main className="app-shell">
-    <header className="topbar"><a className="brand" href="https://github.com/Cloud2BR-TEC/Cloudy-overview-videos" target="_blank" rel="noreferrer"><img src={cloudyLogo} alt="Cloudy" /><span><strong>Cloudy</strong><small>Repository Video Studio</small></span></a><div className="project-state"><span className={isSaved ? 'saved-dot' : 'unsaved-dot'}></span>{isSaved ? 'Saved locally' : 'Unsaved changes'}</div><button className="secondary-button" type="button" onClick={exportProject}>Export project</button><button className="primary-button" type="button" onClick={saveProject}>Save project</button></header>
+    <header className="topbar"><a className="brand" href="https://github.com/Cloud2BR-TEC/Cloudy-overview-videos" target="_blank" rel="noreferrer"><img src={cloudyLogo} alt="Cloudy" /><span><strong>Cloudy</strong><small>Repository Video Studio</small></span></a><div className="project-state"><span className={isSaved ? 'saved-dot' : 'unsaved-dot'}></span>{isSaved ? 'Saved locally' : 'Unsaved changes'}</div><button className="secondary-button" type="button" onClick={exportProject}>Download project setup</button><button className="primary-button" type="button" onClick={saveProject}>Save project</button></header>
     <section className="workspace"><aside className="rail" aria-label="Project workflow"><div className="rail-item active"><span>01</span><strong>Source</strong></div><div className="rail-item"><span>02</span><strong>Story</strong></div><div className="rail-item"><span>03</span><strong>Voice</strong></div><div className="rail-item"><span>04</span><strong>Export</strong></div></aside><section className="content-column">
       <div className="section-heading"><div><p className="eyebrow">Cloudy overview video</p><h1>Choose the repository Cloudy will explain.</h1></div><p className="status" aria-live="polite">{status}</p></div>
       <section className="repository-form"><p className="eyebrow">Public repository</p><label htmlFor="repository-url">GitHub repository URL</label><div className="url-entry"><input id="repository-url" type="url" value={repositoryUrl} onChange={(event) => setRepositoryUrl(event.target.value)} placeholder="https://github.com/owner/repository" /><button className="primary-button" type="button" onClick={() => void loadRepository(repositoryUrl)} disabled={isLoading}>{isLoading ? 'Reading...' : 'Generate explainer'}</button></div><p>Cloudy reads public repository details only. Private repositories are not available in this browser-only version.</p></section>
       {repository && <section className="repository-card" aria-label="Repository source"><div className="repository-title"><div><p className="eyebrow">Source evidence</p><h2>{repository.fullName}</h2><p>{repository.description}</p></div><button className="text-button" type="button" onClick={generateStoryboard}>Refresh Cloudy draft</button></div><div className="metadata-grid"><span><small>Default branch</small>{repository.defaultBranch}</span><span><small>Primary language</small>{repository.language ?? 'Not detected'}</span><span><small>License</small>{repository.license}</span><span><small>Signals</small>{repository.stars} stars · {repository.openIssues} issues</span></div>{repository.assets.length > 0 && <div className="asset-strip">{repository.assets.map((asset) => <img key={asset} src={asset} alt="Repository source asset" />)}</div>}{repository.topics.length > 0 && <div className="tags">{repository.topics.slice(0, 6).map((topic) => <span key={topic}>{topic}</span>)}</div>}</section>}
       <section className="story-area"><div className="story-head"><div><p className="eyebrow">Storyboard</p><h2>Cloudy’s explainer</h2></div><div className={`duration-pill ${inTargetRange ? 'ready' : ''}`}>{durationLabel(totalDuration)} <small>{inTargetRange ? 'Within 8-12 minute target' : 'Target: 8-12 min'}</small></div></div><div className="story-grid"><ol className="scene-list">{scenes.map((scene) => <li key={scene.id}><button type="button" className={scene.id === selectedScene.id ? 'scene selected' : 'scene'} onClick={() => setSelectedSceneId(scene.id)}><span className="scene-number">{String(scene.id).padStart(2, '0')}</span><span><strong>{scene.title}</strong><small>{scene.visual}</small></span><time>{durationLabel(scene.duration)}</time></button></li>)}</ol><article className="scene-editor"><div className="preview-stage"><div className="preview-visual">{repository?.assets[0] ? <img className="source-visual" src={repository.assets[0]} alt="Selected repository source visual" /> : <img src={cloudyLogo} alt="Cloudy presents the selected scene" />}<span className="cloudy-avatar"><img src={cloudyLogo} alt="" /></span><span className="spark one"></span><span className="spark two"></span></div><div className="scene-caption"><span>Scene {selectedScene.id}</span><strong>{selectedScene.visual}</strong></div></div><div className="editor-fields"><label>Scene title<input value={selectedScene.title} onChange={(event) => updateScene('title', event.target.value)} /></label><label>Cloudy narration<textarea rows={4} value={selectedScene.narration} onChange={(event) => updateScene('narration', event.target.value)} /></label><label>Scene duration <span className="field-suffix">seconds</span><input type="number" min="15" value={selectedScene.duration} onChange={(event) => updateScene('duration', event.target.value)} /></label><button className="secondary-button voice-button" type="button" onClick={previewVoice}>Preview female voice</button></div></article></div></section>
-    </section><aside className="review-panel"><div><p className="eyebrow">Ready to export</p><h2>Local package</h2></div><ul className="checklist"><li className={repository ? 'done' : ''}>Repository source captured</li><li className={inTargetRange ? 'done' : ''}>8-12 minute runtime</li><li className="done">Editable Cloudy narration</li><li className={repository?.assets.length ? 'done' : ''}>Source visuals selected</li><li className="done">Captions ready to export</li></ul><div className="export-actions"><button className="primary-button" type="button" onClick={exportCaptions}>Download captions</button><button className="secondary-button" type="button" onClick={exportProject}>Download project</button></div></aside></section>
+    </section><aside className="review-panel"><div><p className="eyebrow">Ready to export</p><h2>Local package</h2></div><ul className="checklist"><li className={repository ? 'done' : ''}>Repository source captured</li><li className={inTargetRange ? 'done' : ''}>8-12 minute runtime</li><li className="done">Editable Cloudy narration</li><li className={repository?.assets.length ? 'done' : ''}>Source visuals selected</li><li className="done">Captions ready to export</li></ul><div className="export-actions">{isRenderingVideo ? <button className="primary-button" type="button" onClick={cancelVideoExport}>Cancel video render {renderProgress}%</button> : <button className="primary-button" type="button" onClick={() => void exportVideo()}>Download YouTube video</button>}<button className="secondary-button" type="button" onClick={exportCaptions}>Download captions</button><button className="secondary-button" type="button" onClick={exportProject}>Download project setup</button></div></aside></section>
   </main>
 }
 
