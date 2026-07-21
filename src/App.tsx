@@ -30,6 +30,16 @@ function parseRepositoryUrl(value: string) {
 function durationLabel(seconds: number) { return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` }
 function timestamp(seconds: number) { return `00:${durationLabel(seconds)}.000` }
 function decodeBase64(value: string) { return new TextDecoder().decode(Uint8Array.from(atob(value.replace(/\s/g, '')), (character) => character.charCodeAt(0))) }
+function isSceneCollection(value: unknown): value is Scene[] {
+  return Array.isArray(value) && value.length > 0 && value.every((scene) =>
+    typeof scene === 'object' && scene !== null &&
+    typeof scene.id === 'number' &&
+    typeof scene.title === 'string' &&
+    typeof scene.duration === 'number' &&
+    typeof scene.narration === 'string' &&
+    typeof scene.visual === 'string',
+  )
+}
 function downloadFile(name: string, contents: string, type: string) {
   const url = URL.createObjectURL(new Blob([contents], { type }))
   const link = document.createElement('a')
@@ -64,14 +74,16 @@ function App() {
   const visibleRepositories = availableRepositories.filter((item) => item.fullName.toLowerCase().includes(repositoryFilter.toLowerCase()))
 
   useEffect(() => {
-    const savedProject = window.localStorage.getItem(projectKey)
-    if (!savedProject) return
     try {
-      const project = JSON.parse(savedProject) as { repositoryUrl?: string; repository?: Repository; scenes?: Scene[] }
+      const savedProject = window.localStorage.getItem(projectKey)
+      if (!savedProject) return
+      const project = JSON.parse(savedProject) as { repositoryUrl?: string; repository?: Repository; scenes?: unknown }
       if (project.repositoryUrl) setRepositoryUrl(project.repositoryUrl)
       if (project.repository) setRepository(project.repository)
-      if (project.scenes?.length) setScenes(project.scenes)
-      setIsSaved(true)
+      if (isSceneCollection(project.scenes)) {
+        setScenes(project.scenes)
+        setIsSaved(true)
+      }
     } catch { window.localStorage.removeItem(projectKey) }
   }, [])
 
