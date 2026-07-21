@@ -301,19 +301,28 @@ function App() {
       wrapCanvasText(context, scene.narration, 1_590).slice(0, 3).forEach((line, index) => context.fillText(line, 132, 872 + index * 44))
 
       const bob = Math.sin(elapsedSeconds * 1.6) * 10
+      const walkX = 1_725 + Math.sin(elapsedSeconds * 0.9) * 90
+      const tilt = Math.sin(elapsedSeconds * 1.6) * 0.14
+      const stepScale = 1 + Math.sin(elapsedSeconds * 1.6) * 0.05 + eased * 0.06
       if (cloudyImage) {
         context.save()
-        context.translate(1_725, 182 + bob)
+        context.translate(walkX, 182 + bob)
+        context.rotate(tilt)
+        context.scale(stepScale, stepScale)
         context.drawImage(cloudyImage, -58, -58, 116, 116)
         context.restore()
       } else {
+        context.save()
+        context.translate(walkX, 182 + bob)
+        context.rotate(tilt)
         context.fillStyle = '#f5a975'
         context.beginPath()
-        context.arc(1_725, 182 + bob, 56 + pulse * 6, 0, Math.PI * 2)
+        context.arc(0, 0, 56 + pulse * 6, 0, Math.PI * 2)
         context.fill()
         context.fillStyle = '#173d3a'
         context.font = '800 26px Manrope, sans-serif'
-        context.fillText('C', 1_716, 191 + bob)
+        context.fillText('C', -9, 9)
+        context.restore()
       }
 
       const overallProgress = Math.min(1, elapsedSeconds / totalSeconds)
