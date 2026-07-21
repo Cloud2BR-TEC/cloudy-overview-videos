@@ -38,6 +38,14 @@ function extractReadmeImageUrls(markdown: string, owner: string, repo: string, b
   }
   return Array.from(urls).filter(isIllustrativeImage)
 }
+function extractReadmeSections(readme: string) {
+  const cleaned = readme.replace(/```[\s\S]*?```/g, '').replace(/^[#*_`>|\s]+|[#*_`>|\s]+$/g, '')
+  const features = (cleaned.match(/(?:features?|what\s+(?:this\s+)?does|capabilities?|highlights?)[:\s][\s\S]{0,600}/i)?.[0] || '').replace(/[#*_`>|]/g, ' ').replace(/\s+/g, ' ').trim()
+  const setup = (cleaned.match(/(?:install|setup|getting\s+started|quick\s+start|prerequisites?)[:\s][\s\S]{0,450}/i)?.[0] || '').replace(/[#*_`>|]/g, ' ').replace(/\s+/g, ' ').trim()
+  const usage = (cleaned.match(/(?:usage|how\s+to\s+use|examples?|api)[:\s][\s\S]{0,500}/i)?.[0] || '').replace(/[#*_`>|]/g, ' ').replace(/\s+/g, ' ').trim()
+  const next = (cleaned.match(/(?:contributing|resources?|further\s+reading|next\s+steps|learn\s+more)[:\s][\s\S]{0,300}/i)?.[0] || '').replace(/[#*_`>|]/g, ' ').replace(/\s+/g, ' ').trim()
+  return { features, setup, usage, next }
+}
 function isSceneCollection(value: unknown): value is Scene[] {
   return Array.isArray(value) && value.length > 0 && value.every((scene) =>
     typeof scene === 'object' && scene !== null &&
@@ -195,10 +203,21 @@ function App() {
   function generateStoryboard() {
     if (!repository) { setStatus('Choose a repository before refreshing the storyboard.'); return }
     const subject = repository.fullName.split('/')[1].replaceAll('-', ' ')
-    const summary = repository.readme.replace(/[#*_`>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 240)
-    setScenes((current) => current.map((scene, index) => ({ ...scene, title: index === 0 ? `Meet ${subject}` : scene.title, narration: index === 1 ? `${repository.description} ${summary || 'Cloudy connects these goals to the viewer’s next practical step.'}` : scene.narration, visual: index === 2 && repository.assets.length ? 'Repository image and guided source tour' : scene.visual })))
+    const sections = extractReadmeSections(repository.readme)
+    const intro = `${repository.description || `${subject} is a repository on GitHub.`} ${repository.language ? `Built with ${repository.language}.` : ''} ${repository.topics.slice(0, 3).join(', ')}`
+    const features = sections.features || `This repository contains ${repository.language || 'source'} code${repository.topics.length ? ` related to ${repository.topics.slice(0, 2).join(' and ')}` : ''}.`
+    const structure = `The repository includes ${repository.assets.length} visual${repository.assets.length === 1 ? '' : 's'}${repository.assets.length ? ' and documented examples' : ' files'}. ${sections.setup || 'Follow the repository documentation to set up and run the project locally.'}`
+    const practice = sections.usage || `Clone the repository, review the ${repository.language || 'source'} files, and follow the workflow described in the documentation to apply what you learn.`
+    const outro = sections.next || `Continue learning by exploring the repository, checking the issues for ways to contribute, and visiting related projects in the ${repository.topics[0] || 'topic'} space.`
+    setScenes([
+      { id: 1, title: `Meet ${subject}`, duration: 52, narration: intro.slice(0, 180), visual: 'Repository cover and Cloudy host' },
+      { id: 2, title: 'What you will learn', duration: 138, narration: features.slice(0, 280), visual: 'README highlights and course map' },
+      { id: 3, title: 'Explore the project', duration: 186, narration: structure.slice(0, 320), visual: repository.assets.length ? 'Repository images and guided source tour' : 'Annotated repository tree' },
+      { id: 4, title: 'Put it into practice', duration: 168, narration: practice.slice(0, 300), visual: 'Workflow steps and source imagery' },
+      { id: 5, title: 'Keep learning', duration: 70, narration: outro.slice(0, 200), visual: 'Next steps card' },
+    ])
     setIsSaved(false)
-    setStatus('Cloudy’s local draft has been refreshed from repository evidence.')
+    setStatus('Cloudy narration generated from repository content.')
   }
   function updateScene(field: 'title' | 'narration' | 'duration', value: string) { setScenes((current) => current.map((scene) => scene.id === selectedScene.id ? { ...scene, [field]: field === 'duration' ? Math.max(15, Number(value) || 15) : value } : scene)); setIsSaved(false) }
   function saveProject() { window.localStorage.setItem(projectKey, JSON.stringify({ repositoryUrl, repository, scenes })); setIsSaved(true); setStatus('Project saved only in this browser.') }
