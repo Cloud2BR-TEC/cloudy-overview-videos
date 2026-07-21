@@ -754,15 +754,6 @@ function App() {
 
   return (
     <main className="app-shell">
-      {isSpeaking && !isVideoPreviewPlaying ? (
-        <button className="secondary-button voice-button" type="button" onClick={stopVoice}>
-          &#9646;&#9646; Stop voice
-        </button>
-      ) : (
-        <button className="secondary-button voice-button" type="button" onClick={() => void previewVoice()} disabled={isVideoPreviewPlaying}>
-          Preview female voice
-        </button>
-      )}
       <header className="topbar">
         <a className="brand" href="https://github.com/Cloud2BR-TEC/Cloudy-overview-videos" target="_blank" rel="noreferrer">
           <img src={cloudyLogo} alt="Cloudy" />
@@ -909,9 +900,20 @@ function App() {
                           Stop
                         </button>
                       ) : (
-                        <button className="primary-button" type="button" onClick={() => void startVideoPreview()}>
-                          &#9654; Play all with voice
-                        </button>
+                        <>
+                          {isSpeaking ? (
+                            <button className="secondary-button voice-button" type="button" onClick={stopVoice}>
+                              &#9646;&#9646; Stop voice
+                            </button>
+                          ) : (
+                            <button className="secondary-button voice-button" type="button" onClick={() => void previewVoice()}>
+                              Preview selected voice
+                            </button>
+                          )}
+                          <button className="primary-button" type="button" onClick={() => void startVideoPreview()} disabled={isSpeaking}>
+                            &#9654; Play all with voice
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -983,9 +985,6 @@ function App() {
                         </small>
                       </span>
                     </div>
-                    <button className="secondary-button voice-button" type="button" onClick={() => void previewVoice()} disabled={isVideoPreviewPlaying}>
-                      Preview selected section voice
-                    </button>
                   </div>
                 </article>
               </div>
