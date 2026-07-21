@@ -26,11 +26,11 @@ function extractBullets(narration: string): string[] {
 }
 
 const STARTER_NARRATIONS = [
-  'Welcome. This repository is the starting point for your learning journey. Cloudy will walk you through the project overview, what you can expect to learn, and how this material connects to your goals.',
-  'In this section Cloudy explains what problem this project solves, what skills and knowledge you will gain, and how the learning goals connect to real-world outcomes described in the documentation.',
-  'Explore the project structure with Cloudy as your guide. We will tour the key folders, highlight practical exercises and code examples, and identify the resources that support your learning path.',
-  'Now it is time to put things into practice. Follow the recommended sequence of steps, complete the hands-on exercises, and produce one concrete, shareable outcome that demonstrates what you have learned.',
-  'Well done for making it this far. Cloudy recaps your learning path, points you toward the next relevant resource, and encourages you to keep building on what you have achieved today.',
+  'Welcome to this repository. Cloudy is your guide through everything you need to know about this project. This presentation will walk you through the goals and objectives, help you understand the intended audience, and clarify what outcomes you can expect. Whether you are a beginner just getting started or an experienced developer looking to expand your skills, this material has been organized to be accessible and practical. By the time Cloudy finishes, you will have a solid overview of the project and a clear sense of what comes next in your learning journey. Let us begin.',
+  'In this section Cloudy explains what problem this project is designed to solve and what skills you will gain. The learning goals are carefully connected to real-world outcomes described throughout the documentation. You will understand the core concepts, the architecture decisions behind the design, and the practical knowledge needed to apply what you learn here. Cloudy has reviewed all available documentation and organized the most important points so you can absorb the material at your own pace and revisit any section whenever you need a refresher.',
+  'Explore the project structure with Cloudy as your guide. This section tours the key folders and files, highlights the practical exercises and code examples provided, and identifies the supporting resources that accompany the main content. Understanding how the repository is organized will help you navigate it confidently and find exactly what you need. Cloudy will point out the most important files and explain what role each part of the project plays in the overall learning experience.',
+  'Now it is time to put things into practice. Follow the recommended sequence of steps and complete the hands-on exercises provided. Each exercise has been designed to reinforce a specific concept covered earlier in the presentation. Work through each step carefully, check your results against the expected outcomes, and use the documentation as your reference. Producing one concrete, shareable outcome by the end of this section will demonstrate everything you have learned and give you a strong foundation to build on.',
+  'Well done for reaching this final section. Cloudy recaps the learning path you have followed, highlights the key insights from each section, and points you toward the next relevant resource for continued growth. The repository contains additional references, open issues you can contribute to, and links to related projects in the same topic area. Keep exploring, keep building, and remember that every step forward in your learning is a valuable investment in your future as a developer.',
 ]
 const starterScenes: Scene[] = STARTER_NARRATIONS.map((narration, index) => ({
   id: index + 1,
@@ -142,53 +142,78 @@ function loadImage(src: string) {
     image.src = src
   })
 }
+function splitIntoSlides(text: string, targetWords: number): string[] {
+  const sentences = text.trim().replace(/([.!?])\s+/g, '$1\n').split('\n').filter(s => s.trim().length > 8)
+  const slides: string[] = []
+  let current: string[] = []
+  let count = 0
+  for (const sentence of sentences) {
+    const words = sentence.trim().split(/\s+/).length
+    if (count > 0 && count + words > targetWords * 1.25) {
+      slides.push(current.join(' '))
+      current = [sentence]
+      count = words
+    } else {
+      current.push(sentence)
+      count += words
+    }
+  }
+  if (current.length) slides.push(current.join(' '))
+  return slides.filter(s => s.trim().split(/\s+/).length > 8)
+}
 function buildScenes(repo: Repository): Scene[] {
   const subject = repo.fullName.split('/')[1].replaceAll('-', ' ')
   const sections = parseReadmeSections(repo.readme)
   const find = (pattern: RegExp) =>
     sections.find(s => pattern.test(s.heading) && s.body.trim().split(/\s+/).length > 8)?.body ?? ''
   const fallback = (idx: number) => sections[idx]?.body ?? ''
+  const MAX = 800
+  const WORDS_PER_SLIDE = 130
 
-  // Scene 1 – intro: description + first README body
-  const introRaw = [
-    repo.description ?? '',
-    repo.language ? `Built with ${repo.language}.` : '',
-    repo.topics.length ? `Topics: ${repo.topics.slice(0, 4).join(', ')}.` : '',
-    fallback(0),
-  ].filter(Boolean).join(' ')
-  const intro = limitWords(introRaw, 130)
-
-  // Scene 2 – what you'll learn: features / overview / about / highlights
-  const featuresRaw = find(/features?|overview|about\b|what\s+(it|this|we|you)|highlights?|key\s+point|objective|goal|purpose/i)
-    || fallback(1)
-    || `This repository contains ${repo.language || 'source'} code${repo.topics.length ? ` focused on ${repo.topics.slice(0, 3).join(', ')}` : ''}.`
-  const features = limitWords(featuresRaw, 220)
-
-  // Scene 3 – explore: install / setup / structure / architecture
-  const setupRaw = find(/install|setup|getting[\s-]started|structure|architecture|prerequisites?|requirements?|configur|depend/i)
-    || fallback(2)
-    || 'Follow the repository documentation and README to understand the project structure and set up the environment.'
-  const structure = limitWords(setupRaw, 200)
-
-  // Scene 4 – practice: usage / examples / api / demo / how-to
-  const usageRaw = find(/usage|example|how[\s-]to|tutorial|guide|quickstart|api\b|demo|walkthrough/i)
-    || fallback(3)
-    || `Clone the repository, run the examples, and follow the workflow described in the documentation.`
-  const practice = limitWords(usageRaw, 210)
-
-  // Scene 5 – keep learning: contributing / next steps / resources / community
-  const outroRaw = find(/contribut|resource|further|next[\s-]step|learn[\s-]more|reference|acknowledgment|credit|community|roadmap/i)
-    || sections[sections.length - 1]?.body
-    || `Continue learning by exploring open issues and related projects in the ${repo.topics[0] || 'project'} community.`
-  const outro = limitWords(outroRaw, 140)
-
-  return [
-    { id: 1, title: `Meet ${subject}`, duration: wordsToSeconds(intro), narration: intro, visual: 'Repository cover and Cloudy host', bullets: extractBullets(intro) },
-    { id: 2, title: 'What you will learn', duration: wordsToSeconds(features), narration: features, visual: 'README highlights and course map', bullets: extractBullets(features) },
-    { id: 3, title: 'Explore the project', duration: wordsToSeconds(structure), narration: structure, visual: repo.assets.length ? 'Repository images and guided source tour' : 'Annotated repository tree', bullets: extractBullets(structure) },
-    { id: 4, title: 'Put it into practice', duration: wordsToSeconds(practice), narration: practice, visual: 'Workflow steps and source imagery', bullets: extractBullets(practice) },
-    { id: 5, title: 'Keep learning', duration: wordsToSeconds(outro), narration: outro, visual: 'Next steps card', bullets: extractBullets(outro) },
+  const groups = [
+    {
+      baseTitle: `Meet ${subject}`,
+      visual: 'Repository cover and Cloudy host',
+      text: limitWords([
+        repo.description ?? '',
+        repo.language ? `Built with ${repo.language}.` : '',
+        repo.topics.length ? `Topics: ${repo.topics.slice(0, 4).join(', ')}.` : '',
+        fallback(0),
+      ].filter(Boolean).join(' '), MAX),
+    },
+    {
+      baseTitle: 'What you will learn',
+      visual: 'README highlights and course map',
+      text: limitWords(find(/features?|overview|about\b|what\s+(it|this|we|you)|highlights?|key\s+point|objective|goal|purpose/i) || fallback(1) || `This repository contains ${repo.language || 'source'} code${repo.topics.length ? ` focused on ${repo.topics.slice(0, 3).join(', ')}` : ''}.`, MAX),
+    },
+    {
+      baseTitle: 'Explore the project',
+      visual: repo.assets.length ? 'Repository images and guided source tour' : 'Annotated repository tree',
+      text: limitWords(find(/install|setup|getting[\s-]started|structure|architecture|prerequisites?|requirements?|configur|depend/i) || fallback(2) || 'Follow the repository documentation and README to understand the project structure.', MAX),
+    },
+    {
+      baseTitle: 'Put it into practice',
+      visual: 'Workflow steps and source imagery',
+      text: limitWords(find(/usage|example|how[\s-]to|tutorial|guide|quickstart|api\b|demo|walkthrough/i) || fallback(3) || `Clone the repository and follow the workflow described in the documentation.`, MAX),
+    },
+    {
+      baseTitle: 'Keep learning',
+      visual: 'Next steps card',
+      text: limitWords(find(/contribut|resource|further|next[\s-]step|learn[\s-]more|reference|acknowledgment|credit|community|roadmap/i) || sections[sections.length - 1]?.body || `Continue learning by exploring open issues and related projects.`, MAX),
+    },
   ]
+
+  const result: Scene[] = []
+  let id = 1
+  for (const group of groups) {
+    const slides = splitIntoSlides(group.text, WORDS_PER_SLIDE)
+    const all = slides.length ? slides : [group.text || group.baseTitle]
+    all.forEach((narration, i) => {
+      const title = all.length > 1 ? `${group.baseTitle} – Part ${i + 1}` : group.baseTitle
+      result.push({ id: id++, title, duration: wordsToSeconds(narration), narration, visual: group.visual, bullets: extractBullets(narration) })
+    })
+  }
+  return result
 }
 function drawCoverImage(context: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, width: number, height: number, zoom: number) {
   const scale = Math.max(width / image.width, height / image.height) * zoom
