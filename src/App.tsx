@@ -40,6 +40,20 @@ function isSceneCollection(value: unknown): value is Scene[] {
     typeof scene.visual === 'string',
   )
 }
+function isRepository(value: unknown): value is Repository {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  return typeof record.fullName === 'string' &&
+    typeof record.description === 'string' &&
+    Array.isArray(record.topics) && record.topics.every((topic) => typeof topic === 'string') &&
+    (typeof record.language === 'string' || record.language === null) &&
+    typeof record.defaultBranch === 'string' &&
+    typeof record.license === 'string' &&
+    typeof record.stars === 'number' &&
+    typeof record.openIssues === 'number' &&
+    typeof record.readme === 'string' &&
+    Array.isArray(record.assets) && record.assets.every((asset) => typeof asset === 'string')
+}
 function downloadFile(name: string, contents: string, type: string) {
   const url = URL.createObjectURL(new Blob([contents], { type }))
   const link = document.createElement('a')
@@ -77,11 +91,14 @@ function App() {
     try {
       const savedProject = window.localStorage.getItem(projectKey)
       if (!savedProject) return
-      const project = JSON.parse(savedProject) as { repositoryUrl?: string; repository?: Repository; scenes?: unknown }
-      if (project.repositoryUrl) setRepositoryUrl(project.repositoryUrl)
-      if (project.repository) setRepository(project.repository)
-      if (isSceneCollection(project.scenes)) {
-        setScenes(project.scenes)
+      const project = JSON.parse(savedProject) as unknown
+      if (typeof project !== 'object' || project === null) throw new Error('Invalid saved project')
+      const saved = project as { repositoryUrl?: unknown; repository?: unknown; scenes?: unknown }
+      if (typeof saved.repositoryUrl === 'string') setRepositoryUrl(saved.repositoryUrl)
+      if (isRepository(saved.repository)) setRepository(saved.repository)
+      const savedScenes = saved.scenes
+      if (isSceneCollection(savedScenes)) {
+        setScenes(savedScenes)
         setIsSaved(true)
       }
     } catch { window.localStorage.removeItem(projectKey) }
