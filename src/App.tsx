@@ -884,15 +884,15 @@ function App() {
                         <>
                           {isSpeaking ? (
                             <button className="secondary-button voice-button" type="button" onClick={stopVoice}>
-                              &#9646;&#9646; Stop voice
+                              &#9646;&#9646; Stop preview
                             </button>
                           ) : (
                             <button className="secondary-button voice-button" type="button" onClick={() => void previewVoice()}>
-                              Preview selected voice
+                              Preview selected
                             </button>
                           )}
                           <button className="primary-button" type="button" onClick={() => void startVideoPreview()} disabled={isSpeaking}>
-                            &#9654; Play all with voice
+                            &#9654; Play all
                           </button>
                         </>
                       )}
