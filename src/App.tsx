@@ -7,13 +7,29 @@ type Scene = { id: number; title: string; duration: number; narration: string; v
 
 const starterRepository = 'https://github.com/Cloud2BR-TEC/ai-academy-101-ml'
 const projectKey = 'cloudy-video-project'
-const starterScenes: Scene[] = [
-  { id: 1, title: 'Welcome to the repository', duration: 52, narration: 'Cloudy introduces the project, the intended learner, and the outcome.', visual: 'Repository cover and Cloudy host' },
-  { id: 2, title: 'What you will learn', duration: 138, narration: 'Explain the problem space and walk through the learning goals found in the documentation.', visual: 'README highlights and course map' },
-  { id: 3, title: 'Explore the project', duration: 186, narration: 'Tour the important folders, practical exercises, and supporting resources.', visual: 'Annotated repository tree' },
-  { id: 4, title: 'Put it into practice', duration: 168, narration: 'Show the recommended learning sequence and one concrete outcome for the viewer.', visual: 'Workflow steps and source imagery' },
-  { id: 5, title: 'Keep learning', duration: 70, narration: 'Cloudy recaps the path and points viewers to the next relevant resource.', visual: 'Next steps card' },
+
+function wordsToSeconds(text: string) {
+  const words = text.trim().split(/\s+/).filter(Boolean).length
+  return Math.max(15, Math.round((words / 130) * 60))
+}
+function limitWords(text: string, maxWords: number) {
+  return text.trim().split(/\s+/).slice(0, maxWords).join(' ')
+}
+
+const STARTER_NARRATIONS = [
+  'Welcome. This repository is the starting point for your learning journey. Cloudy will walk you through the project overview, what you can expect to learn, and how this material connects to your goals.',
+  'In this section Cloudy explains what problem this project solves, what skills and knowledge you will gain, and how the learning goals connect to real-world outcomes described in the documentation.',
+  'Explore the project structure with Cloudy as your guide. We will tour the key folders, highlight practical exercises and code examples, and identify the resources that support your learning path.',
+  'Now it is time to put things into practice. Follow the recommended sequence of steps, complete the hands-on exercises, and produce one concrete, shareable outcome that demonstrates what you have learned.',
+  'Well done for making it this far. Cloudy recaps your learning path, points you toward the next relevant resource, and encourages you to keep building on what you have achieved today.',
 ]
+const starterScenes: Scene[] = STARTER_NARRATIONS.map((narration, index) => ({
+  id: index + 1,
+  title: ['Welcome to the repository', 'What you will learn', 'Explore the project', 'Put it into practice', 'Keep learning'][index],
+  duration: wordsToSeconds(narration),
+  narration,
+  visual: ['Repository cover and Cloudy host', 'README highlights and course map', 'Annotated repository tree', 'Workflow steps and source imagery', 'Next steps card'][index],
+}))
 
 function parseRepositoryUrl(value: string) {
   try {
@@ -94,10 +110,6 @@ function wrapCanvasText(context: CanvasRenderingContext2D, text: string, maxWidt
   if (line) lines.push(line)
   return lines
 }
-function wordsPerSecond(text: string) {
-  const words = text.trim().split(/\s+/).filter(Boolean).length
-  return Math.max(15, Math.round((words / 130) * 60))
-}
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
@@ -106,6 +118,22 @@ function loadImage(src: string) {
     image.onerror = () => reject(new Error('Image failed to load'))
     image.src = src
   })
+}
+function buildScenes(repo: Repository): Scene[] {
+  const subject = repo.fullName.split('/')[1].replaceAll('-', ' ')
+  const sections = extractReadmeSections(repo.readme)
+  const intro = limitWords(`${repo.description || `${subject} is a repository on GitHub.`} ${repo.language ? `Built with ${repo.language}.` : ''} ${repo.topics.length ? `Topics include ${repo.topics.slice(0, 4).join(', ')}.` : ''}`, 150)
+  const features = limitWords(sections.features || `This repository contains ${repo.language || 'source'} code${repo.topics.length ? ` focused on ${repo.topics.slice(0, 3).join(', ')}` : ''}. Explore the code to understand the architecture and approach used by the maintainers.`, 250)
+  const structure = limitWords(`${sections.setup || `The project can be set up by following the repository documentation and the steps described in the README.`} ${repo.assets.length ? `The repository contains ${repo.assets.length} supporting image${repo.assets.length === 1 ? '' : 's'} and additional assets.` : ''}`, 220)
+  const practice = limitWords(sections.usage || `To put this into practice, clone the repository, review the ${repo.language || 'source'} files, run the examples, and follow the workflow steps described in the documentation to produce your first outcome.`, 230)
+  const outro = limitWords(sections.next || `Continue your learning journey by exploring the open issues, reviewing related repositories, and connecting with the ${repo.topics[0] || 'project'} community. Check back for updates and new content.`, 160)
+  return [
+    { id: 1, title: `Meet ${subject}`, duration: wordsToSeconds(intro), narration: intro, visual: 'Repository cover and Cloudy host' },
+    { id: 2, title: 'What you will learn', duration: wordsToSeconds(features), narration: features, visual: 'README highlights and course map' },
+    { id: 3, title: 'Explore the project', duration: wordsToSeconds(structure), narration: structure, visual: repo.assets.length ? 'Repository images and guided source tour' : 'Annotated repository tree' },
+    { id: 4, title: 'Put it into practice', duration: wordsToSeconds(practice), narration: practice, visual: 'Workflow steps and source imagery' },
+    { id: 5, title: 'Keep learning', duration: wordsToSeconds(outro), narration: outro, visual: 'Next steps card' },
+  ]
 }
 function drawCoverImage(context: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, width: number, height: number, zoom: number) {
   const scale = Math.max(width / image.width, height / image.height) * zoom
@@ -197,9 +225,12 @@ function App() {
       const folderListings = await Promise.all(assetFolders.map((folder) => fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/contents/${folder.name}`, { headers: apiHeaders }).then((response) => response.ok ? response.json() as Promise<Array<{ type: string; download_url: string | null }>> : []).catch(() => [])))
       const folderImages = folderListings.flat().filter((file) => file.type === 'file' && file.download_url && isIllustrativeImage(file.download_url)).map((file) => file.download_url as string)
       const assets = Array.from(new Set([...readmeImages, ...rootImages, ...folderImages])).slice(0, 8)
+      const newRepo: Repository = { fullName: data.full_name, description: data.description ?? 'No repository description was provided.', topics: data.topics ?? [], language: data.language, defaultBranch: data.default_branch, license: data.license?.spdx_id ?? 'No license detected', stars: data.stargazers_count, openIssues: data.open_issues_count, readme: readmeText, assets }
       setRepositoryUrl(`https://github.com/${data.full_name}`)
-      setRepository({ fullName: data.full_name, description: data.description ?? 'No repository description was provided.', topics: data.topics ?? [], language: data.language, defaultBranch: data.default_branch, license: data.license?.spdx_id ?? 'No license detected', stars: data.stargazers_count, openIssues: data.open_issues_count, readme: readmeText, assets })
-      setStatus(assets.length ? `Found ${assets.length} repository image${assets.length === 1 ? '' : 's'} to illustrate the storyboard.` : 'No repository images were found. Cloudy will present with a branded placeholder.')
+      setRepository(newRepo)
+      setScenes(buildScenes(newRepo))
+      const imageNote = assets.length ? `Found ${assets.length} image${assets.length === 1 ? '' : 's'} from the repository.` : 'No images found — Cloudy will present with a branded placeholder.'
+      setStatus(`Storyboard ready. ${imageNote}`)
       setIsSaved(false)
     } catch { setRepository(null); setStatus('The repository could not be read. Check repository access and try again.') }
     finally { setIsLoading(false) }
@@ -207,29 +238,15 @@ function App() {
 
   function generateStoryboard() {
     if (!repository) { setStatus('Choose a repository before refreshing the storyboard.'); return }
-    const subject = repository.fullName.split('/')[1].replaceAll('-', ' ')
-    const sections = extractReadmeSections(repository.readme)
-    const intro = `${repository.description || `${subject} is a repository on GitHub.`} ${repository.language ? `Built with ${repository.language}.` : ''} ${repository.topics.slice(0, 3).join(', ')}`
-    const features = sections.features || `This repository contains ${repository.language || 'source'} code${repository.topics.length ? ` related to ${repository.topics.slice(0, 2).join(' and ')}` : ''}.`
-    const structure = `The repository includes ${repository.assets.length} visual${repository.assets.length === 1 ? '' : 's'}${repository.assets.length ? ' and documented examples' : ' files'}. ${sections.setup || 'Follow the repository documentation to set up and run the project locally.'}`
-    const practice = sections.usage || `Clone the repository, review the ${repository.language || 'source'} files, and follow the workflow described in the documentation to apply what you learn.`
-    const outro = sections.next || `Continue learning by exploring the repository, checking the issues for ways to contribute, and visiting related projects in the ${repository.topics[0] || 'topic'} space.`
-    const narrations = [intro.slice(0, 180), features.slice(0, 280), structure.slice(0, 320), practice.slice(0, 300), outro.slice(0, 200)]
-    setScenes([
-      { id: 1, title: `Meet ${subject}`, duration: wordsPerSecond(narrations[0]), narration: narrations[0], visual: 'Repository cover and Cloudy host' },
-      { id: 2, title: 'What you will learn', duration: wordsPerSecond(narrations[1]), narration: narrations[1], visual: 'README highlights and course map' },
-      { id: 3, title: 'Explore the project', duration: wordsPerSecond(narrations[2]), narration: narrations[2], visual: repository.assets.length ? 'Repository images and guided source tour' : 'Annotated repository tree' },
-      { id: 4, title: 'Put it into practice', duration: wordsPerSecond(narrations[3]), narration: narrations[3], visual: 'Workflow steps and source imagery' },
-      { id: 5, title: 'Keep learning', duration: wordsPerSecond(narrations[4]), narration: narrations[4], visual: 'Next steps card' },
-    ])
+    setScenes(buildScenes(repository))
     setIsSaved(false)
-    setStatus('Cloudy narration generated from repository content.')
+    setStatus('Cloudy narration refreshed from repository content.')
   }
   function updateScene(field: 'title' | 'narration', value: string) {
     setScenes((current) => current.map((scene) => {
       if (scene.id !== selectedScene.id) return scene
       const updated = { ...scene, [field]: value }
-      if (field === 'narration') updated.duration = wordsPerSecond(value)
+      if (field === 'narration') updated.duration = wordsToSeconds(value)
       return updated
     }))
     setIsSaved(false)
