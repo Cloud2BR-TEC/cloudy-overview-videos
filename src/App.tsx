@@ -22,6 +22,7 @@ type Scene = {
   visual: string
   bullets: string[]
 }
+type WorkflowStep = 'source' | 'story' | 'voice' | 'export'
 
 const starterRepository = 'https://github.com/Cloud2BR-TEC/ai-academy-101-ml'
 
@@ -261,6 +262,7 @@ function App() {
   const [selectedSceneId, setSelectedSceneId] = useState(1)
   const [status, setStatus] = useState('Paste a public GitHub repository URL to create Cloudy’s explainer.')
   const [isLoading, setIsLoading] = useState(false)
+  const [activeWorkflow, setActiveWorkflow] = useState<WorkflowStep>('source')
   const [isRenderingVideo, setIsRenderingVideo] = useState(false)
   const [renderProgress, setRenderProgress] = useState(0)
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -715,6 +717,17 @@ function App() {
     setVideoPreviewSceneIdx(0)
   }
 
+  function navigateToWorkflow(step: WorkflowStep) {
+    if ((step === 'story' || step === 'voice') && !repository) {
+      setActiveWorkflow('source')
+      setStatus('Generate an explainer before opening Story or Voice.')
+      document.getElementById('source-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    setActiveWorkflow(step)
+    document.getElementById(`${step}-section`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -728,22 +741,22 @@ function App() {
       </header>
       <section className="workspace">
         <aside className="rail" aria-label="Project workflow">
-          <div className="rail-item active">
+          <button className={`rail-item ${activeWorkflow === 'source' ? 'active' : ''}`} type="button" onClick={() => navigateToWorkflow('source')} aria-current={activeWorkflow === 'source' ? 'step' : undefined}>
             <span>01</span>
             <strong>Source</strong>
-          </div>
-          <div className="rail-item">
+          </button>
+          <button className={`rail-item ${activeWorkflow === 'story' ? 'active' : ''}`} type="button" onClick={() => navigateToWorkflow('story')} aria-current={activeWorkflow === 'story' ? 'step' : undefined}>
             <span>02</span>
             <strong>Story</strong>
-          </div>
-          <div className="rail-item">
+          </button>
+          <button className={`rail-item ${activeWorkflow === 'voice' ? 'active' : ''}`} type="button" onClick={() => navigateToWorkflow('voice')} aria-current={activeWorkflow === 'voice' ? 'step' : undefined}>
             <span>03</span>
             <strong>Voice</strong>
-          </div>
-          <div className="rail-item">
+          </button>
+          <button className={`rail-item ${activeWorkflow === 'export' ? 'active' : ''}`} type="button" onClick={() => navigateToWorkflow('export')} aria-current={activeWorkflow === 'export' ? 'step' : undefined}>
             <span>04</span>
             <strong>Export</strong>
-          </div>
+          </button>
         </aside>
         <section className="content-column">
           <div className="section-heading">
@@ -755,7 +768,7 @@ function App() {
               {status}
             </p>
           </div>
-          <section className="repository-form">
+          <section className="repository-form" id="source-section">
             <p className="eyebrow">Public repository</p>
             <label htmlFor="repository-url">GitHub repository URL</label>
             <div className="url-entry">
@@ -810,7 +823,7 @@ function App() {
             </section>
           )}
           {repository ? (
-            <section className="story-area">
+            <section className="story-area" id="story-section">
               <div className="story-head">
                 <div>
                   <p className="eyebrow">Storyboard</p>
@@ -842,7 +855,7 @@ function App() {
                   ))}
                 </ol>
                 <article className="scene-editor">
-                  <div className="presentation-toolbar">
+                  <div className="presentation-toolbar" id="voice-section">
                     <div>
                       <p className="eyebrow">Live presentation</p>
                       <strong>{isVideoPreviewPlaying ? `Presenting section ${videoPreviewSceneIdx + 1} of ${scenes.length}` : 'Review and edit the selected section'}</strong>
@@ -943,7 +956,7 @@ function App() {
               </div>
             </section>
           ) : (
-            <section className="story-placeholder">
+            <section className="story-placeholder" id="story-section">
               <p className="eyebrow">Storyboard</p>
               <h2>Generate an explainer to begin</h2>
               <p>
@@ -952,7 +965,7 @@ function App() {
             </section>
           )}
         </section>
-        <aside className={`review-panel ${repository ? '' : 'placeholder'}`}>
+        <aside className={`review-panel ${repository ? '' : 'placeholder'}`} id="export-section">
           <div>
             <p className="eyebrow">Export requirements</p>
             <h2>{isExportReady ? 'Downloads ready' : 'Complete before download'}</h2>
