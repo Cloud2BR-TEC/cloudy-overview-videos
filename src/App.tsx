@@ -41,6 +41,9 @@ function wordsToSeconds(text: string) {
 function limitWords(text: string, maxWords: number) {
   return text.trim().split(/\s+/).slice(0, maxWords).join(' ')
 }
+function cleanSlideTitle(value: string) {
+  return value.replace(/^\s*#+\s*/, '')
+}
 function extractBullets(narration: string): string[] {
   return narration
     .replace(/([.!?])\s+/g, '$1\n')
@@ -391,7 +394,7 @@ function App() {
     setScenes((current) =>
       current.map((scene) => {
         if (scene.id !== selectedScene.id) return scene
-        const updated = { ...scene, [field]: value }
+        const updated = { ...scene, [field]: field === 'title' ? cleanSlideTitle(value) : value }
         if (field === 'narration') {
           updated.duration = wordsToSeconds(value)
           updated.bullets = extractBullets(value)
@@ -903,7 +906,7 @@ function App() {
                       <p className="slide-scene-label">
                         Section {presentedScene.section} of 5 · Slide {presentedScene.slideInSection} of {SLIDES_PER_SECTION} · {presentedScene.duration} sec
                       </p>
-                      <h2 className="slide-title"><span aria-hidden="true">#</span> {presentedScene.title}</h2>
+                      <h2 className="slide-title">{presentedScene.title}</h2>
                       <ul className="slide-bullets">
                         {(presentedScene.bullets?.length ? presentedScene.bullets : extractBullets(presentedScene.narration)).map((bullet, i) => (
                           <li key={i}>{bullet}</li>
