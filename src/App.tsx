@@ -12,6 +12,7 @@ type Repository = {
   stars: number
   openIssues: number
   readme: string
+  documentation: string
   assets: string[]
   files: string[]
 }
@@ -201,6 +202,9 @@ function isEnglishImagePath(value: string) {
   const fileName = segments.at(-1) ?? ''
   const localeSuffix = fileName.match(/[._-]([a-z]{2}(?:[-_][a-z]{2,4})?)(?=\.[^.]+$)/)?.[1]
   return !localeSuffix || englishLocale.test(localeSuffix) || !nonEnglishLocale.test(localeSuffix)
+}
+function isEnglishDocumentationPath(value: string) {
+  return /^docs\//i.test(value) && /\.mdx?$/i.test(value) && isEnglishImagePath(value) && !isExcludedRepositoryPath(value)
 }
 function repositoryImageScore(path: string) {
   const normalized = path.toLowerCase()
@@ -419,7 +423,7 @@ function hasVisualNarrationAlignment(scenes: Scene[]) {
   })
 }
 function buildScenes(repo: Repository): Scene[] {
-  const sections = parseReadmeSections(repo.readme)
+  const sections = [...parseReadmeSections(repo.readme), ...parseReadmeSections(repo.documentation)]
   const find = (pattern: RegExp) => sections.find((s) => pattern.test(s.heading) && s.body.trim().split(/\s+/).length > 8)?.body ?? ''
   const fallback = (idx: number) => sections[idx]?.body ?? ''
   const MAX = 800
@@ -608,7 +612,8 @@ function App() {
             tree?: Array<{ path: string; type: string; size?: number }>
           })
         : null
-      const repositoryFiles = (treeData?.tree ?? [])
+      const treeEntries = treeData?.tree ?? []
+      const repositoryFiles = treeEntries
         .filter(
           (entry) =>
             entry.type === 'blob' &&
@@ -618,7 +623,24 @@ function App() {
         .sort((left, right) => repositoryFileScore(right.path) - repositoryFileScore(left.path) || left.path.localeCompare(right.path))
         .map((entry) => entry.path)
         .slice(0, 250)
-      const repositoryImages = (treeData?.tree ?? [])
+      const documentationPaths = treeEntries
+        .filter((entry) => entry.type === 'blob' && isEnglishDocumentationPath(entry.path) && (entry.size ?? 0) <= 500_000)
+        .sort((left, right) => repositoryFileScore(right.path) - repositoryFileScore(left.path) || left.path.localeCompare(right.path))
+        .map((entry) => entry.path)
+        .slice(0, 24)
+      const documentationTexts = await Promise.all(
+        documentationPaths.map(async (path) => {
+          try {
+            const response = await fetch(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${encodeURIComponent(data.default_branch)}/${path.split('/').map(encodeURIComponent).join('/')}`)
+            return response.ok ? response.text() : ''
+          } catch {
+            return ''
+          }
+        }),
+      )
+      const documentation = documentationTexts.filter(Boolean).join('\n\n')
+      const documentationFileCount = documentationTexts.filter(Boolean).length
+      const repositoryImages = treeEntries
         .filter(
           (entry) =>
             entry.type === 'blob' &&
@@ -641,6 +663,7 @@ function App() {
         stars: data.stargazers_count,
         openIssues: data.open_issues_count,
         readme: readmeText,
+        documentation,
         assets,
         files: repositoryFiles,
       }
@@ -649,7 +672,8 @@ function App() {
       const generatedScenes = buildScenes(newRepo)
       setScenes(generatedScenes)
       const imageNote = assets.length ? `Using ${assets.length} English or default-language repository image${assets.length === 1 ? '' : 's'}, one per slide.` : 'No English or default-language images found — Cloudy will present with a branded placeholder.'
-      setStatus(`Storyboard ready: ${generatedScenes.length} unique slides, ${SLIDES_PER_SECTION} per section, ${durationLabel(generatedScenes.reduce((total, scene) => total + scene.duration, 0))} total. ${imageNote}`)
+      const documentationNote = documentationFileCount ? `Grounded in the main README and ${documentationFileCount} English documentation file${documentationFileCount === 1 ? '' : 's'}.` : 'No English docs/ Markdown files were loaded; using the main README and repository structure.'
+      setStatus(`Storyboard ready: ${generatedScenes.length} unique slides, ${SLIDES_PER_SECTION} per section, ${durationLabel(generatedScenes.reduce((total, scene) => total + scene.duration, 0))} total. ${documentationNote} ${imageNote}`)
     } catch (error) {
       setRepository(null)
       setStatus(error instanceof Error ? error.message : 'The repository could not be read. Check repository access and try again.')
