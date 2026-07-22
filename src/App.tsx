@@ -124,6 +124,20 @@ function isIllustrativeImage(url: string) {
     !/(^|[/_-])(badge|button|counter|status|views?|build|coverage|license|logo|icon|avatar|favicon)([/_?&.-]|$)|shields\.io|badgen|coveralls|travis-ci|circleci|codecov/i.test(normalized)
   )
 }
+function isEnglishImagePath(value: string) {
+  const normalized = decodeURIComponent(value).toLowerCase().replace(/[?#].*$/, '')
+  const segments = normalized.split('/').filter(Boolean)
+  const englishLocale = /^(?:en(?:[-_](?:us|gb|ca|au|nz|ie))?|english)$/
+  const nonEnglishLocale = /^(?:ar|bg|bn|ca|cs|cy|da|de|el|es|et|eu|fa|fi|fr|ga|he|hi|hr|hu|id|is|it|ja|ko|lt|lv|ms|mt|nb|nl|nn|no|pl|pt|ro|ru|sk|sl|sr|sv|sw|ta|te|th|tr|uk|ur|vi|zh)(?:[-_][a-z]{2,4})?$/
+  const nonEnglishName = /^(?:arabic|chinese|dutch|french|german|hindi|italian|japanese|korean|polish|portuguese|russian|spanish|turkish)$/
+  const localizationIndex = segments.findIndex((segment) => /^(?:i18n|l10n|locale|locales|translation|translations)$/.test(segment))
+  if (localizationIndex >= 0) return segments.slice(localizationIndex + 1).some((segment) => englishLocale.test(segment))
+  if (segments.some((segment) => nonEnglishLocale.test(segment) || nonEnglishName.test(segment))) return false
+
+  const fileName = segments.at(-1) ?? ''
+  const localeSuffix = fileName.match(/[._-]([a-z]{2}(?:[-_][a-z]{2,4})?)(?=\.[^.]+$)/)?.[1]
+  return !localeSuffix || englishLocale.test(localeSuffix) || !nonEnglishLocale.test(localeSuffix)
+}
 function repositoryImageScore(path: string) {
   const normalized = path.toLowerCase()
   let score = 0
@@ -149,7 +163,7 @@ function extractReadmeImageUrls(markdown: string, owner: string, repo: string, b
       urls.add(raw.startsWith('http') ? raw : `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${raw.replace(/^\.?\//, '')}`)
     }
   }
-  return Array.from(urls).filter(isIllustrativeImage)
+  return Array.from(urls).filter((url) => isIllustrativeImage(url) && isEnglishImagePath(url))
 }
 function isRepositoryNoise(value: string) {
   const text = value.replace(/\s+/g, ' ').trim()
@@ -465,6 +479,7 @@ function App() {
           (entry) =>
             entry.type === 'blob' &&
             isIllustrativeImage(entry.path) &&
+            isEnglishImagePath(entry.path) &&
             !/(^|\/)(node_modules|vendor|dist|build|coverage|\.next)(\/|$)/i.test(entry.path) &&
             (entry.size ?? 0) <= 10_000_000,
         )
@@ -487,7 +502,7 @@ function App() {
       setRepository(newRepo)
       const generatedScenes = buildScenes(newRepo)
       setScenes(generatedScenes)
-      const imageNote = assets.length ? `Cycling ${assets.length} repository image${assets.length === 1 ? '' : 's'}, one per slide.` : 'No images found — Cloudy will present with a branded placeholder.'
+      const imageNote = assets.length ? `Using ${assets.length} English or default-language repository image${assets.length === 1 ? '' : 's'}, one per slide.` : 'No English or default-language images found — Cloudy will present with a branded placeholder.'
       setStatus(`Storyboard ready: ${generatedScenes.length} slides, ${SLIDES_PER_SECTION} per section, ${durationLabel(generatedScenes.reduce((total, scene) => total + scene.duration, 0))} total. ${imageNote}`)
     } catch {
       setRepository(null)
