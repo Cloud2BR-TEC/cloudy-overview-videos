@@ -100,7 +100,8 @@ function cleanSlideTitle(value: string) {
 }
 function contentWords(value: string) {
   const ignored = new Set(['about', 'after', 'before', 'from', 'into', 'repository', 'slide', 'source', 'that', 'their', 'this', 'through', 'using', 'visual', 'with', 'your'])
-  return new Set(value.toLowerCase().match(/[a-z0-9]+/g)?.filter((word) => word.length > 3 && !ignored.has(word)) ?? [])
+  const domainTerms = new Set(['ai', 'api', 'cd', 'ci', 'ml', 'ui', 'ux'])
+  return new Set(value.toLowerCase().match(/[a-z0-9]+/g)?.filter((word) => (word.length > 3 || domainTerms.has(word)) && !ignored.has(word)) ?? [])
 }
 function normalizedSentence(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
@@ -206,6 +207,21 @@ function repositoryAssetLabel(url: string) {
   } catch {
     return 'Repository visual'
   }
+}
+function repositoryAssetSubject(label: string) {
+  return label.split(/\s+/).slice(0, 5).join(' ')
+}
+function chooseRelevantAsset(assets: string[], slideTitle: string, slideText: string, usage: Map<string, number>) {
+  if (!assets.length) return null
+  const context = `${slideTitle} ${SLIDE_FOCUS[slideTitle] ?? ''} ${slideText}`
+  return [...assets].sort((left, right) => {
+    const score = (asset: string) => {
+      const label = repositoryAssetLabel(asset)
+      const relevance = topicOverlap(context, label) + topicOverlap(label, context)
+      return relevance * 20 - (usage.get(asset) ?? 0)
+    }
+    return score(right) - score(left) || assets.indexOf(left) - assets.indexOf(right)
+  })[0]
 }
 function extractReadmeImageUrls(markdown: string, owner: string, repo: string, branch: string) {
   const urls = new Set<string>()
@@ -315,7 +331,7 @@ function loadImage(src: string) {
     image.src = src
   })
 }
-function buildTemplateNarration(primaryText: string, repositoryText: string, slideIndex: number, slideTitle: string, assetLabel: string) {
+function buildTemplateNarration(primaryText: string, repositoryText: string, slideTitle: string, assetLabel: string) {
   const seen = new Set<string>()
   const sentences = `${primaryText} ${repositoryText}`
     .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
@@ -328,17 +344,18 @@ function buildTemplateNarration(primaryText: string, repositoryText: string, sli
       return true
     }) ?? []
   const focus = SLIDE_FOCUS[slideTitle] ?? `Focus this slide on ${slideTitle.toLowerCase()} using only the available repository evidence.`
-  if (!sentences.length) return focus
+  const visualSubject = assetLabel === 'No repository visual selected' ? '' : repositoryAssetSubject(assetLabel)
+  const visualBridge = visualSubject ? `The ${visualSubject} visual anchors this explanation in repository evidence.` : ''
+  if (!sentences.length) return [focus, visualBridge].filter(Boolean).join(' ')
 
-  const complementary = sentences.filter((sentence) => topicOverlap(sentence, assetLabel) < 0.6)
-  const candidates = complementary.length ? complementary : sentences
-  const ordered = [...candidates].sort((left, right) => topicOverlap(right, slideTitle) - topicOverlap(left, slideTitle))
-  const offset = slideIndex % ordered.length
-  const rotated = [...ordered.slice(offset), ...ordered.slice(0, offset)]
+  const ordered = [...sentences].sort((left, right) => {
+    const relevance = (sentence: string) => topicOverlap(sentence, slideTitle) * 2 + topicOverlap(sentence, assetLabel)
+    return relevance(right) - relevance(left)
+  })
 
-  const narration = [focus]
-  let wordCount = focus.split(/\s+/).length
-  for (const sentence of rotated) {
+  const narration = [focus, visualBridge].filter(Boolean)
+  let wordCount = narration.join(' ').split(/\s+/).length
+  for (const sentence of ordered) {
     if (wordCount >= TARGET_NARRATION_WORDS) break
     const remaining = TARGET_NARRATION_WORDS + 4 - wordCount
     const words = sentence.split(/\s+/).slice(0, remaining)
@@ -352,6 +369,13 @@ function hasUniqueSlideContent(scenes: Scene[]) {
   const narrationKeys = scenes.map((scene) => normalizedSentence(scene.narration)).filter(Boolean)
   const bulletKeys = scenes.map((scene) => normalizedSentence(scene.bullets.join(' '))).filter(Boolean)
   return new Set(titleKeys).size === scenes.length && new Set(narrationKeys).size === scenes.length && new Set(bulletKeys).size === scenes.length
+}
+function hasVisualNarrationAlignment(scenes: Scene[]) {
+  return scenes.every((scene) => {
+    if (!scene.asset) return false
+    const subject = repositoryAssetSubject(scene.assetLabel)
+    return normalizedSentence(scene.narration).includes(normalizedSentence(subject)) || topicOverlap(scene.narration, scene.assetLabel) > 0
+  })
 }
 function buildScenes(repo: Repository): Scene[] {
   const sections = parseReadmeSections(repo.readme)
@@ -389,13 +413,15 @@ function buildScenes(repo: Repository): Scene[] {
   ]
 
   const result: Scene[] = []
+  const assetUsage = new Map<string, number>()
   let id = 1
   groups.forEach((group, groupIndex) => {
     group.slideTitles.forEach((slideTitle, slideIndex) => {
       const title = slideTitle
-      const asset = repo.assets.length ? repo.assets[(id - 1) % repo.assets.length] : null
+      const asset = chooseRelevantAsset(repo.assets, title, group.text, assetUsage)
+      if (asset) assetUsage.set(asset, (assetUsage.get(asset) ?? 0) + 1)
       const assetLabel = asset ? repositoryAssetLabel(asset) : 'No repository visual selected'
-      const narration = buildTemplateNarration(group.text, repositoryText, groupIndex * SLIDES_PER_SECTION + slideIndex, title, assetLabel)
+      const narration = buildTemplateNarration(group.text, repositoryText, title, assetLabel)
       result.push({
         id: id++,
         section: groupIndex + 1,
@@ -486,8 +512,9 @@ function App() {
   const narrationReady = scenes.length > 0 && scenes.every((scene) => scene.title.trim().length > 0 && scene.narration.trim().length > 0)
   const uniqueSlidesReady = scenes.length === 50 && hasUniqueSlideContent(scenes)
   const visualsReady = Boolean(repository?.assets.length)
+  const visualNarrationReady = visualsReady && hasVisualNarrationAlignment(scenes)
   const captionsReady = narrationReady && scenes.every((scene) => Number.isFinite(scene.duration) && scene.duration > 0)
-  const isExportReady = Boolean(repository) && inTargetRange && narrationReady && uniqueSlidesReady && visualsReady && captionsReady
+  const isExportReady = Boolean(repository) && inTargetRange && narrationReady && uniqueSlidesReady && visualsReady && visualNarrationReady && captionsReady
   const cloudyLogo = new URL('./assets/branding/cloudy-logo.png', import.meta.url).href
   const apiHeaders: Record<string, string> = {
     Accept: 'application/vnd.github+json',
@@ -1224,6 +1251,7 @@ function App() {
             <li className={narrationReady ? 'done' : ''}>Every slide has a title and narration</li>
             <li className={uniqueSlidesReady ? 'done' : ''}>All 50 slides have unique content</li>
             <li className={visualsReady ? 'done' : ''}>Source visuals selected</li>
+            <li className={visualNarrationReady ? 'done' : ''}>Narration relates to every visual</li>
             <li className={captionsReady ? 'done' : ''}>Caption timings ready</li>
           </ul>
           <div className="export-actions">
