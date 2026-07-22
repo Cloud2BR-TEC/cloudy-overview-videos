@@ -978,26 +978,21 @@ function App() {
                 </div>
               </div>
               <div className="story-grid">
-                <ol className="scene-list">
-                  {scenes.map((scene) => (
-                    <li key={scene.id}>
-                      <button
-                        type="button"
-                        className={scene.id === selectedScene.id ? 'scene selected' : 'scene'}
-                        onClick={() => {
-                          setSelectedSceneId(scene.id)
-                        }}
-                      >
-                        <span className="scene-number">{scene.section}.{String(scene.slideInSection).padStart(2, '0')}</span>
-                        <span>
-                          <strong>{scene.title}</strong>
-                          <small>{scene.visual}</small>
-                        </span>
-                        <time>{durationLabel(scene.duration)}</time>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
+                <div className="scene-picker">
+                  <label htmlFor="scene-select">Choose a slide</label>
+                  <select id="scene-select" value={selectedScene.id} onChange={(event) => setSelectedSceneId(Number(event.target.value))}>
+                    {Array.from({ length: 5 }, (_, sectionIndex) => sectionIndex + 1).map((section) => (
+                      <optgroup key={section} label={`Section ${section}`}>
+                        {scenes.filter((scene) => scene.section === section).map((scene) => (
+                          <option key={scene.id} value={scene.id}>
+                            {scene.section}.{String(scene.slideInSection).padStart(2, '0')} · {scene.title} · {durationLabel(scene.duration)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <span>{selectedScene.visual}</span>
+                </div>
                 <article className="scene-editor">
                   <div className="presentation-toolbar" id="voice-section">
                     <div>
