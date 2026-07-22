@@ -98,14 +98,17 @@ function decodeBase64(value: string) {
   return new TextDecoder().decode(Uint8Array.from(atob(value.replace(/\s/g, '')), (character) => character.charCodeAt(0)))
 }
 function isIllustrativeImage(url: string) {
-  return /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(url) && !/badge|shields\.io|badgen|coveralls|travis-ci|circleci|codecov/i.test(url)
+  const normalized = decodeURIComponent(url).toLowerCase()
+  return (
+    /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(normalized) &&
+    !/(^|[/_-])(badge|button|counter|status|views?|build|coverage|license|logo|icon|avatar|favicon)([/_?&.-]|$)|shields\.io|badgen|coveralls|travis-ci|circleci|codecov/i.test(normalized)
+  )
 }
 function repositoryImageScore(path: string) {
   const normalized = path.toLowerCase()
   let score = 0
   if (/(^|\/)(screenshots?|images?|media|docs?|figures?|resources?)(\/|$)/.test(normalized)) score += 4
   if (/cover|hero|banner|screenshot|preview|demo|architecture|diagram|workflow/.test(normalized)) score += 3
-  if (/logo|icon|avatar|favicon/.test(normalized)) score -= 2
   return score
 }
 function repositoryAssetLabel(url: string) {
@@ -129,7 +132,14 @@ function extractReadmeImageUrls(markdown: string, owner: string, repo: string, b
   return Array.from(urls).filter(isIllustrativeImage)
 }
 function parseReadmeSections(readme: string): Array<{ heading: string; body: string }> {
-  const text = readme.replace(/```[\s\S]*?```/g, ' ').replace(/`[^`\n]+`/g, ' ')
+  const text = readme
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/<!--\s*START\s+BADGE\s*-->[\s\S]*?<!--\s*END\s+BADGE\s*-->/gi, ' ')
+    .replace(/<div[^>]*(?:badge|shields\.io)[\s\S]*?<\/div>/gi, ' ')
+    .replace(/\[[^\]]+]\(https?:\/\/(?:www\.)?github\.com\/(?:Cloud2BR-TEC\/?|)?\)/gi, ' ')
+    .replace(/!\[[^\]]*]\([^)]+\)/g, ' ')
+    .replace(/<img\b[^>]*>/gi, ' ')
+    .replace(/`[^`\n]+`/g, ' ')
   const lines = text.split('\n')
   const sections: Array<{ heading: string; body: string }> = []
   let heading = ''
@@ -138,12 +148,23 @@ function parseReadmeSections(readme: string): Array<{ heading: string; body: str
     const body = bodyLines
       .map((l) =>
         l
+          .replace(/<[^>]+>/g, ' ')
           .replace(/^[>\-*+]\s*/, '')
           .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-          .replace(/[*_#`|!\[\]()]/g, ' ')
+          .replace(/https?:\/\/\S+/gi, ' ')
+          .replace(/[*_#`|!()]/g, ' ')
+          .replaceAll('[', ' ')
+          .replaceAll(']', ' ')
           .trim(),
       )
-      .filter((l) => l.length > 4 && !/^https?:\/\//i.test(l))
+      .filter(
+        (l) =>
+          l.length > 4 &&
+          !/^https?:\/\//i.test(l) &&
+          !/^(?:last\s+updated|updated|refresh\s+date|total\s+views?|views?|build|coverage|license)\s*:/i.test(l) &&
+          !/^(?:-{3,}|={3,}|_{3,})$/.test(l) &&
+          !/^Cloud2BR\s+TEC$/i.test(l),
+      )
       .join(' ')
       .replace(/\s+/g, ' ')
       .trim()
