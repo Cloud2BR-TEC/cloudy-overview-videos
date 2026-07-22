@@ -14,7 +14,6 @@ type Repository = {
   readme: string
   documentation: string
   assets: string[]
-  files: string[]
 }
 type Scene = {
   id: number
@@ -221,13 +220,6 @@ function repositoryFileScore(path: string) {
   if (/(^|\/)(\.github|scripts?|tests?)(\/|$)|(^|\/)\./.test(normalized)) score -= 3
   return score
 }
-function repositoryFileFact(path: string) {
-  const pathWithoutExtension = decodeURIComponent(path).replace(/\.[^/.]+$/, '')
-  const segments = pathWithoutExtension.split('/').filter(Boolean)
-  const resourceName = (segments.pop() ?? pathWithoutExtension).replace(/[._-]+/g, ' ')
-  const location = segments.join(' / ').replace(/[._-]+/g, ' ')
-  return location ? `The ${resourceName} resource appears under ${location}.` : `The repository includes the ${resourceName} resource.`
-}
 function repositoryAssetLabel(url: string) {
   try {
     const fileName = decodeURIComponent(new URL(url).pathname.split('/').pop() ?? 'Repository visual')
@@ -363,6 +355,9 @@ function loadImage(src: string) {
 }
 function rankedEvidenceSentences(primaryText: string, repositoryText: string, slideTitle: string, assetLabel: string) {
   const seen = new Set<string>()
+  const primaryEvidence = new Set(
+    (primaryText.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? []).map((sentence) => normalizedSentence(sentence)),
+  )
   const sentences = `${primaryText} ${repositoryText}`
     .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
     ?.map((sentence) => sentence.trim())
@@ -375,7 +370,7 @@ function rankedEvidenceSentences(primaryText: string, repositoryText: string, sl
     }) ?? []
   const focus = SLIDE_FOCUS[slideTitle] ?? `Focus this slide on ${slideTitle.toLowerCase()} using only the available repository evidence.`
   return [...sentences].sort((left, right) => {
-    const relevance = (sentence: string) => topicOverlap(sentence, slideTitle) * 2 + topicOverlap(sentence, focus) * 2 + topicOverlap(sentence, assetLabel)
+    const relevance = (sentence: string) => (primaryEvidence.has(normalizedSentence(sentence)) ? 10 : 0) + topicOverlap(sentence, slideTitle) * 2 + topicOverlap(sentence, focus) * 2 + topicOverlap(sentence, assetLabel)
     return relevance(right) - relevance(left)
   })
 }
@@ -390,7 +385,7 @@ function selectDistinctEvidence(primaryText: string, repositoryText: string, sli
   const evidence = rankedEvidenceSentences(primaryText, repositoryText, slideTitle, assetLabel).find(
     (candidate) => usedEvidence.every((used) => contentSimilarity(candidate, used) < 0.72),
   )
-  if (!evidence) throw new Error('This repository does not contain enough distinct README evidence to create 50 non-repeating slides')
+  if (!evidence) throw new Error('This repository does not contain enough distinct material evidence to create 50 non-repeating slides')
   usedEvidence.push(evidence)
   return evidence
 }
@@ -422,72 +417,50 @@ function hasVisualNarrationAlignment(scenes: Scene[]) {
     return normalizedSentence(scene.narration).includes(normalizedSentence(subject)) || topicOverlap(scene.narration, scene.assetLabel) > 0
   })
 }
+function isMaterialSection(section: { heading: string; body: string }) {
+  const heading = normalizedSentence(section.heading)
+  const words = section.body.trim().split(/\s+/).filter(Boolean)
+  return (
+    heading.length > 3 &&
+    words.length >= 8 &&
+    !/^(?:contents?|table of contents|modules?|quick review links?|references?|resources?|navigation|repository|documentation)$/.test(heading) &&
+    !/(?:repository structure|folder structure|contribut|license|github workflow|documentation map)/.test(heading)
+  )
+}
 function buildScenes(repo: Repository): Scene[] {
-  const sections = [...parseReadmeSections(repo.readme), ...parseReadmeSections(repo.documentation)]
-  const find = (pattern: RegExp) => sections.find((s) => pattern.test(s.heading) && s.body.trim().split(/\s+/).length > 8)?.body ?? ''
-  const fallback = (idx: number) => sections[idx]?.body ?? ''
-  const MAX = 800
-  const repositoryText = [
-    sections.map((section) => section.body).join(' ') || repo.description,
-    repo.language ? `The primary repository language is ${repo.language}.` : '',
-    repo.topics.length ? `The repository topics are ${repo.topics.join(', ')}.` : '',
-    `The repository license is ${repo.license}.`,
-    ...repo.files.map(repositoryFileFact),
-  ].filter(Boolean).join(' ')
-
-  const groups = [
-    {
-      slideTitles: ['Overview', 'Purpose', 'Audience', 'Repository context', 'Main topic', 'Technology', 'Project scope', 'Documentation map', 'Source visuals', 'Repository recap'],
-      visual: 'Repository cover and Cloudy host',
-      text: limitWords([repo.description ?? '', repo.language ? `Built with ${repo.language}.` : '', repo.topics.length ? `Topics: ${repo.topics.slice(0, 4).join(', ')}.` : '', fallback(0)].filter(Boolean).join(' '), MAX),
-    },
-    {
-      slideTitles: ['Learning goals', 'Core concepts', 'Key features', 'Important terminology', 'Expected outcomes', 'Knowledge map', 'Repository highlights', 'Documentation signals', 'Practical context', 'Learning recap'],
-      visual: 'README highlights and course map',
-      text: limitWords(find(/features?|overview|about\b|what\s+(it|this|we|you)|highlights?|key\s+point|objective|goal|purpose/i) || fallback(1) || `This repository contains ${repo.language || 'source'} code${repo.topics.length ? ` focused on ${repo.topics.slice(0, 3).join(', ')}` : ''}.`, MAX),
-    },
-    {
-      slideTitles: ['Project structure', 'Architecture', 'Main components', 'Configuration', 'Dependencies', 'Setup path', 'Documentation', 'Repository assets', 'Project workflow', 'Project recap'],
-      visual: repo.assets.length ? 'Repository images and guided source tour' : 'Annotated repository tree',
-      text: limitWords(find(/install|setup|getting[\s-]started|structure|architecture|prerequisites?|requirements?|configur|depend/i) || fallback(2) || 'Follow the repository documentation and README to understand the project structure.', MAX),
-    },
-    {
-      slideTitles: ['Getting started', 'First step', 'Core workflow', 'Example path', 'Using the project', 'Checking results', 'Common sequence', 'Source reference', 'Practical outcome', 'Practice recap'],
-      visual: 'Workflow steps and source imagery',
-      text: limitWords(find(/usage|example|how[\s-]to|tutorial|guide|quickstart|api\b|demo|walkthrough/i) || fallback(3) || `Clone the repository and follow the workflow described in the documentation.`, MAX),
-    },
-    {
-      slideTitles: ['Review', 'Key takeaway', 'Further reading', 'Related resources', 'Open issues', 'Contributing', 'Next experiment', 'Repository reference', 'Suggested next step', 'Final recap'],
-      visual: 'Next steps card',
-      text: limitWords(find(/contribut|resource|further|next[\s-]step|learn[\s-]more|reference|acknowledgment|credit|community|roadmap/i) || sections[sections.length - 1]?.body || `Continue learning by exploring open issues and related projects.`, MAX),
-    },
-  ]
+  const allSections = [...parseReadmeSections(repo.readme), ...parseReadmeSections(repo.documentation)]
+  const seenTitles = new Set<string>()
+  const materialSections = allSections.filter(isMaterialSection).filter((section) => {
+    const key = normalizedSentence(section.heading)
+    if (seenTitles.has(key)) return false
+    seenTitles.add(key)
+    return true
+  }).slice(0, 50)
+  if (materialSections.length < 50) throw new Error(`Only ${materialSections.length} substantive content sections were found; 50 are required for a non-repeating material-focused video`)
+  const repositoryText = materialSections.map((section) => section.body).join(' ')
 
   const result: Scene[] = []
   const assetUsage = new Map<string, number>()
   const usedEvidence: string[] = []
-  let id = 1
-  groups.forEach((group, groupIndex) => {
-    group.slideTitles.forEach((slideTitle, slideIndex) => {
-      const title = slideTitle
-      const asset = chooseRelevantAsset(repo.assets, title, group.text, assetUsage)
-      if (asset) assetUsage.set(asset, (assetUsage.get(asset) ?? 0) + 1)
-      const assetLabel = asset ? repositoryAssetLabel(asset) : 'No repository visual selected'
-      const evidence = selectDistinctEvidence(group.text, repositoryText, title, assetLabel, usedEvidence)
-      const narration = buildTemplateNarration(evidence, assetLabel)
-      result.push({
-        id: id++,
-        section: groupIndex + 1,
-        slideInSection: slideIndex + 1,
-        title,
-        duration: TEMPLATE_SLIDE_SECONDS,
-        narration,
-        visual: asset ? `Repository image: ${assetLabel}` : group.visual,
-        bullets: buildEvidenceBullets(evidence, title),
-        asset,
-        assets: asset ? [asset] : [],
-        assetLabel,
-      })
+  materialSections.forEach((material, index) => {
+    const title = cleanSlideTitle(material.heading)
+    const asset = chooseRelevantAsset(repo.assets, title, material.body, assetUsage)
+    if (asset) assetUsage.set(asset, (assetUsage.get(asset) ?? 0) + 1)
+    const assetLabel = asset ? repositoryAssetLabel(asset) : 'No repository visual selected'
+    const evidence = selectDistinctEvidence(material.body, repositoryText, title, assetLabel, usedEvidence)
+    const narration = buildTemplateNarration(evidence, assetLabel)
+    result.push({
+      id: index + 1,
+      section: Math.floor(index / SLIDES_PER_SECTION) + 1,
+      slideInSection: (index % SLIDES_PER_SECTION) + 1,
+      title,
+      duration: TEMPLATE_SLIDE_SECONDS,
+      narration,
+      visual: asset ? `Repository image: ${assetLabel}` : `Material focus: ${title}`,
+      bullets: buildEvidenceBullets(evidence, title),
+      asset,
+      assets: asset ? [asset] : [],
+      assetLabel,
     })
   })
   if (result.length !== 50 || !hasUniqueSlideContent(result)) throw new Error('The storyboard contains repeated or substantially similar slide content')
@@ -613,16 +586,6 @@ function App() {
           })
         : null
       const treeEntries = treeData?.tree ?? []
-      const repositoryFiles = treeEntries
-        .filter(
-          (entry) =>
-            entry.type === 'blob' &&
-            !isExcludedRepositoryPath(entry.path) &&
-            !/(^|\/)(node_modules|vendor|dist|build|coverage|\.next|__pycache__)(\/|$)/i.test(entry.path),
-        )
-        .sort((left, right) => repositoryFileScore(right.path) - repositoryFileScore(left.path) || left.path.localeCompare(right.path))
-        .map((entry) => entry.path)
-        .slice(0, 250)
       const documentationPaths = treeEntries
         .filter((entry) => entry.type === 'blob' && isEnglishDocumentationPath(entry.path) && (entry.size ?? 0) <= 500_000)
         .sort((left, right) => repositoryFileScore(right.path) - repositoryFileScore(left.path) || left.path.localeCompare(right.path))
@@ -665,7 +628,6 @@ function App() {
         readme: readmeText,
         documentation,
         assets,
-        files: repositoryFiles,
       }
       setRepositoryUrl(`https://github.com/${data.full_name}`)
       setRepository(newRepo)
