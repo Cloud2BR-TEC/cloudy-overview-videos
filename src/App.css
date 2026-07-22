@@ -119,11 +119,16 @@
 .checklist li.done::before { border-color: #278064; background: #278064; box-shadow: inset 0 0 0 3px #d9eee5; }
 .story-placeholder { border-color: #7fa5bb; background: #d9eaf2; color: #35586b; }
 .story-placeholder h2 { color: #102f43; }
-.story-grid .scene-list { max-height: 760px; overflow-y: auto; scrollbar-color: #6f99b1 #c9dfeb; }
+.story-grid { grid-template-columns: minmax(0, 1fr); }
+.story-grid .scene-list { display: flex; max-height: none; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid #8eafc1; scrollbar-color: #6f99b1 #c9dfeb; scroll-snap-type: x proximity; }
+.story-grid .scene-list li { flex: 0 0 270px; scroll-snap-align: start; }
+.story-grid .scene { height: 100%; min-height: 92px; border-right: 1px solid #a8c4d2; border-bottom: 0; }
+.story-grid .scene.selected { box-shadow: inset 0 4px 0 #d85f36; }
+.story-grid .scene-editor { min-width: 0; padding: 24px; }
 .scene-editor > .video-scene-progress { flex-wrap: nowrap; overflow-x: auto; scrollbar-color: #6f99b1 #c8deea; }
 .scene-editor > .video-scene-progress .vsp-dot { flex: 0 0 auto; }
 
-.unified-stage { grid-template-columns: minmax(170px, .72fr) minmax(280px, 1.45fr) 132px; grid-template-rows: minmax(320px, 1fr) auto; }
+.unified-stage { grid-template-columns: minmax(210px, .72fr) minmax(360px, 1.45fr) 132px; grid-template-rows: minmax(430px, 1fr) auto; }
 .unified-stage .slide-left { grid-column: 1; grid-row: 1; }
 .unified-stage .slide-bullets li::before { content: '-'; font-family: 'DM Mono', monospace; font-weight: 800; }
 .slide-source-visual { position: relative; z-index: 2; display: grid; grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; margin: 0; overflow: hidden; border-left: 1px solid #47758d; background: #f5fafc; }
@@ -137,6 +142,8 @@
 .unified-stage .slide-narration { grid-column: 1 / -1; grid-row: 2; }
 
 @media (max-width: 760px) {
+	.story-grid .scene-list li { flex-basis: 230px; }
+	.story-grid .scene-editor { padding: 16px; }
 	.unified-stage { grid-template-columns: minmax(0, 1fr) 120px; grid-template-rows: auto 180px auto; }
 	.unified-stage .slide-left { grid-column: 1; grid-row: 1; }
 	.unified-stage .slide-right { grid-column: 2; grid-row: 1; }
