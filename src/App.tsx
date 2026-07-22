@@ -942,17 +942,16 @@ function App() {
                     <div className="slide-right">
                       <div className={`slide-cloudy ${isSpeaking ? 'speaking' : ''}`}>
                         <CloudyAvatar speaking={isSpeaking} size={88} />
-                      </div>
-                      {isSpeaking && (
-                        <span className="talk-badge">
+                        {isSpeaking && (
+                          <span className="talk-badge" aria-label="Cloudy is speaking" title="Cloudy is speaking">
                           <span className="talk-bars">
                             <span></span>
                             <span></span>
                             <span></span>
                           </span>
-                          Cloudy is speaking
-                        </span>
-                      )}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="slide-narration">
                       <span className="slide-narration-label">{isVideoPreviewPlaying ? 'Now reading' : 'Cloudy narration'}</span>
