@@ -33,6 +33,8 @@ const starterRepository = 'https://github.com/Cloud2BR-TEC/ai-academy-101-ml'
 const SLIDES_PER_SECTION = 10
 const TEMPLATE_SLIDE_SECONDS = 12
 const TARGET_NARRATION_WORDS = 26
+const VOICE_RATE = 1.25
+const BASE_NARRATION_WORDS_PER_MINUTE = 130
 const SLIDE_FOCUS: Record<string, string> = {
   Overview: 'Begin with the central idea and the context needed to understand the repository.',
   Purpose: 'Clarify the problem this work is intended to address and why that goal matters.',
@@ -88,7 +90,7 @@ const SLIDE_FOCUS: Record<string, string> = {
 
 function wordsToSeconds(text: string) {
   const words = text.trim().split(/\s+/).filter(Boolean).length
-  return Math.min(15, Math.max(10, Math.round((words / 130) * 60)))
+  return Math.min(15, Math.max(10, Math.round((words / (BASE_NARRATION_WORDS_PER_MINUTE * VOICE_RATE)) * 60)))
 }
 function limitWords(text: string, maxWords: number) {
   return text.trim().split(/\s+/).slice(0, maxWords).join(' ')
@@ -704,7 +706,7 @@ function App() {
         }
         const source = audioContext.createBufferSource()
         source.buffer = narrationBuffers[sceneIndex]
-        source.playbackRate.value = Math.max(1, source.buffer.duration / Math.max(1, scene.duration - 0.35))
+        source.playbackRate.value = VOICE_RATE
         source.connect(audioDestination)
         source.addEventListener('ended', () => {
           if (activeNarrationSource === source) setIsSpeaking(false)
@@ -906,7 +908,7 @@ function App() {
     const utterance = new SpeechSynthesisUtterance(selectedScene.narration)
     utterance.voice = femaleVoice
     utterance.lang = femaleVoice?.lang ?? 'en-US'
-    utterance.rate = 0.95
+    utterance.rate = VOICE_RATE
     utterance.pitch = 1.1
     utterance.onend = () => setIsSpeaking(false)
     utterance.onerror = () => setIsSpeaking(false)
@@ -930,7 +932,7 @@ function App() {
         const utterance = new SpeechSynthesisUtterance(scenes[i].narration)
         utterance.voice = voice
         utterance.lang = voice?.lang ?? 'en-US'
-        utterance.rate = 0.95
+        utterance.rate = VOICE_RATE
         utterance.pitch = 1.1
         utterance.onstart = () => setIsSpeaking(true)
         utterance.onend = () => {
