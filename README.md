@@ -11,7 +11,7 @@ Cloudy Repository Video Studio is a static GitHub Pages application. Paste a pub
 > [!IMPORTANT]
 > Paste a canonical public repository URL such as `https://github.com/owner/repository`, then select **Generate explainer**.
 
-Cloudy reads public GitHub API data to assemble the storyboard. It does not write to repositories or upload content. Private repositories cannot be used in this browser-only version.
+Cloudy reads public GitHub API data to assemble the storyboard. Slide bullets and narration are audience-facing summaries grounded in repository metadata and README evidence; internal editorial directions are never shown as presentation content. Repository planning files named `agenda.yml` or `agenda.yaml` are excluded. Cloudy does not write to repositories or upload content. Private repositories cannot be used in this browser-only version.
 
 Each generated storyboard follows a balanced ten-minute template: five sections, ten Markdown slides per section, and twelve seconds per slide. The resulting 50 slides total 600 seconds and cycle repository images one image per slide. Edited narration remains constrained to the 10-15 second slide pacing range.
 

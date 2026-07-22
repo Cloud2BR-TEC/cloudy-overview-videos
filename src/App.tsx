@@ -112,6 +112,9 @@ function topicOverlap(value: string, topic: string) {
   if (!valueWords.size || !topicWords.size) return 0
   return Array.from(topicWords).filter((word) => valueWords.has(word)).length / topicWords.size
 }
+function isEditorialDirection(value: string) {
+  return /^(?:begin|call attention|clarify|close|concentrate|connect|consolidate|define|describe|direct|distinguish|explain|focus|frame|highlight|identify|isolate|narrow|offer|orient|place|point|present|reduce|reinforce|relate|revisit|select|separate|show|shift|state|summarize|trace|treat|turn|use)\b/i.test(value.trim())
+}
 function extractBullets(narration: string): string[] {
   const seen = new Set<string>()
   return narration
@@ -119,6 +122,7 @@ function extractBullets(narration: string): string[] {
     .split('\n')
     .map((s) => s.trim())
     .filter((s) => s.length > 18 && s.length < 170)
+    .filter((sentence) => !isEditorialDirection(sentence))
     .filter((sentence) => {
       const key = normalizedSentence(sentence)
       if (!key || seen.has(key)) return false
@@ -171,6 +175,10 @@ function timestamp(seconds: number) {
 }
 function decodeBase64(value: string) {
   return new TextDecoder().decode(Uint8Array.from(atob(value.replace(/\s/g, '')), (character) => character.charCodeAt(0)))
+}
+function isExcludedRepositoryPath(value: string) {
+  const path = decodeURIComponent(value).toLowerCase().replace(/[?#].*$/, '')
+  return /(^|\/)agenda\.ya?ml$/.test(path)
 }
 function isIllustrativeImage(url: string) {
   const normalized = decodeURIComponent(url).toLowerCase()
@@ -230,6 +238,7 @@ function extractReadmeImageUrls(markdown: string, owner: string, repo: string, b
     for (const match of markdown.matchAll(pattern)) {
       const raw = match[1]
       if (!raw) continue
+      if (isExcludedRepositoryPath(raw)) continue
       urls.add(raw.startsWith('http') ? raw : `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${raw.replace(/^\.?\//, '')}`)
     }
   }
@@ -249,6 +258,7 @@ function isNarratableText(value: string) {
 }
 function parseReadmeSections(readme: string): Array<{ heading: string; body: string }> {
   const text = readme
+    .replace(/^.*agenda\.ya?ml.*$/gim, ' ')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/^.*START\s+BADGE.*$[\s\S]*?^.*END\s+BADGE.*$/gim, ' ')
     .replace(/<!--\s*START\s+BADGE\s*-->[\s\S]*?<!--\s*END\s+BADGE\s*-->/gi, ' ')
@@ -331,7 +341,7 @@ function loadImage(src: string) {
     image.src = src
   })
 }
-function buildTemplateNarration(primaryText: string, repositoryText: string, slideTitle: string, assetLabel: string) {
+function rankedEvidenceSentences(primaryText: string, repositoryText: string, slideTitle: string, assetLabel: string) {
   const seen = new Set<string>()
   const sentences = `${primaryText} ${repositoryText}`
     .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
@@ -344,24 +354,38 @@ function buildTemplateNarration(primaryText: string, repositoryText: string, sli
       return true
     }) ?? []
   const focus = SLIDE_FOCUS[slideTitle] ?? `Focus this slide on ${slideTitle.toLowerCase()} using only the available repository evidence.`
-  const visualSubject = assetLabel === 'No repository visual selected' ? '' : repositoryAssetSubject(assetLabel)
-  const visualBridge = visualSubject ? `The ${visualSubject} visual anchors this explanation in repository evidence.` : ''
-  if (!sentences.length) return [focus, visualBridge].filter(Boolean).join(' ')
-
-  const ordered = [...sentences].sort((left, right) => {
-    const relevance = (sentence: string) => topicOverlap(sentence, slideTitle) * 2 + topicOverlap(sentence, assetLabel)
+  return [...sentences].sort((left, right) => {
+    const relevance = (sentence: string) => topicOverlap(sentence, slideTitle) * 2 + topicOverlap(sentence, focus) * 2 + topicOverlap(sentence, assetLabel)
     return relevance(right) - relevance(left)
   })
+}
+function buildEvidenceBullets(primaryText: string, repositoryText: string, slideTitle: string, assetLabel: string) {
+  const sentences = rankedEvidenceSentences(primaryText, repositoryText, slideTitle, assetLabel)
+  if (!sentences.length) return [`${slideTitle}: No supporting README detail was found.`]
 
-  const narration = [focus, visualBridge].filter(Boolean)
+  return sentences.slice(0, 4).map((sentence, index) => {
+    const words = sentence.replace(/[.!?]+$/, '').split(/\s+/)
+    const summary = words.length > 14 ? `${words.slice(0, 14).join(' ')}\u2026` : words.join(' ')
+    return index === 0 ? `${slideTitle}: ${summary}` : summary
+  })
+}
+function buildTemplateNarration(primaryText: string, repositoryText: string, slideTitle: string, assetLabel: string) {
+  const sentences = rankedEvidenceSentences(primaryText, repositoryText, slideTitle, assetLabel)
+  const visualSubject = assetLabel === 'No repository visual selected' ? '' : repositoryAssetSubject(assetLabel)
+  const visualBridge = visualSubject ? `The ${visualSubject} image provides a visual reference for this repository topic.` : ''
+  const contextLead = `${slideTitle} is grounded in the repository's documented information.`
+  if (!sentences.length) return [contextLead, visualBridge].filter(Boolean).join(' ')
+
+  const narration = [contextLead]
   let wordCount = narration.join(' ').split(/\s+/).length
-  for (const sentence of ordered) {
+  for (const sentence of sentences) {
     if (wordCount >= TARGET_NARRATION_WORDS) break
     const remaining = TARGET_NARRATION_WORDS + 4 - wordCount
     const words = sentence.split(/\s+/).slice(0, remaining)
     narration.push(words.join(' '))
     wordCount += words.length
   }
+  if (visualBridge) narration.push(visualBridge)
   return narration.join(' ').trim()
 }
 function hasUniqueSlideContent(scenes: Scene[]) {
@@ -430,7 +454,7 @@ function buildScenes(repo: Repository): Scene[] {
         duration: TEMPLATE_SLIDE_SECONDS,
         narration,
         visual: asset ? `Repository image: ${assetLabel}` : group.visual,
-        bullets: extractBullets(narration),
+        bullets: buildEvidenceBullets(group.text, repositoryText, title, assetLabel),
         asset,
         assets: asset ? [asset] : [],
         assetLabel,
@@ -563,6 +587,7 @@ function App() {
         .filter(
           (entry) =>
             entry.type === 'blob' &&
+            !isExcludedRepositoryPath(entry.path) &&
             isIllustrativeImage(entry.path) &&
             isEnglishImagePath(entry.path) &&
             !/(^|\/)(node_modules|vendor|dist|build|coverage|\.next)(\/|$)/i.test(entry.path) &&
