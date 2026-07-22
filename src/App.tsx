@@ -33,6 +33,58 @@ const starterRepository = 'https://github.com/Cloud2BR-TEC/ai-academy-101-ml'
 const SLIDES_PER_SECTION = 10
 const TEMPLATE_SLIDE_SECONDS = 12
 const TARGET_NARRATION_WORDS = 26
+const SLIDE_FOCUS: Record<string, string> = {
+  Overview: 'Begin with the central idea and the context needed to understand the repository.',
+  Purpose: 'Clarify the problem this work is intended to address and why that goal matters.',
+  Audience: 'Identify who can benefit from the material and what background will help them begin.',
+  'Repository context': 'Place the project within its documented subject area and intended learning path.',
+  'Main topic': 'Narrow the discussion to the primary concept supported by the repository evidence.',
+  Technology: 'Connect the documented goal to the main language, platform, or technical approach in use.',
+  'Project scope': 'Define what the repository covers while keeping expectations within its documented boundaries.',
+  'Documentation map': 'Show where the documentation provides orientation, instructions, and supporting detail.',
+  'Source visuals': 'Use the selected visual as evidence while the narration explains its broader significance.',
+  'Repository recap': 'Summarize the repository introduction without repeating the earlier slide details.',
+  'Learning goals': 'State the practical understanding a learner should build from the documented material.',
+  'Core concepts': 'Separate the foundational ideas that support the rest of the learning sequence.',
+  'Key features': 'Highlight the documented capabilities that most directly support the project purpose.',
+  'Important terminology': 'Call attention to terms learners should recognize before following later explanations.',
+  'Expected outcomes': 'Describe the documented result learners should be prepared to demonstrate or explain.',
+  'Knowledge map': 'Connect related ideas so the learning sequence reads as one coherent path.',
+  'Repository highlights': 'Select the strongest documented signals instead of repeating the full overview.',
+  'Documentation signals': 'Explain what headings, examples, and instructions reveal about the project priorities.',
+  'Practical context': 'Relate the documented concepts to the kind of task they are meant to support.',
+  'Learning recap': 'Consolidate the learning goals into a distinct checkpoint before the project tour.',
+  'Project structure': 'Orient the viewer to how the documented parts of the project fit together.',
+  Architecture: 'Focus on relationships between components rather than repeating their individual names.',
+  'Main components': 'Distinguish the primary building blocks and the responsibility each one carries.',
+  Configuration: 'Explain the role of settings and environment choices in preparing the project.',
+  Dependencies: 'Identify the supporting tools or packages the documented workflow relies upon.',
+  'Setup path': 'Present preparation as an ordered path from prerequisites to a usable environment.',
+  Documentation: 'Treat the documentation as an operational reference for completing the project successfully.',
+  'Repository assets': 'Explain how examples and visual resources support understanding beyond the source text.',
+  'Project workflow': 'Trace how documented project activities move from input through an observable result.',
+  'Project recap': 'Close the project tour by connecting structure, setup, and workflow into one view.',
+  'Getting started': 'Turn the documented prerequisites into a clear first action for the viewer.',
+  'First step': 'Isolate the earliest meaningful task instead of summarizing the entire workflow again.',
+  'Core workflow': 'Concentrate on the repeatable sequence that moves the project toward its outcome.',
+  'Example path': 'Use the documented example as a route through the process, not as a second overview.',
+  'Using the project': 'Shift from preparation to the actions a user performs with the project.',
+  'Checking results': 'Explain how the documented outcome can be observed, reviewed, or validated.',
+  'Common sequence': 'Reinforce the normal order of operations while avoiding earlier setup details.',
+  'Source reference': 'Point to the source material that supports decisions during hands-on work.',
+  'Practical outcome': 'Focus on the concrete result the documented workflow is designed to produce.',
+  'Practice recap': 'Summarize the hands-on sequence as a checkpoint before discussing next steps.',
+  Review: 'Revisit the most important documented idea from a final, outcome-oriented perspective.',
+  'Key takeaway': 'Reduce the repository evidence to one durable lesson the viewer should retain.',
+  'Further reading': 'Direct attention to documentation that can extend understanding after this presentation.',
+  'Related resources': 'Distinguish supporting resources from the core material already covered.',
+  'Open issues': 'Frame unresolved repository work as an opportunity for investigation or contribution.',
+  Contributing: 'Explain how the repository documentation invites useful participation and responsible changes.',
+  'Next experiment': 'Turn the documented concepts into a focused follow-up activity for continued practice.',
+  'Repository reference': 'Position the repository as the authoritative place to revisit implementation details.',
+  'Suggested next step': 'Offer one forward action that follows naturally from the documented learning path.',
+  'Final recap': 'Close by connecting the project purpose, practical path, and next learning opportunity.',
+}
 
 function wordsToSeconds(text: string) {
   const words = text.trim().split(/\s+/).filter(Boolean).length
@@ -273,7 +325,8 @@ function buildTemplateNarration(primaryText: string, repositoryText: string, sli
       seen.add(key)
       return true
     }) ?? []
-  if (!sentences.length) return 'Cloudy uses the available repository documentation to provide context for this part of the project.'
+  const focus = SLIDE_FOCUS[slideTitle] ?? `Focus this slide on ${slideTitle.toLowerCase()} using only the available repository evidence.`
+  if (!sentences.length) return focus
 
   const complementary = sentences.filter((sentence) => topicOverlap(sentence, assetLabel) < 0.6)
   const candidates = complementary.length ? complementary : sentences
@@ -281,8 +334,8 @@ function buildTemplateNarration(primaryText: string, repositoryText: string, sli
   const offset = slideIndex % ordered.length
   const rotated = [...ordered.slice(offset), ...ordered.slice(0, offset)]
 
-  const narration: string[] = []
-  let wordCount = 0
+  const narration = [focus]
+  let wordCount = focus.split(/\s+/).length
   for (const sentence of rotated) {
     if (wordCount >= TARGET_NARRATION_WORDS) break
     const remaining = TARGET_NARRATION_WORDS + 4 - wordCount
@@ -291,6 +344,12 @@ function buildTemplateNarration(primaryText: string, repositoryText: string, sli
     wordCount += words.length
   }
   return narration.join(' ').trim()
+}
+function hasUniqueSlideContent(scenes: Scene[]) {
+  const titleKeys = scenes.map((scene) => normalizedSentence(scene.title)).filter(Boolean)
+  const narrationKeys = scenes.map((scene) => normalizedSentence(scene.narration)).filter(Boolean)
+  const bulletKeys = scenes.map((scene) => normalizedSentence(scene.bullets.join(' '))).filter(Boolean)
+  return new Set(titleKeys).size === scenes.length && new Set(narrationKeys).size === scenes.length && new Set(bulletKeys).size === scenes.length
 }
 function buildScenes(repo: Repository): Scene[] {
   const sections = parseReadmeSections(repo.readme)
@@ -350,6 +409,7 @@ function buildScenes(repo: Repository): Scene[] {
       })
     })
   })
+  if (result.length !== 50 || !hasUniqueSlideContent(result)) throw new Error('The storyboard template produced duplicate slide content.')
   return result
 }
 function drawCoverImage(context: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, width: number, height: number, zoom: number) {
@@ -422,9 +482,10 @@ function App() {
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? scenes[0]
   const inTargetRange = totalDuration >= 480 && totalDuration <= 720
   const narrationReady = scenes.length > 0 && scenes.every((scene) => scene.title.trim().length > 0 && scene.narration.trim().length > 0)
+  const uniqueSlidesReady = scenes.length === 50 && hasUniqueSlideContent(scenes)
   const visualsReady = Boolean(repository?.assets.length)
   const captionsReady = narrationReady && scenes.every((scene) => Number.isFinite(scene.duration) && scene.duration > 0)
-  const isExportReady = Boolean(repository) && inTargetRange && narrationReady && visualsReady && captionsReady
+  const isExportReady = Boolean(repository) && inTargetRange && narrationReady && uniqueSlidesReady && visualsReady && captionsReady
   const cloudyLogo = new URL('./assets/branding/cloudy-logo.png', import.meta.url).href
   const apiHeaders: Record<string, string> = {
     Accept: 'application/vnd.github+json',
@@ -497,7 +558,7 @@ function App() {
       const generatedScenes = buildScenes(newRepo)
       setScenes(generatedScenes)
       const imageNote = assets.length ? `Using ${assets.length} English or default-language repository image${assets.length === 1 ? '' : 's'}, one per slide.` : 'No English or default-language images found — Cloudy will present with a branded placeholder.'
-      setStatus(`Storyboard ready: ${generatedScenes.length} slides, ${SLIDES_PER_SECTION} per section, ${durationLabel(generatedScenes.reduce((total, scene) => total + scene.duration, 0))} total. ${imageNote}`)
+      setStatus(`Storyboard ready: ${generatedScenes.length} unique slides, ${SLIDES_PER_SECTION} per section, ${durationLabel(generatedScenes.reduce((total, scene) => total + scene.duration, 0))} total. ${imageNote}`)
     } catch {
       setRepository(null)
       setStatus('The repository could not be read. Check repository access and try again.')
@@ -1159,6 +1220,7 @@ function App() {
             <li className={repository ? 'done' : ''}>Repository source captured</li>
             <li className={inTargetRange ? 'done' : ''}>8-12 minute runtime</li>
             <li className={narrationReady ? 'done' : ''}>Every slide has a title and narration</li>
+            <li className={uniqueSlidesReady ? 'done' : ''}>All 50 slides have unique content</li>
             <li className={visualsReady ? 'done' : ''}>Source visuals selected</li>
             <li className={captionsReady ? 'done' : ''}>Caption timings ready</li>
           </ul>
