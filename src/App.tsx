@@ -35,7 +35,6 @@ type WorkflowStep = 'source' | 'story' | 'voice' | 'export'
 const starterRepository = 'https://github.com/Cloud2BR-TEC/ai-academy-101-ml'
 const SLIDES_PER_SECTION = 10
 const TEMPLATE_SLIDE_SECONDS = 12
-const TARGET_NARRATION_WORDS = 26
 const VOICE_RATE = 1.15
 const BASE_NARRATION_WORDS_PER_MINUTE = 130
 const SLIDE_FOCUS: Record<string, string> = {
@@ -132,11 +131,7 @@ function extractBullets(narration: string): string[] {
       seen.add(key)
       return true
     })
-    .slice(0, 4)
-    .map((s) => {
-      const words = s.split(/\s+/)
-      return words.length > 15 ? words.slice(0, 15).join(' ') + '\u2026' : s
-    })
+    .map((sentence) => sentence)
 }
 
 const STARTER_NARRATIONS = [
@@ -363,6 +358,27 @@ function wrapCanvasText(context: CanvasRenderingContext2D, text: string, maxWidt
   if (line) lines.push(line)
   return lines
 }
+function fitCanvasText(context: CanvasRenderingContext2D, text: string, maxWidth: number, maxHeight: number, maxFontSize: number, minFontSize: number, weight = '400') {
+  for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1) {
+    context.font = `${weight} ${fontSize}px Manrope, sans-serif`
+    const lineHeight = Math.ceil(fontSize * 1.35)
+    const lines = wrapCanvasText(context, text, maxWidth)
+    if (lines.length * lineHeight <= maxHeight) return { fontSize, lineHeight, lines }
+  }
+  context.font = `${weight} ${minFontSize}px Manrope, sans-serif`
+  return { fontSize: minFontSize, lineHeight: Math.ceil(minFontSize * 1.35), lines: wrapCanvasText(context, text, maxWidth) }
+}
+function fitCanvasPoints(context: CanvasRenderingContext2D, points: string[], maxWidth: number, maxHeight: number) {
+  for (let fontSize = 28; fontSize >= 12; fontSize -= 1) {
+    context.font = `400 ${fontSize}px Manrope, sans-serif`
+    const lineHeight = Math.ceil(fontSize * 1.35)
+    const linesByPoint = points.map((point) => wrapCanvasText(context, point, maxWidth))
+    const textHeight = linesByPoint.reduce((height, lines) => height + lines.length * lineHeight, 0) + Math.max(0, points.length - 1) * lineHeight
+    if (textHeight <= maxHeight) return { fontSize, lineHeight, linesByPoint }
+  }
+  context.font = '400 12px Manrope, sans-serif'
+  return { fontSize: 12, lineHeight: 17, linesByPoint: points.map((point) => wrapCanvasText(context, point, maxWidth)) }
+}
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
@@ -409,12 +425,10 @@ function selectDistinctEvidence(primaryText: string, repositoryText: string, sli
   return evidence
 }
 function buildEvidenceBullets(evidence: string, slideTitle: string) {
-  const words = evidence.replace(/[.!?]+$/, '').split(/\s+/)
-  const summary = words.length > 20 ? `${words.slice(0, 13).join(' ')}\u2026 ${words.slice(-6).join(' ')}` : words.join(' ')
-  return [`${slideTitle}: ${summary}`]
+  return [`${slideTitle}: ${evidence.replace(/[.!?]+$/, '')}`]
 }
 function buildTemplateNarration(evidence: string) {
-  return limitWords(evidence, TARGET_NARRATION_WORDS + 4)
+  return evidence
 }
 function buildSupportingPoints(sectionText: string, evidence: string) {
   const evidenceKey = normalizedSentence(evidence)
@@ -425,8 +439,7 @@ function buildSupportingPoints(sectionText: string, evidence: string) {
       const sentenceKey = normalizedSentence(sentence)
       return !evidenceKey.includes(sentenceKey) && !sentenceKey.includes(evidenceKey) && contentSimilarity(sentence, evidence) < 0.55
     })
-    .slice(0, 3)
-    .map((sentence) => limitWords(sentence, 24))
+    .map((sentence) => sentence)
 }
 function hasUniqueSlideContent(scenes: Scene[]) {
   const titleKeys = scenes.map((scene) => normalizedSentence(scene.title)).filter(Boolean)
@@ -907,9 +920,9 @@ function App() {
       context.globalAlpha = eased
       context.translate((1 - eased) * -60, 0)
       context.fillStyle = '#ffffff'
-      context.font = `800 ${scene.title.length > 20 ? 70 : 86}px Manrope, sans-serif`
-      const titleLines = wrapCanvasText(context, scene.title, leftW)
-      titleLines.slice(0, 2).forEach((line, i) => context.fillText(line, 100, 220 + i * 96))
+      const titleLayout = fitCanvasText(context, scene.title, leftW, 200, scene.title.length > 20 ? 70 : 86, 34, '800')
+      context.font = `800 ${titleLayout.fontSize}px Manrope, sans-serif`
+      titleLayout.lines.forEach((line, index) => context.fillText(line, 100, 220 + index * titleLayout.lineHeight))
       context.restore()
 
       // Bullet points
@@ -919,14 +932,15 @@ function App() {
         if (alpha <= 0) return
         context.save()
         context.globalAlpha = alpha
-        const by = 450 + i * 80
+        const bulletLayout = fitCanvasText(context, bullet, leftW - 128, 320 / Math.max(bullets.length, 1), 34, 16)
+        const by = 450 + i * (320 / Math.max(bullets.length, 1))
         context.fillStyle = '#f5a975'
         context.beginPath()
         context.arc(108, by - 9, 6, 0, Math.PI * 2)
         context.fill()
         context.fillStyle = '#e4f0e8'
-        context.font = '400 34px Manrope, sans-serif'
-        context.fillText(bullet, 128, by)
+        context.font = `400 ${bulletLayout.fontSize}px Manrope, sans-serif`
+        bulletLayout.lines.forEach((line, index) => context.fillText(line, 128, by + index * bulletLayout.lineHeight))
         context.restore()
       })
 
@@ -950,18 +964,18 @@ function App() {
         context.fillStyle = '#d76639'
         context.font = '700 22px Manrope, sans-serif'
         context.fillText('ADDITIONAL DOCUMENTED CONTEXT', rightX + 44, 210)
+        const pointsLayout = fitCanvasPoints(context, scene.supportingPoints, rightW - 130, 510)
         context.fillStyle = '#294f4b'
-        context.font = '400 28px Manrope, sans-serif'
+        context.font = `400 ${pointsLayout.fontSize}px Manrope, sans-serif`
         let pointY = 280
-        scene.supportingPoints.forEach((point) => {
-          const lines = wrapCanvasText(context, point, rightW - 130).slice(0, 4)
+        pointsLayout.linesByPoint.forEach((lines) => {
           context.fillStyle = '#d76639'
           context.beginPath()
           context.arc(rightX + 52, pointY - 9, 6, 0, Math.PI * 2)
           context.fill()
           context.fillStyle = '#294f4b'
-          lines.forEach((line, index) => context.fillText(line, rightX + 78, pointY + index * 42))
-          pointY += lines.length * 42 + 48
+          lines.forEach((line, index) => context.fillText(line, rightX + 78, pointY + index * pointsLayout.lineHeight))
+          pointY += lines.length * pointsLayout.lineHeight + pointsLayout.lineHeight
         })
       }
 
@@ -971,10 +985,9 @@ function App() {
       context.font = '700 22px Manrope, sans-serif'
       context.fillText('CLOUDY IS SAYING:', 80, 906)
       context.fillStyle = '#ffffff'
-      context.font = '400 30px Manrope, sans-serif'
-      wrapCanvasText(context, scene.narration, 1_750)
-        .slice(0, 3)
-        .forEach((line, index) => context.fillText(line, 80, 938 + index * 38))
+      const narrationLayout = fitCanvasText(context, scene.narration, 1_750, 102, 30, 14)
+      context.font = `400 ${narrationLayout.fontSize}px Manrope, sans-serif`
+      narrationLayout.lines.forEach((line, index) => context.fillText(line, 80, 938 + index * narrationLayout.lineHeight))
 
       const bob = Math.sin(elapsedSeconds * 1.6) * 10
       const walkX = 1_725 + Math.sin(elapsedSeconds * 0.9) * 90
