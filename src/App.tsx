@@ -471,11 +471,11 @@ function App() {
       setStatus('Complete every export requirement before downloading the video.')
       return
     }
-    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
-      setStatus('This browser cannot create a video file. Use a current Chromium browser.')
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream || !navigator.mediaDevices?.getDisplayMedia) {
+      setStatus('This browser cannot create a narrated video. Use a current Chromium browser.')
       return
     }
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm'
+    const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find((type) => MediaRecorder.isTypeSupported(type)) ?? 'video/webm'
     const canvas = document.createElement('canvas')
     canvas.width = 1920
     canvas.height = 1080
@@ -485,10 +485,36 @@ function App() {
     const cloudyImage = await loadImage(cloudyLogo).catch(() => null)
     const assetImages = repository?.assets.length ? await Promise.all(repository.assets.map((asset) => loadImage(asset).catch(() => null))) : []
     const assetImageByUrl = new Map(repository?.assets.map((asset, index) => [asset, assetImages[index]]) ?? [])
-    const stream = canvas.captureStream(30)
+    const narrationVoice = await resolveVoice()
+    window.speechSynthesis.cancel()
+    setStatus('In the share dialog, choose this tab and enable Share tab audio to include Cloudy’s narration.')
+    await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
+    let displayStream: MediaStream
+    try {
+      displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+    } catch {
+      setStatus('Narrated video export cancelled. Share this tab with tab audio enabled to download the complete video.')
+      return
+    }
+    const narrationTrack = displayStream.getAudioTracks()[0]
+    if (!narrationTrack) {
+      displayStream.getTracks().forEach((track) => track.stop())
+      setStatus('No tab audio was shared. Try again and enable Share tab audio to create the narrated video.')
+      return
+    }
+    const canvasStream = canvas.captureStream(30)
+    const stream = new MediaStream([...canvasStream.getVideoTracks(), narrationTrack])
     const recorder = new MediaRecorder(stream, {
       mimeType,
       videoBitsPerSecond: 6_000_000,
+      audioBitsPerSecond: 128_000,
+    })
+    let audioCaptureEnded = false
+    narrationTrack.addEventListener('ended', () => {
+      if (recorder.state !== 'recording') return
+      audioCaptureEnded = true
+      renderAbortRef.current = true
+      setStatus('Tab audio sharing stopped, so the narrated video render was cancelled.')
     })
     const chunks: BlobPart[] = []
     recorder.addEventListener('dataavailable', (event) => {
@@ -500,8 +526,9 @@ function App() {
     renderAbortRef.current = false
     setIsRenderingVideo(true)
     setRenderProgress(0)
-    setStatus('Rendering your video in this browser. Keep this tab open.')
+    setStatus('Rendering the complete video with Cloudy narration. Keep this tab active and unmuted.')
     recorder.start(1_000)
+    let narratedSceneId: number | null = null
 
     const drawFrame = (elapsedSeconds: number) => {
       let sceneOffset = 0
@@ -513,6 +540,20 @@ function App() {
           }
           return false
         }) ?? scenes[scenes.length - 1]
+      if (scene.id !== narratedSceneId) {
+        narratedSceneId = scene.id
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(scene.narration)
+        utterance.voice = narrationVoice
+        utterance.lang = narrationVoice?.lang ?? 'en-US'
+        utterance.rate = 0.95
+        utterance.pitch = 1.1
+        utterance.volume = 1
+        utterance.onstart = () => setIsSpeaking(true)
+        utterance.onend = () => setIsSpeaking(false)
+        utterance.onerror = () => setIsSpeaking(false)
+        window.speechSynthesis.speak(utterance)
+      }
       const sceneElapsed = elapsedSeconds - (sceneOffset - scene.duration)
       const sceneProgress = Math.min(1, sceneElapsed / scene.duration)
       const pulse = 0.5 + Math.sin(sceneElapsed * 1.2) * 0.5
@@ -635,6 +676,8 @@ function App() {
       drawFrame(elapsedSeconds)
       setRenderProgress(Math.min(100, Math.round((elapsedSeconds / totalSeconds) * 100)))
       if (renderAbortRef.current || elapsedSeconds >= totalSeconds) {
+        window.speechSynthesis.cancel()
+        setIsSpeaking(false)
         recorder.stop()
         return
       }
@@ -644,10 +687,11 @@ function App() {
     window.requestAnimationFrame(renderFrame)
     const video = await videoReady
     stream.getTracks().forEach((track) => track.stop())
+    displayStream.getTracks().forEach((track) => track.stop())
     setIsRenderingVideo(false)
     setRenderProgress(0)
     if (renderAbortRef.current) {
-      setStatus('Video rendering cancelled.')
+      setStatus(audioCaptureEnded ? 'Narrated video cancelled because tab audio sharing stopped.' : 'Video rendering cancelled.')
       return
     }
     const url = URL.createObjectURL(video)
@@ -656,7 +700,7 @@ function App() {
     link.download = 'cloudy-video.webm'
     link.click()
     URL.revokeObjectURL(url)
-    setStatus('WebM video downloaded. Captions are embedded on screen.')
+    setStatus('Complete WebM video downloaded with Cloudy narration and on-screen captions.')
   }
   function cancelVideoExport() {
     renderAbortRef.current = true
@@ -1027,7 +1071,7 @@ function App() {
               </button>
             ) : (
               <button className="primary-button" type="button" onClick={() => void exportVideo()} disabled={!isExportReady}>
-                Download video
+                Download narrated video
               </button>
             )}
             <button className="secondary-button" type="button" onClick={exportCaptions} disabled={!isExportReady}>
