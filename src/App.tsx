@@ -508,6 +508,7 @@ function App() {
   const videoPreviewAbortRef = useRef(false)
   const totalDuration = scenes.reduce((total, scene) => total + scene.duration, 0)
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? scenes[0]
+  const selectedSceneIndex = scenes.findIndex((scene) => scene.id === selectedScene.id)
   const inTargetRange = totalDuration >= 480 && totalDuration <= 720
   const narrationReady = scenes.length > 0 && scenes.every((scene) => scene.title.trim().length > 0 && scene.narration.trim().length > 0)
   const uniqueSlidesReady = scenes.length === 50 && hasUniqueSlideContent(scenes)
@@ -1109,17 +1110,39 @@ function App() {
               <div className="story-grid">
                 <div className="scene-picker">
                   <label htmlFor="scene-select">Choose a slide</label>
-                  <select id="scene-select" value={selectedScene.id} onChange={(event) => setSelectedSceneId(Number(event.target.value))}>
-                    {Array.from({ length: 5 }, (_, sectionIndex) => sectionIndex + 1).map((section) => (
-                      <optgroup key={section} label={`Section ${section}`}>
-                        {scenes.filter((scene) => scene.section === section).map((scene) => (
-                          <option key={scene.id} value={scene.id}>
-                            {scene.section}.{String(scene.slideInSection).padStart(2, '0')} · {scene.title} · {durationLabel(scene.duration)}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
+                  <div className="scene-picker-controls">
+                    <button
+                      type="button"
+                      className="scene-arrow"
+                      aria-label="Previous slide"
+                      title="Previous slide"
+                      disabled={selectedSceneIndex <= 0}
+                      onClick={() => setSelectedSceneId(scenes[selectedSceneIndex - 1].id)}
+                    >
+                      ‹
+                    </button>
+                    <select id="scene-select" value={selectedScene.id} onChange={(event) => setSelectedSceneId(Number(event.target.value))}>
+                      {Array.from({ length: 5 }, (_, sectionIndex) => sectionIndex + 1).map((section) => (
+                        <optgroup key={section} label={`Section ${section}`}>
+                          {scenes.filter((scene) => scene.section === section).map((scene) => (
+                            <option key={scene.id} value={scene.id}>
+                              {scene.section}.{String(scene.slideInSection).padStart(2, '0')} · {scene.title} · {durationLabel(scene.duration)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="scene-arrow"
+                      aria-label="Next slide"
+                      title="Next slide"
+                      disabled={selectedSceneIndex >= scenes.length - 1}
+                      onClick={() => setSelectedSceneId(scenes[selectedSceneIndex + 1].id)}
+                    >
+                      ›
+                    </button>
+                  </div>
                   <span>{selectedScene.visual}</span>
                 </div>
                 <article className="scene-editor">
