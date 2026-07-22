@@ -131,11 +131,25 @@ function extractReadmeImageUrls(markdown: string, owner: string, repo: string, b
   }
   return Array.from(urls).filter(isIllustrativeImage)
 }
+function isRepositoryNoise(value: string) {
+  const text = value.replace(/\s+/g, ' ').trim()
+  return (
+    /<|>|(?:src|href|alt|align)\s*=|https?:\/\/|www\.|START\s+BADGE|END\s+BADGE/i.test(text) ||
+    /^(?:last\s+updated|updated|refresh\s+date|total\s+views?|views?|build|coverage|license)\s*:/i.test(text) ||
+    /^(?:-{3,}|={3,}|_{3,})$/.test(text)
+  )
+}
+function isNarratableText(value: string) {
+  const text = value.replace(/\s+/g, ' ').trim()
+  return text.split(/\s+/).length >= 4 && !isRepositoryNoise(text)
+}
 function parseReadmeSections(readme: string): Array<{ heading: string; body: string }> {
   const text = readme
     .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/^.*START\s+BADGE.*$[\s\S]*?^.*END\s+BADGE.*$/gim, ' ')
     .replace(/<!--\s*START\s+BADGE\s*-->[\s\S]*?<!--\s*END\s+BADGE\s*-->/gi, ' ')
-    .replace(/<div[^>]*(?:badge|shields\.io)[\s\S]*?<\/div>/gi, ' ')
+    .replace(/<div\b[^>]*>[\s\S]*?(?:badge|shields\.io)[\s\S]*?<\/div>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
     .replace(/\[[^\]]+]\(https?:\/\/(?:www\.)?github\.com\/(?:Cloud2BR-TEC\/?|)?\)/gi, ' ')
     .replace(/!\[[^\]]*]\([^)]+\)/g, ' ')
     .replace(/<img\b[^>]*>/gi, ' ')
@@ -159,10 +173,8 @@ function parseReadmeSections(readme: string): Array<{ heading: string; body: str
       )
       .filter(
         (l) =>
-          l.length > 4 &&
-          !/^https?:\/\//i.test(l) &&
-          !/^(?:last\s+updated|updated|refresh\s+date|total\s+views?|views?|build|coverage|license)\s*:/i.test(l) &&
-          !/^(?:-{3,}|={3,}|_{3,})$/.test(l) &&
+          l.length > 1 &&
+          !isRepositoryNoise(l) &&
           !/^Cloud2BR\s+TEC$/i.test(l),
       )
       .join(' ')
@@ -219,7 +231,7 @@ function buildTemplateNarration(primaryText: string, repositoryText: string, sli
   const sentences = `${primaryText} ${repositoryText}`
     .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
     ?.map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.split(/\s+/).length > 3) ?? []
+    .filter(isNarratableText) ?? []
   if (!sentences.length) return 'This slide uses the repository metadata and available source documentation as its reference.'
 
   const narration: string[] = []
