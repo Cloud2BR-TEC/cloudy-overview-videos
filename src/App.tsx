@@ -44,12 +44,32 @@ function limitWords(text: string, maxWords: number) {
 function cleanSlideTitle(value: string) {
   return value.replace(/^\s*#+\s*/, '')
 }
+function contentWords(value: string) {
+  const ignored = new Set(['about', 'after', 'before', 'from', 'into', 'repository', 'slide', 'source', 'that', 'their', 'this', 'through', 'using', 'visual', 'with', 'your'])
+  return new Set(value.toLowerCase().match(/[a-z0-9]+/g)?.filter((word) => word.length > 3 && !ignored.has(word)) ?? [])
+}
+function normalizedSentence(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
+function topicOverlap(value: string, topic: string) {
+  const valueWords = contentWords(value)
+  const topicWords = contentWords(topic)
+  if (!valueWords.size || !topicWords.size) return 0
+  return Array.from(topicWords).filter((word) => valueWords.has(word)).length / topicWords.size
+}
 function extractBullets(narration: string): string[] {
+  const seen = new Set<string>()
   return narration
     .replace(/([.!?])\s+/g, '$1\n')
     .split('\n')
     .map((s) => s.trim())
     .filter((s) => s.length > 18 && s.length < 170)
+    .filter((sentence) => {
+      const key = normalizedSentence(sentence)
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
     .slice(0, 4)
     .map((s) => {
       const words = s.split(/\s+/)
@@ -227,24 +247,34 @@ function loadImage(src: string) {
     image.src = src
   })
 }
-function buildTemplateNarration(primaryText: string, repositoryText: string, slideIndex: number) {
+function buildTemplateNarration(primaryText: string, repositoryText: string, slideIndex: number, slideTitle: string, assetLabel: string) {
+  const seen = new Set<string>()
   const sentences = `${primaryText} ${repositoryText}`
     .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
     ?.map((sentence) => sentence.trim())
-    .filter(isNarratableText) ?? []
-  if (!sentences.length) return 'This slide uses the repository metadata and available source documentation as its reference.'
+    .filter(isNarratableText)
+    .filter((sentence) => {
+      const key = normalizedSentence(sentence)
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    }) ?? []
+  if (!sentences.length) return 'Cloudy uses the available repository documentation to provide context for this part of the project.'
+
+  const complementary = sentences.filter((sentence) => topicOverlap(sentence, assetLabel) < 0.6)
+  const candidates = complementary.length ? complementary : sentences
+  const ordered = [...candidates].sort((left, right) => topicOverlap(right, slideTitle) - topicOverlap(left, slideTitle))
+  const offset = slideIndex % ordered.length
+  const rotated = [...ordered.slice(offset), ...ordered.slice(0, offset)]
 
   const narration: string[] = []
   let wordCount = 0
-  let cursor = slideIndex % sentences.length
-  let attempts = 0
-  while (wordCount < TARGET_NARRATION_WORDS && attempts < Math.max(sentences.length * 2, 6)) {
+  for (const sentence of rotated) {
+    if (wordCount >= TARGET_NARRATION_WORDS) break
     const remaining = TARGET_NARRATION_WORDS + 4 - wordCount
-    const words = sentences[cursor].split(/\s+/).slice(0, remaining)
+    const words = sentence.split(/\s+/).slice(0, remaining)
     narration.push(words.join(' '))
     wordCount += words.length
-    cursor = (cursor + 1) % sentences.length
-    attempts += 1
   }
   return narration.join(' ').trim()
 }
@@ -293,10 +323,10 @@ function buildScenes(repo: Repository): Scene[] {
   let id = 1
   groups.forEach((group, groupIndex) => {
     group.slideTitles.forEach((slideTitle, slideIndex) => {
-      const narration = buildTemplateNarration(group.text, repositoryText, groupIndex * SLIDES_PER_SECTION + slideIndex)
       const title = `${group.baseTitle}: ${slideTitle}`
       const asset = repo.assets.length ? repo.assets[(id - 1) % repo.assets.length] : null
       const assetLabel = asset ? repositoryAssetLabel(asset) : 'No repository visual selected'
+      const narration = buildTemplateNarration(group.text, repositoryText, groupIndex * SLIDES_PER_SECTION + slideIndex, title, assetLabel)
       result.push({
         id: id++,
         section: groupIndex + 1,
