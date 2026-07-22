@@ -15,7 +15,7 @@ Cloudy reads public GitHub API data to assemble the storyboard. It does not writ
 
 Each generated storyboard follows a balanced ten-minute template: five sections, ten Markdown slides per section, and twelve seconds per slide. The resulting 50 slides total 600 seconds and cycle repository images one image per slide. Edited narration remains constrained to the 10-15 second slide pacing range.
 
-The browser creates the downloadable WebM video locally with Cloudy narration and on-screen captions. During export, select the current tab and enable **Share tab audio** so the browser can record its locally available speech voice into the video. Keep the tab active and unmuted until the real-time render finishes.
+The browser creates the downloadable WebM video locally with Cloudy narration and on-screen captions. On first export, it downloads and caches a browser-local female voice model; later exports reuse that model automatically. No screen-sharing permission or tab-audio selection is required. Keep the tab active until the real-time render finishes.
 
 <!-- START BADGE -->
 <div align="center">

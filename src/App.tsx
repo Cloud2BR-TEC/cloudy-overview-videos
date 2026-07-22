@@ -326,6 +326,43 @@ function drawContainImage(context: CanvasRenderingContext2D, image: HTMLImageEle
   const drawHeight = image.height * scale
   context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight)
 }
+function generateNarrationAudio(
+  scenes: Scene[],
+  onProgress: (phase: 'model' | 'scene', progress: number) => void,
+  signal: AbortSignal,
+) {
+  return new Promise<Blob[]>((resolve, reject) => {
+    const worker = new Worker(new URL('./narration.worker.ts', import.meta.url), { type: 'module' })
+    const audio = new Array<Blob>(scenes.length)
+    const cleanup = () => {
+      signal.removeEventListener('abort', onAbort)
+      worker.terminate()
+    }
+    const fail = (error: Error) => {
+      cleanup()
+      reject(error)
+    }
+    const onAbort = () => fail(new DOMException('Narration generation cancelled.', 'AbortError'))
+    signal.addEventListener('abort', onAbort, { once: true })
+    worker.addEventListener('error', () => fail(new Error('The local narration worker could not start.')), { once: true })
+    worker.addEventListener('message', (event: MessageEvent<{ type: string; index?: number; total?: number; progress?: number; audio?: Blob; message?: string }>) => {
+      const message = event.data
+      if (message.type === 'model') onProgress('model', message.progress ?? 0)
+      if (message.type === 'scene' && message.index !== undefined && message.total) onProgress('scene', message.index / message.total)
+      if (message.type === 'audio' && message.index !== undefined && message.audio) audio[message.index] = message.audio
+      if (message.type === 'error') fail(new Error(message.message ?? 'Local narration generation failed.'))
+      if (message.type === 'complete') {
+        if (audio.filter(Boolean).length !== scenes.length) {
+          fail(new Error('One or more narration clips could not be generated.'))
+          return
+        }
+        cleanup()
+        resolve(audio)
+      }
+    })
+    worker.postMessage({ scenes: scenes.map(({ narration }) => ({ narration })) })
+  })
+}
 
 function App() {
   const [repositoryUrl, setRepositoryUrl] = useState(starterRepository)
@@ -341,6 +378,7 @@ function App() {
   const [isVideoPreviewPlaying, setIsVideoPreviewPlaying] = useState(false)
   const [videoPreviewSceneIdx, setVideoPreviewSceneIdx] = useState(0)
   const renderAbortRef = useRef(false)
+  const renderAbortControllerRef = useRef<AbortController | null>(null)
   const videoPreviewAbortRef = useRef(false)
   const totalDuration = scenes.reduce((total, scene) => total + scene.duration, 0)
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? scenes[0]
@@ -471,7 +509,7 @@ function App() {
       setStatus('Complete every export requirement before downloading the video.')
       return
     }
-    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream || !navigator.mediaDevices?.getDisplayMedia) {
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream || !window.AudioContext || !window.Worker) {
       setStatus('This browser cannot create a narrated video. Use a current Chromium browser.')
       return
     }
@@ -481,40 +519,56 @@ function App() {
     canvas.height = 1080
     const context = canvas.getContext('2d')
     if (!context) return
+    const audioContext = new AudioContext()
+    await audioContext.resume()
+    renderAbortRef.current = false
+    const renderAbortController = new AbortController()
+    renderAbortControllerRef.current = renderAbortController
+    setIsRenderingVideo(true)
+    setRenderProgress(0)
     setStatus('Loading repository visuals for your video...')
     const cloudyImage = await loadImage(cloudyLogo).catch(() => null)
     const assetImages = repository?.assets.length ? await Promise.all(repository.assets.map((asset) => loadImage(asset).catch(() => null))) : []
     const assetImageByUrl = new Map(repository?.assets.map((asset, index) => [asset, assetImages[index]]) ?? [])
-    const narrationVoice = await resolveVoice()
-    window.speechSynthesis.cancel()
-    setStatus('In the share dialog, choose this tab and enable Share tab audio to include Cloudy’s narration.')
-    await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
-    let displayStream: MediaStream
+    let narrationBuffers: AudioBuffer[]
     try {
-      displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-    } catch {
-      setStatus('Narrated video export cancelled. Share this tab with tab audio enabled to download the complete video.')
+      const narrationBlobs = await generateNarrationAudio(
+        scenes,
+        (phase, progress) => {
+          if (phase === 'model') setStatus(`Preparing Cloudy’s local voice model ${Math.round(progress * 100)}%...`)
+          if (phase === 'scene') {
+            setRenderProgress(Math.round(progress * 25))
+            setStatus(`Generating Cloudy narration ${Math.min(scenes.length, Math.floor(progress * scenes.length) + 1)} of ${scenes.length}...`)
+          }
+        },
+        renderAbortController.signal,
+      )
+      setStatus('Decoding Cloudy narration for the video...')
+      narrationBuffers = await Promise.all(narrationBlobs.map(async (blob) => audioContext.decodeAudioData(await blob.arrayBuffer())))
+    } catch (error) {
+      await audioContext.close()
+      renderAbortControllerRef.current = null
+      setIsRenderingVideo(false)
+      setRenderProgress(0)
+      setStatus(error instanceof DOMException && error.name === 'AbortError' ? 'Video rendering cancelled.' : 'Cloudy’s local narration could not be generated. Check the connection and try again.')
       return
     }
-    const narrationTrack = displayStream.getAudioTracks()[0]
-    if (!narrationTrack) {
-      displayStream.getTracks().forEach((track) => track.stop())
-      setStatus('No tab audio was shared. Try again and enable Share tab audio to create the narrated video.')
+    renderAbortControllerRef.current = null
+    if (renderAbortRef.current) {
+      await audioContext.close()
+      setIsRenderingVideo(false)
+      setRenderProgress(0)
+      setStatus('Video rendering cancelled.')
       return
     }
+    window.speechSynthesis.cancel()
     const canvasStream = canvas.captureStream(30)
-    const stream = new MediaStream([...canvasStream.getVideoTracks(), narrationTrack])
+    const audioDestination = audioContext.createMediaStreamDestination()
+    const stream = new MediaStream([...canvasStream.getVideoTracks(), ...audioDestination.stream.getAudioTracks()])
     const recorder = new MediaRecorder(stream, {
       mimeType,
       videoBitsPerSecond: 6_000_000,
       audioBitsPerSecond: 128_000,
-    })
-    let audioCaptureEnded = false
-    narrationTrack.addEventListener('ended', () => {
-      if (recorder.state !== 'recording') return
-      audioCaptureEnded = true
-      renderAbortRef.current = true
-      setStatus('Tab audio sharing stopped, so the narrated video render was cancelled.')
     })
     const chunks: BlobPart[] = []
     recorder.addEventListener('dataavailable', (event) => {
@@ -523,36 +577,41 @@ function App() {
     const videoReady = new Promise<Blob>((resolve) => recorder.addEventListener('stop', () => resolve(new Blob(chunks, { type: 'video/webm' })), { once: true }))
     const totalSeconds = scenes.reduce((total, scene) => total + scene.duration, 0)
     const startedAt = performance.now()
-    renderAbortRef.current = false
-    setIsRenderingVideo(true)
     setRenderProgress(0)
-    setStatus('Rendering the complete video with Cloudy narration. Keep this tab active and unmuted.')
+    setStatus('Rendering the complete video with automatic Cloudy narration. Keep this tab active.')
     recorder.start(1_000)
     let narratedSceneId: number | null = null
+    let activeNarrationSource: AudioBufferSourceNode | null = null
 
     const drawFrame = (elapsedSeconds: number) => {
       let sceneOffset = 0
+      let sceneIndex = scenes.length - 1
       const scene =
-        scenes.find((item) => {
+        scenes.find((item, index) => {
           sceneOffset += item.duration
           if (elapsedSeconds < sceneOffset) {
+            sceneIndex = index
             return true
           }
           return false
         }) ?? scenes[scenes.length - 1]
       if (scene.id !== narratedSceneId) {
         narratedSceneId = scene.id
-        window.speechSynthesis.cancel()
-        const utterance = new SpeechSynthesisUtterance(scene.narration)
-        utterance.voice = narrationVoice
-        utterance.lang = narrationVoice?.lang ?? 'en-US'
-        utterance.rate = 0.95
-        utterance.pitch = 1.1
-        utterance.volume = 1
-        utterance.onstart = () => setIsSpeaking(true)
-        utterance.onend = () => setIsSpeaking(false)
-        utterance.onerror = () => setIsSpeaking(false)
-        window.speechSynthesis.speak(utterance)
+        try {
+          activeNarrationSource?.stop()
+        } catch {
+          // The previous clip already ended.
+        }
+        const source = audioContext.createBufferSource()
+        source.buffer = narrationBuffers[sceneIndex]
+        source.playbackRate.value = Math.max(1, source.buffer.duration / Math.max(1, scene.duration - 0.35))
+        source.connect(audioDestination)
+        source.addEventListener('ended', () => {
+          if (activeNarrationSource === source) setIsSpeaking(false)
+        })
+        activeNarrationSource = source
+        setIsSpeaking(true)
+        source.start()
       }
       const sceneElapsed = elapsedSeconds - (sceneOffset - scene.duration)
       const sceneProgress = Math.min(1, sceneElapsed / scene.duration)
@@ -676,7 +735,11 @@ function App() {
       drawFrame(elapsedSeconds)
       setRenderProgress(Math.min(100, Math.round((elapsedSeconds / totalSeconds) * 100)))
       if (renderAbortRef.current || elapsedSeconds >= totalSeconds) {
-        window.speechSynthesis.cancel()
+        try {
+          activeNarrationSource?.stop()
+        } catch {
+          // The final clip already ended.
+        }
         setIsSpeaking(false)
         recorder.stop()
         return
@@ -687,11 +750,11 @@ function App() {
     window.requestAnimationFrame(renderFrame)
     const video = await videoReady
     stream.getTracks().forEach((track) => track.stop())
-    displayStream.getTracks().forEach((track) => track.stop())
+    await audioContext.close()
     setIsRenderingVideo(false)
     setRenderProgress(0)
     if (renderAbortRef.current) {
-      setStatus(audioCaptureEnded ? 'Narrated video cancelled because tab audio sharing stopped.' : 'Video rendering cancelled.')
+      setStatus('Video rendering cancelled.')
       return
     }
     const url = URL.createObjectURL(video)
@@ -704,6 +767,7 @@ function App() {
   }
   function cancelVideoExport() {
     renderAbortRef.current = true
+    renderAbortControllerRef.current?.abort()
     setStatus('Stopping video render...')
   }
 
