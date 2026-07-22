@@ -147,8 +147,9 @@
 .slide-source-visual.empty { align-items: start; padding: 34px; color: #294f4b; text-align: left; }
 .slide-supporting-copy { display: grid; align-content: start; gap: 14px; max-width: 680px; }
 .slide-supporting-copy > span { color: #c84e27; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.slide-supporting-copy h3 { margin: 0; color: #123b39; font-size: 22px; line-height: 1.2; }
-.slide-supporting-copy p { margin: 0; color: #355f5a; font-size: 13px; line-height: 1.65; }
+.slide-supporting-copy ul { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.slide-supporting-copy li { position: relative; padding-left: 18px; color: #355f5a; font-size: 13px; line-height: 1.55; }
+.slide-supporting-copy li::before { position: absolute; top: .6em; left: 0; width: 6px; height: 6px; border-radius: 50%; background: #c84e27; content: ''; }
 .unified-stage .slide-right { grid-column: 3; grid-row: 1; padding-right: 12px; padding-left: 12px; }
 .unified-stage .slide-cloudy { position: relative; width: 100%; min-height: unset; aspect-ratio: 1; border: 1px solid rgba(217, 238, 246, .38); border-radius: 6px; background: rgba(9, 43, 64, .18); }
 .unified-stage .slide-cloudy svg { max-width: 100%; height: auto; }
@@ -158,9 +159,13 @@
 	.scene-picker { grid-template-columns: 1fr; gap: 7px; padding: 12px; }
 	.scene-picker > span { white-space: normal; }
 	.story-grid .scene-editor { padding: 16px; }
-	.unified-stage { grid-template-columns: minmax(0, 1fr) 120px; grid-template-rows: auto 180px auto; }
+	.unified-stage { grid-template-columns: minmax(0, 1fr) 120px; grid-template-rows: auto minmax(240px, auto) auto; }
 	.unified-stage .slide-left { grid-column: 1; grid-row: 1; }
 	.unified-stage .slide-right { grid-column: 2; grid-row: 1; }
 	.slide-source-visual { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid #47758d; border-left: 0; }
+	.slide-source-visual.empty { padding: 20px; }
+	.slide-supporting-copy { gap: 10px; }
+	.slide-supporting-copy ul { gap: 9px; }
+	.slide-supporting-copy li { font-size: 11px; line-height: 1.45; }
 	.unified-stage .slide-narration { grid-row: 3; }
 }
