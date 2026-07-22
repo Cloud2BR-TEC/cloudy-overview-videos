@@ -163,7 +163,7 @@ const starterScenes: Scene[] = STARTER_NARRATIONS.map((narration, index) => ({
 function parseRepositoryUrl(value: string) {
   try {
     const trimmed = value.trim()
-    const copiedUrl = trimmed.match(/https?:\/\/(?:www\.)?github\.com\/[^\s)\]]+/i)?.[0] ?? trimmed
+    const copiedUrl = (trimmed.match(/https?:\/\/(?:www\.)?github\.com\/[^\s)\]]+/i)?.[0] ?? trimmed).replace(/[,.;:>]+$/, '')
     const url = new URL(copiedUrl)
     const segments = url.pathname.replace(/^\/+|\/+$/g, '').split('/')
     const hostname = url.hostname.toLowerCase().replace(/^www\./, '')
@@ -171,6 +171,20 @@ function parseRepositoryUrl(value: string) {
   } catch {
     return null
   }
+}
+async function fetchWithRetry(input: RequestInfo | URL, init: RequestInit, attempts = 3) {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(input, init)
+      if (response.ok || (response.status !== 429 && response.status < 500) || attempt === attempts) return response
+    } catch (error) {
+      if (init.signal?.aborted) throw error
+      lastError = error
+      if (attempt === attempts) throw error
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('GitHub request failed')
 }
 
 function durationLabel(seconds: number) {
@@ -388,7 +402,7 @@ function selectDistinctEvidence(primaryText: string, repositoryText: string, sli
   const evidence = rankedEvidenceSentences(primaryText, repositoryText, slideTitle, assetLabel).find(
     (candidate) => usedEvidence.every((used) => contentSimilarity(candidate, used) < 0.72),
   )
-  if (!evidence) throw new Error('This repository does not contain enough distinct material evidence to create 50 non-repeating slides')
+  if (!evidence) return null
   usedEvidence.push(evidence)
   return evidence
 }
@@ -423,28 +437,43 @@ function isMaterialSection(section: { heading: string; body: string; imageLabels
     !/(?:repository structure|folder structure|contribut|license|github workflow|documentation map|demonstration purposes only|disclaimer|legal notice)/.test(heading)
   )
 }
+function materialPassages(section: { heading: string; body: string; imageLabels: string[] }) {
+  return (section.body.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [])
+    .map((sentence) => sentence.trim())
+    .filter(isNarratableText)
+    .filter((sentence) => sentence.split(/\s+/).length >= 8)
+    .map((body, index) => ({
+      heading: index === 0 ? section.heading : `${section.heading}: ${limitWords(body.replace(/[.!?]+$/, ''), 7)}`,
+      body,
+      imageLabels: index === 0 ? section.imageLabels : [],
+    }))
+}
 function buildScenes(repo: Repository): Scene[] {
   const allSections = [...parseReadmeSections(repo.readme), ...parseReadmeSections(repo.documentation)]
+  const materialSections = allSections.filter(isMaterialSection)
+  const materialCandidates = [...materialSections, ...materialSections.flatMap(materialPassages)]
   const seenTitles = new Set<string>()
-  const materialSections = allSections.filter(isMaterialSection).filter((section) => {
+  const uniqueCandidates = materialCandidates.filter((section) => {
     const key = normalizedSentence(section.heading)
     if (seenTitles.has(key)) return false
     seenTitles.add(key)
     return true
-  }).slice(0, 50)
-  if (materialSections.length < 50) throw new Error(`Only ${materialSections.length} substantive content sections were found; 50 are required for a non-repeating material-focused video`)
+  })
   const repositoryText = materialSections.map((section) => section.body).join(' ')
 
   const result: Scene[] = []
   const usedEvidence: string[] = []
-  materialSections.forEach((material, index) => {
+  for (const material of uniqueCandidates) {
+    if (result.length === 50) break
     const title = cleanSlideTitle(material.heading)
     const evidence = selectDistinctEvidence(material.body, repositoryText, title, 'No repository visual selected', usedEvidence)
+    if (!evidence) continue
     const assetSelection = chooseRelevantAsset(repo.assets, material.imageLabels)
     const asset = assetSelection?.asset ?? null
     const assetLabel = asset ? repositoryAssetLabel(asset) : 'No repository visual selected'
     const narration = buildTemplateNarration(evidence)
-    result.push({
+    const index = result.length
+    const scene: Scene = {
       id: index + 1,
       section: Math.floor(index / SLIDES_PER_SECTION) + 1,
       slideInSection: (index % SLIDES_PER_SECTION) + 1,
@@ -457,9 +486,14 @@ function buildScenes(repo: Repository): Scene[] {
       assets: asset ? [asset] : [],
       assetLabel,
       assetMatch: assetSelection?.match ?? null,
-    })
-  })
-  if (result.length !== 50 || !hasUniqueSlideContent(result)) throw new Error('The storyboard contains repeated or substantially similar slide content')
+    }
+    if (!hasUniqueSlideContent([...result, scene])) {
+      usedEvidence.pop()
+      continue
+    }
+    result.push(scene)
+  }
+  if (result.length !== 50) throw new Error(`Cloudy found ${result.length} distinct material passages, but 50 are required. Add more substantive README or English docs content and try again.`)
   return result
 }
 function drawCoverImage(context: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, width: number, height: number, zoom: number) {
@@ -559,16 +593,16 @@ function App() {
     const loadId = ++repositoryLoadIdRef.current
     const loadController = new AbortController()
     repositoryLoadAbortRef.current = loadController
-    const timeoutId = window.setTimeout(() => loadController.abort('timeout'), 30_000)
+    const timeoutId = window.setTimeout(() => loadController.abort('timeout'), 60_000)
     setIsLoading(true)
     setStatus('Reviewing the repository README, folders, and images...')
     try {
       const [repositoryResponse, readmeResponse] = await Promise.all([
-        fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, {
+        fetchWithRetry(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, {
           headers: apiHeaders,
           signal: loadController.signal,
         }),
-        fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/readme`, { headers: apiHeaders, signal: loadController.signal }),
+        fetchWithRetry(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/readme`, { headers: apiHeaders, signal: loadController.signal }),
       ])
       if (!repositoryResponse.ok) {
         if (repositoryResponse.status === 404) throw new Error('Repository not found. Confirm that it is public and the URL is correct.')
@@ -589,7 +623,7 @@ function App() {
       const readmeText = readmeData?.content ? decodeBase64(readmeData.content) : ''
       const readmeImages = readmeText ? extractReadmeImageUrls(readmeText, parsed.owner, parsed.repo, data.default_branch) : []
       setStatus('Repository found. Reading English documentation and visuals...')
-      const treeResponse = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/${encodeURIComponent(data.default_branch)}?recursive=1`, { headers: apiHeaders, signal: loadController.signal })
+      const treeResponse = await fetchWithRetry(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/${encodeURIComponent(data.default_branch)}?recursive=1`, { headers: apiHeaders, signal: loadController.signal })
       if (!treeResponse.ok) throw new Error(`GitHub could not read the repository files (${treeResponse.status}).`)
       const treeData = treeResponse.ok
         ? ((await treeResponse.json()) as {
@@ -605,7 +639,7 @@ function App() {
       const documentationTexts = await Promise.all(
         documentationPaths.map(async (path) => {
           try {
-            const response = await fetch(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${encodeURIComponent(data.default_branch)}/${path.split('/').map(encodeURIComponent).join('/')}`, { signal: loadController.signal })
+            const response = await fetchWithRetry(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${encodeURIComponent(data.default_branch)}/${path.split('/').map(encodeURIComponent).join('/')}`, { signal: loadController.signal }, 2)
             return response.ok ? response.text() : ''
           } catch {
             if (loadController.signal.aborted) throw new DOMException('Repository load aborted', 'AbortError')
@@ -641,6 +675,9 @@ function App() {
         documentation,
         assets,
       }
+      setStatus('Repository content loaded. Building 50 distinct slides...')
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
+      if (loadController.signal.aborted) throw new DOMException('Repository load aborted', 'AbortError')
       const generatedScenes = buildScenes(newRepo)
       setRepositoryUrl(`https://github.com/${data.full_name}`)
       setRepository(newRepo)
