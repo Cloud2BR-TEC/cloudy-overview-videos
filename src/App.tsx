@@ -271,7 +271,7 @@ function isRepositoryNoise(value: string) {
     /^(?:last\s+updated|updated|refresh\s+date|total\s+views?|views?|build|coverage|license)\s*:/i.test(text) ||
     /\b(?:list of references|click to expand)\b/i.test(text) ||
     /\b(?:provided as[- ]is|with all faults|demonstration purposes only|assumes no liability|official guidance|microsoft sales and support|price adjustments)\b/i.test(text) ||
-    /^(?:-{3,}|={3,}|_{3,})$/.test(text)
+    /^[\s\-=_]{3,}$/.test(text)
   )
 }
 function isNarratableText(value: string) {
@@ -281,6 +281,7 @@ function isNarratableText(value: string) {
 function parseReadmeSections(readme: string): Array<{ heading: string; body: string; imageLabels: string[] }> {
   const text = readme
     .replace(/^.*agenda\.ya?ml.*$/gim, ' ')
+    .replace(/^[\s\-=_]{3,}$/gm, ' ')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/<details\b[^>]*>[\s\S]*?<\/details>/gi, ' ')
     .replace(/^.*START\s+BADGE.*$[\s\S]*?^.*END\s+BADGE.*$/gim, ' ')
@@ -303,7 +304,7 @@ function parseReadmeSections(readme: string): Array<{ heading: string; body: str
       .map((l) =>
         l
           .replace(/<[^>]+>/g, ' ')
-          .replace(/^[>\-*+]\s*/, '')
+          .replace(/^(?:[>*+]\s*|-\s+)/, '')
           .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
           .replace(/https?:\/\/\S+/gi, ' ')
           .replace(/[*_#`|!()]/g, ' ')
