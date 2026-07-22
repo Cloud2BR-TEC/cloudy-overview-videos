@@ -123,7 +123,7 @@
 .scene-editor > .video-scene-progress { flex-wrap: nowrap; overflow-x: auto; scrollbar-color: #6f99b1 #c8deea; }
 .scene-editor > .video-scene-progress .vsp-dot { flex: 0 0 auto; }
 
-.unified-stage { grid-template-columns: minmax(170px, .72fr) minmax(280px, 1.45fr) 104px; grid-template-rows: minmax(320px, 1fr) auto; }
+.unified-stage { grid-template-columns: minmax(170px, .72fr) minmax(280px, 1.45fr) 132px; grid-template-rows: minmax(320px, 1fr) auto; }
 .unified-stage .slide-left { grid-column: 1; grid-row: 1; }
 .unified-stage .slide-bullets li::before { content: '-'; font-family: 'DM Mono', monospace; font-weight: 800; }
 .slide-source-visual { position: relative; z-index: 2; display: grid; grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; margin: 0; overflow: hidden; border-left: 1px solid #47758d; background: #f5fafc; }
@@ -131,11 +131,13 @@
 .slide-source-grid.count-1 { grid-template-columns: 1fr; }
 .slide-source-grid img { width: 100%; height: 100%; min-width: 0; min-height: 0; padding: 14px; object-fit: contain; object-position: center; background: #f5fafc; }
 .slide-source-visual.empty { place-items: center; padding: 18px; color: #466474; font-size: 10px; text-align: center; }
-.unified-stage .slide-right { grid-column: 3; grid-row: 1; }
+.unified-stage .slide-right { grid-column: 3; grid-row: 1; padding-right: 12px; padding-left: 12px; }
+.unified-stage .slide-cloudy { width: 100%; min-height: unset; aspect-ratio: 1; border: 1px solid rgba(217, 238, 246, .38); border-radius: 6px; background: rgba(9, 43, 64, .18); }
+.unified-stage .slide-cloudy svg { max-width: 100%; height: auto; }
 .unified-stage .slide-narration { grid-column: 1 / -1; grid-row: 2; }
 
 @media (max-width: 760px) {
-	.unified-stage { grid-template-columns: minmax(0, 1fr) 108px; grid-template-rows: auto 180px auto; }
+	.unified-stage { grid-template-columns: minmax(0, 1fr) 120px; grid-template-rows: auto 180px auto; }
 	.unified-stage .slide-left { grid-column: 1; grid-row: 1; }
 	.unified-stage .slide-right { grid-column: 2; grid-row: 1; }
 	.slide-source-visual { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid #47758d; border-left: 0; }

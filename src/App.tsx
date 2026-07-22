@@ -908,7 +908,7 @@ function App() {
                     </figure>
                     <div className="slide-right">
                       <div className={`slide-cloudy ${isSpeaking ? 'speaking' : ''}`}>
-                        <CloudyAvatar speaking={isSpeaking} size={96} />
+                        <CloudyAvatar speaking={isSpeaking} size={88} />
                       </div>
                       {isSpeaking && (
                         <span className="talk-badge">
