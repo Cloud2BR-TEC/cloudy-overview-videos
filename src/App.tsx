@@ -28,6 +28,7 @@ type Scene = {
   assets: string[]
   assetLabel: string
   assetMatch: 'authored' | null
+  supportingText: string
 }
 type WorkflowStep = 'source' | 'story' | 'voice' | 'export'
 
@@ -158,6 +159,7 @@ const starterScenes: Scene[] = STARTER_NARRATIONS.map((narration, index) => ({
   assets: [],
   assetLabel: 'No repository visual selected',
   assetMatch: null,
+  supportingText: limitWords(narration, 55),
 }))
 
 function parseRepositoryUrl(value: string) {
@@ -414,6 +416,16 @@ function buildEvidenceBullets(evidence: string, slideTitle: string) {
 function buildTemplateNarration(evidence: string) {
   return limitWords(evidence, TARGET_NARRATION_WORDS + 4)
 }
+function buildSupportingText(sectionText: string, evidence: string) {
+  const evidenceKey = normalizedSentence(evidence)
+  const additionalText = (sectionText.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [])
+    .map((sentence) => sentence.trim())
+    .filter(isNarratableText)
+    .filter((sentence) => !evidenceKey.includes(normalizedSentence(sentence)))
+    .slice(0, 3)
+    .join(' ')
+  return limitWords(additionalText || sectionText, 70)
+}
 function hasUniqueSlideContent(scenes: Scene[]) {
   const titleKeys = scenes.map((scene) => normalizedSentence(scene.title)).filter(Boolean)
   const narrationKeys = scenes.map((scene) => normalizedSentence(scene.narration)).filter(Boolean)
@@ -472,6 +484,7 @@ function buildScenes(repo: Repository): Scene[] {
     const asset = assetSelection?.asset ?? null
     const assetLabel = asset ? repositoryAssetLabel(asset) : 'No repository visual selected'
     const narration = buildTemplateNarration(evidence)
+    const supportingText = buildSupportingText(material.body, evidence)
     const index = result.length
     const scene: Scene = {
       id: index + 1,
@@ -486,6 +499,7 @@ function buildScenes(repo: Repository): Scene[] {
       assets: asset ? [asset] : [],
       assetLabel,
       assetMatch: assetSelection?.match ?? null,
+      supportingText,
     }
     if (!hasUniqueSlideContent([...result, scene])) {
       usedEvidence.pop()
@@ -571,7 +585,7 @@ function App() {
   const inTargetRange = hasRepository && totalDuration >= 480 && totalDuration <= 720
   const narrationReady = hasRepository && scenes.length > 0 && scenes.every((scene) => scene.title.trim().length > 0 && scene.narration.trim().length > 0)
   const uniqueSlidesReady = hasRepository && scenes.length === 50 && hasUniqueSlideContent(scenes)
-  const visualsReady = hasRepository && scenes.some((scene) => scene.assetMatch === 'authored' && scene.asset)
+  const visualsReady = hasRepository && scenes.every((scene) => (scene.assetMatch === 'authored' && scene.asset) || scene.supportingText.trim().length > 0)
   const visualNarrationReady = visualsReady && hasVisualNarrationAlignment(scenes)
   const captionsReady = hasRepository && narrationReady && scenes.every((scene) => Number.isFinite(scene.duration) && scene.duration > 0)
   const isExportReady = hasRepository && inTargetRange && narrationReady && uniqueSlidesReady && visualsReady && visualNarrationReady && captionsReady
@@ -922,6 +936,22 @@ function App() {
         context.fillRect(rightX, 140, rightW, 700)
         drawContainImage(context, panelImage, rightX + 24, 164, rightW - 48, 652)
         context.restore()
+      } else {
+        context.fillStyle = '#f5fafc'
+        context.fillRect(rightX, 140, rightW, 700)
+        context.fillStyle = '#d76639'
+        context.font = '700 22px Manrope, sans-serif'
+        context.fillText('MORE FROM THIS SECTION', rightX + 44, 210)
+        context.fillStyle = '#123b39'
+        context.font = '700 38px Manrope, sans-serif'
+        wrapCanvasText(context, scene.title, rightW - 88)
+          .slice(0, 2)
+          .forEach((line, index) => context.fillText(line, rightX + 44, 270 + index * 48))
+        context.fillStyle = '#294f4b'
+        context.font = '400 28px Manrope, sans-serif'
+        wrapCanvasText(context, scene.supportingText, rightW - 88)
+          .slice(0, 9)
+          .forEach((line, index) => context.fillText(line, rightX + 44, 390 + index * 42))
       }
 
       context.fillStyle = 'rgba(10, 31, 29, .84)'
@@ -1298,7 +1328,11 @@ function App() {
                           ))}
                         </div>
                       ) : (
-                        <span>No section-specific visual was documented</span>
+                        <div className="slide-supporting-copy">
+                          <span>More from this section</span>
+                          <h3>{presentedScene.title}</h3>
+                          <p>{presentedScene.supportingText}</p>
+                        </div>
                       )}
                     </figure>
                     <div className="slide-right">
@@ -1380,7 +1414,7 @@ function App() {
             <li className={inTargetRange ? 'done' : ''}>8-12 minute runtime</li>
             <li className={narrationReady ? 'done' : ''}>Every slide has a title and narration</li>
             <li className={uniqueSlidesReady ? 'done' : ''}>All 50 slides have distinct titles, narration, and evidence</li>
-            <li className={visualsReady ? 'done' : ''}>Source visuals selected</li>
+            <li className={visualsReady ? 'done' : ''}>Every slide has a visual or supporting content</li>
             <li className={visualNarrationReady ? 'done' : ''}>Narration relates to every visual</li>
             <li className={captionsReady ? 'done' : ''}>Caption timings ready</li>
           </ul>
