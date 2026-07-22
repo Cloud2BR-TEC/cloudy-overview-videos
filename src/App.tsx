@@ -293,7 +293,6 @@ function buildTemplateNarration(primaryText: string, repositoryText: string, sli
   return narration.join(' ').trim()
 }
 function buildScenes(repo: Repository): Scene[] {
-  const subject = repo.fullName.split('/')[1].replaceAll('-', ' ')
   const sections = parseReadmeSections(repo.readme)
   const find = (pattern: RegExp) => sections.find((s) => pattern.test(s.heading) && s.body.trim().split(/\s+/).length > 8)?.body ?? ''
   const fallback = (idx: number) => sections[idx]?.body ?? ''
@@ -302,31 +301,26 @@ function buildScenes(repo: Repository): Scene[] {
 
   const groups = [
     {
-      baseTitle: `Meet ${subject}`,
-      slideTitles: ['Overview', 'Purpose', 'Audience', 'Repository context', 'Main topic', 'Technology', 'Project scope', 'Documentation map', 'Source visuals', 'Section recap'],
+      slideTitles: ['Overview', 'Purpose', 'Audience', 'Repository context', 'Main topic', 'Technology', 'Project scope', 'Documentation map', 'Source visuals', 'Repository recap'],
       visual: 'Repository cover and Cloudy host',
       text: limitWords([repo.description ?? '', repo.language ? `Built with ${repo.language}.` : '', repo.topics.length ? `Topics: ${repo.topics.slice(0, 4).join(', ')}.` : '', fallback(0)].filter(Boolean).join(' '), MAX),
     },
     {
-      baseTitle: 'What you will learn',
-      slideTitles: ['Learning goals', 'Core concepts', 'Key features', 'Important terminology', 'Expected outcomes', 'Knowledge map', 'Repository highlights', 'Documentation signals', 'Practical context', 'Section recap'],
+      slideTitles: ['Learning goals', 'Core concepts', 'Key features', 'Important terminology', 'Expected outcomes', 'Knowledge map', 'Repository highlights', 'Documentation signals', 'Practical context', 'Learning recap'],
       visual: 'README highlights and course map',
       text: limitWords(find(/features?|overview|about\b|what\s+(it|this|we|you)|highlights?|key\s+point|objective|goal|purpose/i) || fallback(1) || `This repository contains ${repo.language || 'source'} code${repo.topics.length ? ` focused on ${repo.topics.slice(0, 3).join(', ')}` : ''}.`, MAX),
     },
     {
-      baseTitle: 'Explore the project',
-      slideTitles: ['Project structure', 'Architecture', 'Main components', 'Configuration', 'Dependencies', 'Setup path', 'Documentation', 'Repository assets', 'Project workflow', 'Section recap'],
+      slideTitles: ['Project structure', 'Architecture', 'Main components', 'Configuration', 'Dependencies', 'Setup path', 'Documentation', 'Repository assets', 'Project workflow', 'Project recap'],
       visual: repo.assets.length ? 'Repository images and guided source tour' : 'Annotated repository tree',
       text: limitWords(find(/install|setup|getting[\s-]started|structure|architecture|prerequisites?|requirements?|configur|depend/i) || fallback(2) || 'Follow the repository documentation and README to understand the project structure.', MAX),
     },
     {
-      baseTitle: 'Put it into practice',
-      slideTitles: ['Getting started', 'First step', 'Core workflow', 'Example path', 'Using the project', 'Checking results', 'Common sequence', 'Source reference', 'Practical outcome', 'Section recap'],
+      slideTitles: ['Getting started', 'First step', 'Core workflow', 'Example path', 'Using the project', 'Checking results', 'Common sequence', 'Source reference', 'Practical outcome', 'Practice recap'],
       visual: 'Workflow steps and source imagery',
       text: limitWords(find(/usage|example|how[\s-]to|tutorial|guide|quickstart|api\b|demo|walkthrough/i) || fallback(3) || `Clone the repository and follow the workflow described in the documentation.`, MAX),
     },
     {
-      baseTitle: 'Keep learning',
       slideTitles: ['Review', 'Key takeaway', 'Further reading', 'Related resources', 'Open issues', 'Contributing', 'Next experiment', 'Repository reference', 'Suggested next step', 'Final recap'],
       visual: 'Next steps card',
       text: limitWords(find(/contribut|resource|further|next[\s-]step|learn[\s-]more|reference|acknowledgment|credit|community|roadmap/i) || sections[sections.length - 1]?.body || `Continue learning by exploring open issues and related projects.`, MAX),
@@ -337,7 +331,7 @@ function buildScenes(repo: Repository): Scene[] {
   let id = 1
   groups.forEach((group, groupIndex) => {
     group.slideTitles.forEach((slideTitle, slideIndex) => {
-      const title = `${group.baseTitle}: ${slideTitle}`
+      const title = slideTitle
       const asset = repo.assets.length ? repo.assets[(id - 1) % repo.assets.length] : null
       const assetLabel = asset ? repositoryAssetLabel(asset) : 'No repository visual selected'
       const narration = buildTemplateNarration(group.text, repositoryText, groupIndex * SLIDES_PER_SECTION + slideIndex, title, assetLabel)
@@ -1124,7 +1118,7 @@ function App() {
                   </div>
                   <div className="editor-fields">
                     <label>
-                      Section title
+                      Slide title
                       <input value={selectedScene.title} onChange={(event) => updateScene('title', event.target.value)} />
                     </label>
                     <label>
@@ -1164,7 +1158,7 @@ function App() {
           <ul className="checklist">
             <li className={repository ? 'done' : ''}>Repository source captured</li>
             <li className={inTargetRange ? 'done' : ''}>8-12 minute runtime</li>
-            <li className={narrationReady ? 'done' : ''}>Every section has title and narration</li>
+            <li className={narrationReady ? 'done' : ''}>Every slide has a title and narration</li>
             <li className={visualsReady ? 'done' : ''}>Source visuals selected</li>
             <li className={captionsReady ? 'done' : ''}>Caption timings ready</li>
           </ul>
