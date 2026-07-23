@@ -2245,8 +2245,6 @@ function App() {
                   </div>
                   <div className="short-stage-host">
                     <CloudyAvatar speaking={isShortPreviewPlaying} size={156} />
-                    <span>Protagonist</span>
-                    <span>{durationLabel(shortRuntime)}</span>
                   </div>
                   <span className="shorts-watermark" aria-hidden="true">Cloud2BR</span>
                 </article>
