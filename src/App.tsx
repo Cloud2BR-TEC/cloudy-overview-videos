@@ -2,13 +2,80 @@ import { useRef, useState } from 'react'
 import './App.css'
 import CloudyAvatar from './CloudyAvatar'
 
-const shortTemplateUrls = [
-  new URL('./assets/templates/short-intro.svg', import.meta.url).href,
-  new URL('./assets/templates/short-presenting.svg', import.meta.url).href,
-  new URL('./assets/templates/short-whiteboard.svg', import.meta.url).href,
-  new URL('./assets/templates/short-diagram.svg', import.meta.url).href,
-  new URL('./assets/templates/short-recap.svg', import.meta.url).href,
+// Every short slide is displayed for a fixed window so a new template appears on a steady cadence.
+const SHORT_SLIDE_SECONDS = 10
+
+// Full library of short-form background templates. Order here defines their index in templateImages.
+const SHORT_TEMPLATES = [
+  { key: 'hero', url: new URL('./assets/templates/short-hero.svg', import.meta.url).href },
+  { key: 'intro', url: new URL('./assets/templates/short-intro.svg', import.meta.url).href },
+  { key: 'presenting', url: new URL('./assets/templates/short-presenting.svg', import.meta.url).href },
+  { key: 'whiteboard', url: new URL('./assets/templates/short-whiteboard.svg', import.meta.url).href },
+  { key: 'diagram', url: new URL('./assets/templates/short-diagram.svg', import.meta.url).href },
+  { key: 'timeline', url: new URL('./assets/templates/short-timeline.svg', import.meta.url).href },
+  { key: 'comparison', url: new URL('./assets/templates/short-comparison.svg', import.meta.url).href },
+  { key: 'quote', url: new URL('./assets/templates/short-quote.svg', import.meta.url).href },
+  { key: 'stats', url: new URL('./assets/templates/short-stats.svg', import.meta.url).href },
+  { key: 'code', url: new URL('./assets/templates/short-code.svg', import.meta.url).href },
+  { key: 'terminal', url: new URL('./assets/templates/short-terminal.svg', import.meta.url).href },
+  { key: 'steps', url: new URL('./assets/templates/short-steps.svg', import.meta.url).href },
+  { key: 'question', url: new URL('./assets/templates/short-question.svg', import.meta.url).href },
+  { key: 'checklist', url: new URL('./assets/templates/short-checklist.svg', import.meta.url).href },
+  { key: 'gallery', url: new URL('./assets/templates/short-gallery.svg', import.meta.url).href },
+  { key: 'callout', url: new URL('./assets/templates/short-callout.svg', import.meta.url).href },
+  { key: 'roadmap', url: new URL('./assets/templates/short-roadmap.svg', import.meta.url).href },
+  { key: 'recap', url: new URL('./assets/templates/short-recap.svg', import.meta.url).href },
+  { key: 'outro', url: new URL('./assets/templates/short-outro.svg', import.meta.url).href },
+] as const
+
+const SHORT_TEMPLATE_INDEX: Record<string, number> = Object.fromEntries(SHORT_TEMPLATES.map((template, index) => [template.key, index]))
+
+// Content-aware keyword rules used to pick the most fitting template for each slide's text.
+const SHORT_TEMPLATE_KEYWORDS: { key: string; pattern: RegExp }[] = [
+  { key: 'code', pattern: /\b(code|function|class|method|api|syntax|variable|parameter|import|export|snippet)\b/i },
+  { key: 'terminal', pattern: /\b(terminal|command|cli|bash|shell|run|install|npm|yarn|build|deploy|script|compile)\b/i },
+  { key: 'comparison', pattern: /\b(compare|comparison|versus|vs\.?|difference|better|worse|pros|cons|trade-?off|alternative)\b/i },
+  { key: 'steps', pattern: /\b(step|first|second|third|then|next|finally|process|setup|configure|guide|tutorial|follow)\b/i },
+  { key: 'timeline', pattern: /\b(timeline|history|evolution|phase|stage|began|started|origin|milestone|over time)\b/i },
+  { key: 'roadmap', pattern: /\b(roadmap|future|upcoming|vision|plan|goal|next steps|direction)\b/i },
+  { key: 'stats', pattern: /\b(stat|statistic|number|percent|metric|performance|benchmark|faster|speed|growth|scale|users)\b/i },
+  { key: 'quote', pattern: /\b(quote|said|according|philosophy|principle|belief|motto|says|famously)\b/i },
+  { key: 'question', pattern: /\b(question|why|what if|ever wondered|imagine|consider|curious|ask yourself)\b/i },
+  { key: 'checklist', pattern: /\b(checklist|requirement|ensure|must|need to|best practice|guideline|criteria|rules?)\b/i },
+  { key: 'gallery', pattern: /\b(gallery|example|showcase|screenshot|visual|images?|photos?|demo|preview)\b/i },
+  { key: 'callout', pattern: /\b(warning|important|caution|note|avoid|careful|mistake|pitfall|watch out|critical)\b/i },
+  { key: 'diagram', pattern: /\b(diagram|architecture|structure|component|system|relationship|flow|module|layer|pipeline)\b/i },
+  { key: 'whiteboard', pattern: /\b(concept|explain|idea|theory|learn|understand|fundamental|basics|principle)\b/i },
+  { key: 'presenting', pattern: /\b(feature|overview|introduction|introduce|present|demo|capability|highlight|showcase)\b/i },
 ]
+
+// Rotation used when no keyword matches so slides still vary and the whole library gets leveraged.
+const SHORT_TEMPLATE_ROTATION = ['presenting', 'whiteboard', 'diagram', 'timeline', 'steps', 'stats', 'gallery', 'comparison', 'checklist', 'roadmap', 'code', 'terminal', 'quote', 'question', 'callout']
+
+function shortSlideDuration(playbackSpeed: number) {
+  return SHORT_SLIDE_SECONDS / playbackSpeed
+}
+
+// Choose the best-fitting template key for a slide given its position and text.
+function pickShortTemplateKey(text: string, index: number, total: number, usedKeys: Set<string>) {
+  if (index === 0) return 'hero'
+  if (total > 1 && index === total - 1) return 'outro'
+  for (const { key, pattern } of SHORT_TEMPLATE_KEYWORDS) {
+    if (pattern.test(text) && !usedKeys.has(key)) return key
+  }
+  const available = SHORT_TEMPLATE_ROTATION.filter((key) => !usedKeys.has(key))
+  return available[index % available.length] ?? SHORT_TEMPLATE_ROTATION[index % SHORT_TEMPLATE_ROTATION.length]
+}
+
+// Build the per-slide template index list (content-aware, avoids repeats) for a set of short scenes.
+function planShortTemplateIndices(slides: { title: string; narration: string }[]) {
+  const usedKeys = new Set<string>()
+  return slides.map((slide, index) => {
+    const key = pickShortTemplateKey(`${slide.title} ${slide.narration}`, index, slides.length, usedKeys)
+    usedKeys.add(key)
+    return SHORT_TEMPLATE_INDEX[key] ?? 0
+  })
+}
 
 type Repository = {
   fullName: string
@@ -732,7 +799,7 @@ function App() {
   const shortTopic = scenes.find((scene) => scene.id === shortTopicId) ?? scenes[0]
   const shortSourceScenes = scenes.filter((scene) => scene.section === shortTopic.section).slice(0, 5)
   const shortNarration = shortSourceScenes.map((scene) => scene.narration).join(' ')
-  const shortRuntime = shortSourceScenes.reduce((total, scene) => total + effectiveSceneDuration(scene, playbackSpeed), 0)
+  const shortRuntime = shortSourceScenes.reduce((total) => total + shortSlideDuration(playbackSpeed), 0)
   const shortAssetEntries = [
     { kind: 'cloudy', name: 'Cloudy', detail: 'Protagonist — flies through each world', image: null },
     { kind: 'concept', name: shortTopic.title, detail: 'Topic environment theme', image: null },
@@ -1432,18 +1499,30 @@ function App() {
       if (shortPreviewAbortRef.current || runId !== shortPreviewRunIdRef.current) break
       setShortPreviewBeatIdx(i)
       await new Promise<void>((resolve) => {
+        let settled = false
+        const finish = () => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(slideTimer)
+          resolve()
+        }
         window.speechSynthesis.cancel()
         const utterance = new SpeechSynthesisUtterance(shortSourceScenes[i].narration)
         utterance.voice = voice
         utterance.lang = voice.lang ?? 'en-US'
         utterance.rate = VOICE_RATE * playbackSpeed
         utterance.pitch = 1
-        utterance.onend = () => resolve()
-        utterance.onerror = () => resolve()
+        utterance.onend = finish
+        utterance.onerror = finish
+        // Advance to the next slide after a fixed 10-second window even if narration runs longer.
+        const slideTimer = window.setTimeout(() => {
+          window.speechSynthesis.cancel()
+          finish()
+        }, shortSlideDuration(playbackSpeed) * 1000)
         window.speechSynthesis.speak(utterance)
       })
       if (!shortPreviewAbortRef.current && runId === shortPreviewRunIdRef.current && i < shortSourceScenes.length - 1) {
-        await new Promise<void>((resolve) => window.setTimeout(resolve, 300))
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 150))
       }
     }
     if (runId !== shortPreviewRunIdRef.current) return
@@ -1506,7 +1585,7 @@ function App() {
     const assetImages = await Promise.all(usedAssets.map((asset) => loadImage(asset).catch(() => null)))
     const assetImageByUrl = new Map(usedAssets.map((asset, i) => [asset, assetImages[i]]))
     const templateImages: (HTMLCanvasElement | null)[] = await Promise.all(
-      shortTemplateUrls.map(async (url) => {
+      SHORT_TEMPLATES.map(async ({ url }) => {
         try {
           const response = await fetch(url)
           const svgText = await response.text()
@@ -1570,7 +1649,9 @@ function App() {
     const chunks: BlobPart[] = []
     recorder.addEventListener('dataavailable', (event) => { if (event.data.size) chunks.push(event.data) })
     const videoReady = new Promise<Blob>((resolve) => recorder.addEventListener('stop', () => resolve(new Blob(chunks, { type: 'video/webm' })), { once: true }))
-    const totalSeconds = shortSourceScenes.reduce((total, scene) => total + effectiveSceneDuration(scene, playbackSpeed), 0)
+    const totalSeconds = shortSourceScenes.reduce((total) => total + shortSlideDuration(playbackSpeed), 0)
+    // Content-aware template per slide so every 10s window shows the most fitting background.
+    const slideTemplateIndices = planShortTemplateIndices(shortSourceScenes)
     const startedAt = performance.now()
     setShortRenderProgress(30)
     setStatus('Rendering your Cloudy Short film. Keep this tab active.')
@@ -1579,10 +1660,11 @@ function App() {
     let activeSource: AudioBufferSourceNode | null = null
 
     const drawShortFrame = (elapsed: number) => {
+      const slideDuration = shortSlideDuration(playbackSpeed)
       let offset = 0
       let sceneIdx = shortSourceScenes.length - 1
-      const scene = shortSourceScenes.find((item, i) => {
-        offset += effectiveSceneDuration(item, playbackSpeed)
+      const scene = shortSourceScenes.find((_item, i) => {
+        offset += slideDuration
         if (elapsed < offset) { sceneIdx = i; return true }
         return false
       }) ?? shortSourceScenes[shortSourceScenes.length - 1]
@@ -1596,7 +1678,7 @@ function App() {
         activeSource = source
         source.start()
       }
-      const sceneDuration = effectiveSceneDuration(scene, playbackSpeed)
+      const sceneDuration = shortSlideDuration(playbackSpeed)
       const sceneElapsed = elapsed - (offset - sceneDuration)
       const sceneProgress = Math.min(1, sceneElapsed / sceneDuration)
       const entrance = Math.min(1, sceneElapsed / 0.6)
@@ -1614,8 +1696,8 @@ function App() {
       const actions = ['intro', 'presenting', 'whiteboard', 'diagram', 'farewell'] as const
       const action = actions[sceneIdx % actions.length]
 
-      // ── Background: template or fallback gradient ──
-      const tpl = templateImages[sceneIdx % templateImages.length]
+      // ── Background: content-aware template or fallback gradient ──
+      const tpl = templateImages[slideTemplateIndices[sceneIdx] ?? 0]
       if (tpl) {
         ctx.drawImage(tpl, 0, 0, W, H)
       } else {

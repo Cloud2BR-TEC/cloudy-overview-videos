@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#0f2027"/>
+      <stop offset="100%" stop-color="#182f37"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
+      <stop offset="0%" stop-color="#4db6ac" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#4db6ac" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#d9f2ef"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#04120f" flood-opacity="0.4"/>
+    </filter>
+    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#04120f" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="540" cy="440" r="420" fill="url(#glow)"/>
+
+  <!-- Code window -->
+  <g filter="url(#soft)">
+    <rect x="70" y="230" width="940" height="820" rx="22" fill="#0b1a1f"/>
+  </g>
+  <rect x="70" y="230" width="940" height="64" rx="22" fill="#12262d"/>
+  <rect x="70" y="272" width="940" height="22" fill="#12262d"/>
+  <circle cx="112" cy="262" r="10" fill="#ff5f56"/>
+  <circle cx="150" cy="262" r="10" fill="#ffbd2e"/>
+  <circle cx="188" cy="262" r="10" fill="#27c93f"/>
+  <text x="540" y="269" fill="#4db6ac" font-family="'DM Mono', monospace" font-size="20" font-weight="700" text-anchor="middle" opacity="0.7">main.ts</text>
+
+  <!-- Code lines -->
+  <g font-family="'DM Mono', monospace" font-size="24">
+    <text x="110" y="360" fill="#6b8a86">01</text>
+    <rect x="170" y="342" width="300" height="20" rx="10" fill="#c792ea" opacity="0.5"/>
+    <rect x="486" y="342" width="180" height="20" rx="10" fill="#82aaff" opacity="0.5"/>
+    <text x="110" y="410" fill="#6b8a86">02</text>
+    <rect x="210" y="392" width="240" height="20" rx="10" fill="#4db6ac" opacity="0.6"/>
+    <rect x="466" y="392" width="360" height="20" rx="10" fill="#ffffff" opacity="0.14"/>
+    <text x="110" y="460" fill="#6b8a86">03</text>
+    <rect x="250" y="442" width="200" height="20" rx="10" fill="#f78c6c" opacity="0.6"/>
+    <rect x="466" y="442" width="300" height="20" rx="10" fill="#ffffff" opacity="0.14"/>
+    <text x="110" y="510" fill="#6b8a86">04</text>
+    <rect x="250" y="492" width="420" height="20" rx="10" fill="#ffffff" opacity="0.14"/>
+    <text x="110" y="560" fill="#6b8a86">05</text>
+    <rect x="210" y="542" width="180" height="20" rx="10" fill="#c3e88d" opacity="0.6"/>
+    <text x="110" y="610" fill="#6b8a86">06</text>
+    <rect x="170" y="592" width="120" height="20" rx="10" fill="#c792ea" opacity="0.5"/>
+    <text x="110" y="660" fill="#6b8a86">07</text>
+    <rect x="250" y="642" width="360" height="20" rx="10" fill="#ffffff" opacity="0.14"/>
+    <text x="110" y="710" fill="#6b8a86">08</text>
+    <rect x="170" y="692" width="80" height="20" rx="10" fill="#82aaff" opacity="0.5"/>
+  </g>
+
+  <!-- Cloud head only -->
+  <g transform="translate(880, 940)" filter="url(#cloudShadow)">
+    <g>
+      <circle cx="-34" cy="12" r="38" fill="url(#cloudFill)"/>
+      <circle cx="34" cy="12" r="38" fill="url(#cloudFill)"/>
+      <circle cx="-16" cy="-22" r="32" fill="url(#cloudFill)"/>
+      <circle cx="18" cy="-22" r="32" fill="url(#cloudFill)"/>
+      <ellipse cx="0" cy="16" rx="60" ry="42" fill="url(#cloudFill)"/>
+    </g>
+    <polygon points="-38,-30 0,-46 38,-30 0,-14" fill="#2c5f7c"/>
+    <ellipse cx="-14" cy="2" rx="8" ry="10" fill="#fff"/>
+    <circle cx="-13" cy="4" r="5.5" fill="#25384a"/>
+    <ellipse cx="14" cy="2" rx="8" ry="10" fill="#fff"/>
+    <circle cx="15" cy="4" r="5.5" fill="#25384a"/>
+    <path d="M-8,20 Q0,28 8,20" fill="none" stroke="#d45b5b" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Narration -->
+  <g filter="url(#soft)">
+    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#04120f" opacity="0.92"/>
+  </g>
+  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#4db6ac"/>
+  <text x="90" y="1614" fill="#a5e0d9" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
+  <rect x="0" y="1884" width="1080" height="8" fill="#ffffff" opacity="0.12"/>
+  <rect x="0" y="1884" width="360" height="8" fill="#4db6ac"/>
+</svg>

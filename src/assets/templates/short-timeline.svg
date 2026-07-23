@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#0d2e33"/>
+      <stop offset="100%" stop-color="#134a52"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#26c6da" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#26c6da" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#dff5f8"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#04191c" flood-opacity="0.4"/>
+    </filter>
+    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#04191c" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="860" cy="380" r="360" fill="url(#glow)"/>
+
+  <!-- Eyebrow chip -->
+  <rect x="80" y="180" width="330" height="66" rx="33" fill="#0a2529" opacity="0.85"/>
+  <rect x="104" y="202" width="14" height="22" rx="7" fill="#26c6da"/>
+  <text x="134" y="221" fill="#a6ecf3" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="3">TIMELINE</text>
+
+  <!-- Cloud head only -->
+  <g transform="translate(860, 250)" filter="url(#cloudShadow)">
+    <g>
+      <circle cx="-38" cy="14" r="42" fill="url(#cloudFill)"/>
+      <circle cx="38" cy="14" r="42" fill="url(#cloudFill)"/>
+      <circle cx="-18" cy="-24" r="36" fill="url(#cloudFill)"/>
+      <circle cx="20" cy="-24" r="36" fill="url(#cloudFill)"/>
+      <ellipse cx="0" cy="18" rx="66" ry="46" fill="url(#cloudFill)"/>
+    </g>
+    <polygon points="-42,-34 0,-52 42,-34 0,-16" fill="#2c5f7c"/>
+    <ellipse cx="-15" cy="2" rx="9" ry="11" fill="#fff"/>
+    <circle cx="-14" cy="4" r="6" fill="#25384a"/>
+    <ellipse cx="15" cy="2" rx="9" ry="11" fill="#fff"/>
+    <circle cx="16" cy="4" r="6" fill="#25384a"/>
+    <path d="M-9,22 Q0,31 9,22" fill="none" stroke="#d45b5b" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="-30" cy="16" rx="9" ry="5" fill="#ffb4b4" opacity="0.4"/>
+    <ellipse cx="30" cy="16" rx="9" ry="5" fill="#ffb4b4" opacity="0.4"/>
+  </g>
+
+  <!-- Vertical timeline -->
+  <line x1="150" y1="400" x2="150" y2="1200" stroke="#26c6da" stroke-width="4" opacity="0.4"/>
+  <g>
+    <circle cx="150" cy="470" r="22" fill="#26c6da"/>
+    <text x="150" y="478" fill="#04191c" font-family="'Segoe UI', sans-serif" font-size="22" font-weight="800" text-anchor="middle">1</text>
+    <rect x="210" y="440" width="770" height="120" rx="18" fill="#ffffff" opacity="0.07"/>
+    <rect x="238" y="470" width="380" height="22" rx="11" fill="#ffffff" opacity="0.14"/>
+    <rect x="238" y="506" width="620" height="18" rx="9" fill="#ffffff" opacity="0.08"/>
+
+    <circle cx="150" cy="660" r="22" fill="#26c6da"/>
+    <text x="150" y="668" fill="#04191c" font-family="'Segoe UI', sans-serif" font-size="22" font-weight="800" text-anchor="middle">2</text>
+    <rect x="210" y="630" width="770" height="120" rx="18" fill="#ffffff" opacity="0.07"/>
+    <rect x="238" y="660" width="380" height="22" rx="11" fill="#ffffff" opacity="0.14"/>
+    <rect x="238" y="696" width="620" height="18" rx="9" fill="#ffffff" opacity="0.08"/>
+
+    <circle cx="150" cy="850" r="22" fill="#26c6da"/>
+    <text x="150" y="858" fill="#04191c" font-family="'Segoe UI', sans-serif" font-size="22" font-weight="800" text-anchor="middle">3</text>
+    <rect x="210" y="820" width="770" height="120" rx="18" fill="#ffffff" opacity="0.07"/>
+    <rect x="238" y="850" width="380" height="22" rx="11" fill="#ffffff" opacity="0.14"/>
+    <rect x="238" y="886" width="620" height="18" rx="9" fill="#ffffff" opacity="0.08"/>
+
+    <circle cx="150" cy="1040" r="22" fill="#26c6da"/>
+    <text x="150" y="1048" fill="#04191c" font-family="'Segoe UI', sans-serif" font-size="22" font-weight="800" text-anchor="middle">4</text>
+    <rect x="210" y="1010" width="770" height="120" rx="18" fill="#ffffff" opacity="0.07"/>
+    <rect x="238" y="1040" width="380" height="22" rx="11" fill="#ffffff" opacity="0.14"/>
+    <rect x="238" y="1076" width="620" height="18" rx="9" fill="#ffffff" opacity="0.08"/>
+  </g>
+
+  <!-- Narration -->
+  <g filter="url(#soft)">
+    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#04191c" opacity="0.92"/>
+  </g>
+  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#26c6da"/>
+  <text x="90" y="1614" fill="#a6ecf3" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
+  <rect x="0" y="1884" width="1080" height="8" fill="#ffffff" opacity="0.12"/>
+  <rect x="0" y="1884" width="360" height="8" fill="#26c6da"/>
+</svg>

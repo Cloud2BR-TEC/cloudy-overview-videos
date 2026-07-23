@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#123b39"/>
+      <stop offset="55%" stop-color="#1d5b51"/>
+      <stop offset="100%" stop-color="#c85f37"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.55">
+      <stop offset="0%" stop-color="#f5a975" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#f5a975" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffc08f"/>
+      <stop offset="100%" stop-color="#e8824a"/>
+    </linearGradient>
+    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e6f2ee"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="18" stdDeviation="26" flood-color="#04141d" flood-opacity="0.42"/>
+    </filter>
+    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#04141d" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="540" cy="640" r="460" fill="url(#glow)"/>
+
+  <!-- Thank you chip -->
+  <rect x="360" y="220" width="360" height="70" rx="35" fill="#04231f" opacity="0.7"/>
+  <text x="540" y="265" fill="#ffd8bd" font-family="'Segoe UI', sans-serif" font-size="26" font-weight="800" letter-spacing="3" text-anchor="middle">THANKS FOR WATCHING</text>
+
+  <!-- Cloud head only waving/celebrating -->
+  <g transform="translate(540, 620)" filter="url(#cloudShadow)">
+    <g>
+      <circle cx="-58" cy="22" r="64" fill="url(#cloudFill)"/>
+      <circle cx="58" cy="22" r="64" fill="url(#cloudFill)"/>
+      <circle cx="-30" cy="-38" r="54" fill="url(#cloudFill)"/>
+      <circle cx="34" cy="-38" r="54" fill="url(#cloudFill)"/>
+      <ellipse cx="0" cy="28" rx="102" ry="70" fill="url(#cloudFill)"/>
+    </g>
+    <polygon points="-66,-50 0,-78 66,-50 0,-22" fill="#22506a"/>
+    <polygon points="-66,-50 0,-72 66,-50 0,-28" fill="#2c5f7c"/>
+    <path d="M42,-40 L42,8" stroke="#f5a975" stroke-width="5.5" stroke-linecap="round"/>
+    <circle cx="42" cy="12" r="7" fill="#f5a975"/>
+    <ellipse cx="-24" cy="2" rx="14" ry="16" fill="#fff"/>
+    <circle cx="-23" cy="4" r="9" fill="#25384a"/>
+    <circle cx="-19" cy="-1" r="3.5" fill="#fff"/>
+    <ellipse cx="24" cy="2" rx="14" ry="16" fill="#fff"/>
+    <circle cx="25" cy="4" r="9" fill="#25384a"/>
+    <circle cx="29" cy="-1" r="3.5" fill="#fff"/>
+    <path d="M-16,28 Q0,46 16,28" fill="none" stroke="#d45b5b" stroke-width="6.5" stroke-linecap="round"/>
+    <ellipse cx="-48" cy="22" rx="13" ry="8" fill="#ffb4b4" opacity="0.4"/>
+    <ellipse cx="48" cy="22" rx="13" ry="8" fill="#ffb4b4" opacity="0.4"/>
+  </g>
+
+  <!-- CTA buttons -->
+  <g filter="url(#soft)">
+    <rect x="180" y="900" width="720" height="110" rx="26" fill="url(#accent)"/>
+  </g>
+  <text x="540" y="968" fill="#3a1c10" font-family="'Segoe UI', sans-serif" font-size="30" font-weight="800" letter-spacing="1" text-anchor="middle">FOLLOW FOR MORE</text>
+  <rect x="240" y="1050" width="600" height="90" rx="22" fill="#ffffff" opacity="0.10"/>
+  <text x="540" y="1106" fill="#ffe4d4" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="700" letter-spacing="1" text-anchor="middle">Cloud2BR</text>
+
+  <!-- Narration -->
+  <g filter="url(#soft)">
+    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#04141d" opacity="0.92"/>
+  </g>
+  <rect x="66" y="1584" width="6" height="66" rx="3" fill="url(#accent)"/>
+  <text x="90" y="1614" fill="#ffd8bd" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
+  <rect x="0" y="1884" width="1080" height="8" fill="#ffffff" opacity="0.12"/>
+  <rect x="0" y="1884" width="1080" height="8" fill="url(#accent)"/>
+</svg>

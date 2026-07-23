@@ -1,78 +1,100 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fdf4e8"/>
-      <stop offset="100%" stop-color="#f8e8d0"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#fef6ea"/>
+      <stop offset="100%" stop-color="#f7e4c8"/>
     </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ffb74d" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffb74d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fbeede"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#5a3410" flood-opacity="0.20"/>
+    </filter>
+    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#5a3410" flood-opacity="0.25"/>
+    </filter>
   </defs>
-  <!-- Background -->
+
   <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="540" cy="820" r="420" fill="url(#glow)"/>
+
   <!-- Recap card -->
-  <rect x="60" y="70" width="960" height="500" rx="16" fill="#00000008"/>
-  <!-- Title area -->
-  <rect x="100" y="110" width="560" height="50" rx="4" fill="none" stroke="#ffb74d80" stroke-width="2" stroke-dasharray="6 4"/>
-  <text x="116" y="142" fill="#ffb74d80" font-family="sans-serif" font-size="14" font-weight="700">RECAP TITLE</text>
+  <g filter="url(#soft)">
+    <rect x="60" y="70" width="960" height="500" rx="24" fill="#ffffff" opacity="0.65"/>
+  </g>
+  <rect x="96" y="106" width="380" height="52" rx="26" fill="#ffb74d" opacity="0.2"/>
+  <rect x="114" y="124" width="14" height="16" rx="7" fill="#d98a2b"/>
+  <text x="140" y="142" fill="#c07d1f" font-family="'Segoe UI', sans-serif" font-size="22" font-weight="800" letter-spacing="2">RECAP TITLE</text>
+
   <!-- Checkmark items -->
   <g>
-    <text x="100" y="210" fill="#57ab5a" font-family="sans-serif" font-size="26" font-weight="700">✓</text>
-    <rect x="136" y="192" width="840" height="28" rx="4" fill="#57ab5a08"/>
-    <text x="140" y="214" fill="#2c3e5040" font-family="sans-serif" font-size="12">KEY POINT 1</text>
-    <text x="100" y="262" fill="#57ab5a" font-family="sans-serif" font-size="26" font-weight="700">✓</text>
-    <rect x="136" y="244" width="840" height="28" rx="4" fill="#57ab5a08"/>
-    <text x="140" y="266" fill="#2c3e5040" font-family="sans-serif" font-size="12">KEY POINT 2</text>
-    <text x="100" y="314" fill="#57ab5a" font-family="sans-serif" font-size="26" font-weight="700">✓</text>
-    <rect x="136" y="296" width="840" height="28" rx="4" fill="#57ab5a08"/>
-    <text x="140" y="318" fill="#2c3e5040" font-family="sans-serif" font-size="12">KEY POINT 3</text>
-    <text x="100" y="366" fill="#57ab5a" font-family="sans-serif" font-size="26" font-weight="700">✓</text>
-    <rect x="136" y="348" width="840" height="28" rx="4" fill="#57ab5a08"/>
-    <text x="140" y="370" fill="#2c3e5040" font-family="sans-serif" font-size="12">KEY POINT 4</text>
+    <circle cx="118" cy="212" r="20" fill="#57ab5a"/>
+    <path d="M108,212 l7,8 l14,-16" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="156" y="196" width="820" height="30" rx="15" fill="#57ab5a" opacity="0.10"/>
+
+    <circle cx="118" cy="278" r="20" fill="#57ab5a"/>
+    <path d="M108,278 l7,8 l14,-16" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="156" y="262" width="820" height="30" rx="15" fill="#57ab5a" opacity="0.10"/>
+
+    <circle cx="118" cy="344" r="20" fill="#57ab5a"/>
+    <path d="M108,344 l7,8 l14,-16" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="156" y="328" width="820" height="30" rx="15" fill="#57ab5a" opacity="0.10"/>
+
+    <circle cx="118" cy="410" r="20" fill="#57ab5a"/>
+    <path d="M108,410 l7,8 l14,-16" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="156" y="394" width="700" height="30" rx="15" fill="#57ab5a" opacity="0.10"/>
   </g>
-  <!-- Cloudy celebrating (center, big) -->
-  <g transform="translate(540, 780)">
-    <ellipse cx="0" cy="20" rx="76" ry="62" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2.5"/>
-    <circle cx="0" cy="-32" r="52" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2.5"/>
-    <circle cx="-32" cy="-18" r="32" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2.5"/>
-    <circle cx="32" cy="-18" r="32" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2.5"/>
-    <circle cx="-18" cy="-60" r="28" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2.5"/>
-    <circle cx="18" cy="-60" r="28" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2.5"/>
-    <polygon points="-42,-72 0,-90 42,-72 0,-60" fill="#2c5f7c"/>
-    <line x1="0" y1="-74" x2="30" y2="-56" stroke="#f5a975" stroke-width="3.5"/>
-    <ellipse cx="-18" cy="-36" rx="10" ry="12" fill="#fff"/>
-    <circle cx="-18" cy="-36" r="7" fill="#2c3e50"/>
-    <circle cx="-15" cy="-39" r="3" fill="#fff"/>
-    <ellipse cx="18" cy="-36" rx="10" ry="12" fill="#fff"/>
-    <circle cx="18" cy="-36" r="7" fill="#2c3e50"/>
-    <circle cx="21" cy="-39" r="3" fill="#fff"/>
-    <ellipse cx="0" cy="-12" rx="11" ry="8" fill="#d45b5b"/>
-    <ellipse cx="-36" cy="-22" rx="10" ry="6" fill="#ffb4b4" opacity="0.3"/>
-    <ellipse cx="36" cy="-22" rx="10" ry="6" fill="#ffb4b4" opacity="0.3"/>
-    <!-- Arms up celebrating -->
-    <line x1="-60" y1="4" x2="-90" y2="-60" stroke="#4a7c9c" stroke-width="9" stroke-linecap="round"/>
-    <circle cx="-94" cy="-64" r="10" fill="#f0f8ff"/>
-    <line x1="60" y1="4" x2="90" y2="-60" stroke="#4a7c9c" stroke-width="9" stroke-linecap="round"/>
-    <circle cx="94" cy="-64" r="10" fill="#f0f8ff"/>
-    <!-- Legs -->
-    <line x1="-22" y1="76" x2="-28" y2="130" stroke="#4a7c9c" stroke-width="9" stroke-linecap="round"/>
-    <ellipse cx="-28" cy="136" rx="16" ry="8" fill="#3a6a88"/>
-    <line x1="22" y1="76" x2="28" y2="130" stroke="#4a7c9c" stroke-width="9" stroke-linecap="round"/>
-    <ellipse cx="28" cy="136" rx="16" ry="8" fill="#3a6a88"/>
-  </g>
+
   <!-- Confetti -->
   <g>
-    <rect x="180" y="660" width="12" height="12" rx="1" fill="#f5a975" transform="rotate(25 186 666)"/>
-    <rect x="320" y="620" width="12" height="12" rx="1" fill="#4fc3f7" transform="rotate(40 326 626)"/>
-    <rect x="700" y="640" width="12" height="12" rx="1" fill="#ce93d8" transform="rotate(15 706 646)"/>
-    <rect x="850" y="680" width="12" height="12" rx="1" fill="#81c784" transform="rotate(50 856 686)"/>
-    <rect x="440" y="600" width="12" height="12" rx="1" fill="#ffb74d" transform="rotate(30 446 606)"/>
-    <rect x="240" y="740" width="10" height="10" rx="1" fill="#4fc3f7" transform="rotate(60 245 745)"/>
-    <rect x="780" y="760" width="10" height="10" rx="1" fill="#f5a975" transform="rotate(45 785 765)"/>
-    <rect x="600" y="610" width="10" height="10" rx="1" fill="#81c784" transform="rotate(20 605 615)"/>
-    <rect x="130" y="700" width="10" height="10" rx="1" fill="#ce93d8" transform="rotate(35 135 705)"/>
-    <rect x="900" y="720" width="10" height="10" rx="1" fill="#ffb74d" transform="rotate(55 905 725)"/>
+    <rect x="180" y="660" width="14" height="14" rx="2" fill="#f5a975" transform="rotate(25 187 667)"/>
+    <rect x="320" y="620" width="14" height="14" rx="2" fill="#4fc3f7" transform="rotate(40 327 627)"/>
+    <rect x="700" y="640" width="14" height="14" rx="2" fill="#ce93d8" transform="rotate(15 707 647)"/>
+    <rect x="850" y="680" width="14" height="14" rx="2" fill="#81c784" transform="rotate(50 857 687)"/>
+    <rect x="440" y="600" width="14" height="14" rx="2" fill="#ffb74d" transform="rotate(30 447 607)"/>
+    <circle cx="245" cy="745" r="7" fill="#4fc3f7"/>
+    <circle cx="785" cy="765" r="7" fill="#f5a975"/>
+    <circle cx="605" cy="615" r="6" fill="#81c784"/>
+    <circle cx="135" cy="705" r="6" fill="#ce93d8"/>
+    <circle cx="905" cy="725" r="6" fill="#ffb74d"/>
   </g>
+
+  <!-- Cloud head only (no body), celebrating center -->
+  <g transform="translate(540, 800)" filter="url(#cloudShadow)">
+    <g>
+      <circle cx="-56" cy="22" r="60" fill="url(#cloudFill)"/>
+      <circle cx="56" cy="22" r="60" fill="url(#cloudFill)"/>
+      <circle cx="-28" cy="-36" r="52" fill="url(#cloudFill)"/>
+      <circle cx="32" cy="-36" r="52" fill="url(#cloudFill)"/>
+      <ellipse cx="0" cy="26" rx="98" ry="66" fill="url(#cloudFill)"/>
+    </g>
+    <polygon points="-62,-48 0,-76 62,-48 0,-20" fill="#22506a"/>
+    <polygon points="-62,-48 0,-70 62,-48 0,-26" fill="#2c5f7c"/>
+    <path d="M40,-38 L40,8" stroke="#f5a975" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="40" cy="12" r="7" fill="#f5a975"/>
+    <ellipse cx="-24" cy="2" rx="13" ry="15" fill="#fff"/>
+    <circle cx="-23" cy="4" r="8" fill="#25384a"/>
+    <circle cx="-19" cy="-1" r="3" fill="#fff"/>
+    <ellipse cx="24" cy="2" rx="13" ry="15" fill="#fff"/>
+    <circle cx="25" cy="4" r="8" fill="#25384a"/>
+    <circle cx="29" cy="-1" r="3" fill="#fff"/>
+    <path d="M-16,26 Q0,42 16,26" fill="none" stroke="#d45b5b" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="-46" cy="22" rx="13" ry="8" fill="#ffb4b4" opacity="0.4"/>
+    <ellipse cx="46" cy="22" rx="13" ry="8" fill="#ffb4b4" opacity="0.4"/>
+  </g>
+
   <!-- Narration area -->
-  <rect x="40" y="1560" width="1000" height="280" rx="16" fill="#3d220f" opacity="0.88"/>
-  <rect x="60" y="1580" width="5" height="60" rx="2" fill="#ffb74d"/>
-  <text x="80" y="1606" fill="#ffb74d80" font-family="sans-serif" font-size="14" font-weight="700">NARRATION</text>
-  <rect x="0" y="1880" width="1080" height="6" fill="#00000012"/>
+  <g filter="url(#soft)">
+    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#3d220f" opacity="0.92"/>
+  </g>
+  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#ffb74d"/>
+  <text x="90" y="1614" fill="#ffdca6" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
+
+  <rect x="0" y="1884" width="1080" height="8" fill="#3d220f" opacity="0.12"/>
+  <rect x="0" y="1884" width="360" height="8" fill="#ffb74d"/>
 </svg>

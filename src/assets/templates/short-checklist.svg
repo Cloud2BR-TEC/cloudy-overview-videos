@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#ecf9ee"/>
+      <stop offset="100%" stop-color="#ccecd2"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
+      <stop offset="0%" stop-color="#66bb6a" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#66bb6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2f4e5"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#0f3d1e" flood-opacity="0.20"/>
+    </filter>
+    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f3d1e" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="820" cy="360" r="360" fill="url(#glow)"/>
+
+  <!-- Title chip -->
+  <rect x="80" y="160" width="330" height="66" rx="33" fill="#66bb6a" opacity="0.2"/>
+  <text x="110" y="202" fill="#2f7a37" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="3">CHECKLIST</text>
+
+  <!-- Cloud head only -->
+  <g transform="translate(870, 250)" filter="url(#cloudShadow)">
+    <g>
+      <circle cx="-36" cy="12" r="40" fill="url(#cloudFill)"/>
+      <circle cx="36" cy="12" r="40" fill="url(#cloudFill)"/>
+      <circle cx="-17" cy="-24" r="34" fill="url(#cloudFill)"/>
+      <circle cx="19" cy="-24" r="34" fill="url(#cloudFill)"/>
+      <ellipse cx="0" cy="16" rx="64" ry="44" fill="url(#cloudFill)"/>
+    </g>
+    <polygon points="-40,-32 0,-50 40,-32 0,-14" fill="#2c5f7c"/>
+    <ellipse cx="-15" cy="2" rx="9" ry="11" fill="#fff"/>
+    <circle cx="-14" cy="4" r="6" fill="#25384a"/>
+    <ellipse cx="15" cy="2" rx="9" ry="11" fill="#fff"/>
+    <circle cx="16" cy="4" r="6" fill="#25384a"/>
+    <path d="M-9,21 Q0,30 9,21" fill="none" stroke="#d45b5b" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Checklist rows -->
+  <g filter="url(#soft)">
+    <rect x="70" y="430" width="940" height="110" rx="20" fill="#ffffff" opacity="0.8"/>
+    <rect x="70" y="570" width="940" height="110" rx="20" fill="#ffffff" opacity="0.8"/>
+    <rect x="70" y="710" width="940" height="110" rx="20" fill="#ffffff" opacity="0.8"/>
+    <rect x="70" y="850" width="940" height="110" rx="20" fill="#ffffff" opacity="0.8"/>
+    <rect x="70" y="990" width="940" height="110" rx="20" fill="#ffffff" opacity="0.8"/>
+  </g>
+  <g>
+    <circle cx="140" cy="485" r="26" fill="#66bb6a"/>
+    <path d="M126,485 l9,10 l18,-20" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="200" y="474" width="640" height="22" rx="11" fill="#2f7a37" opacity="0.18"/>
+
+    <circle cx="140" cy="625" r="26" fill="#66bb6a"/>
+    <path d="M126,625 l9,10 l18,-20" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="200" y="614" width="580" height="22" rx="11" fill="#2f7a37" opacity="0.18"/>
+
+    <circle cx="140" cy="765" r="26" fill="#66bb6a"/>
+    <path d="M126,765 l9,10 l18,-20" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="200" y="754" width="680" height="22" rx="11" fill="#2f7a37" opacity="0.18"/>
+
+    <circle cx="140" cy="905" r="26" fill="#66bb6a"/>
+    <path d="M126,905 l9,10 l18,-20" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="200" y="894" width="520" height="22" rx="11" fill="#2f7a37" opacity="0.18"/>
+
+    <circle cx="140" cy="1045" r="26" fill="#66bb6a"/>
+    <path d="M126,1045 l9,10 l18,-20" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="200" y="1034" width="620" height="22" rx="11" fill="#2f7a37" opacity="0.18"/>
+  </g>
+
+  <!-- Narration -->
+  <g filter="url(#soft)">
+    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#0f3d1e" opacity="0.92"/>
+  </g>
+  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#66bb6a"/>
+  <text x="90" y="1614" fill="#bfe6c4" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
+  <rect x="0" y="1884" width="1080" height="8" fill="#0f3d1e" opacity="0.12"/>
+  <rect x="0" y="1884" width="360" height="8" fill="#66bb6a"/>
+</svg>

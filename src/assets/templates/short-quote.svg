@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#fdeef3"/>
+      <stop offset="100%" stop-color="#f6d4e0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
+      <stop offset="0%" stop-color="#ec6a8c" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ec6a8c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fbe4ec"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#5a1730" flood-opacity="0.20"/>
+    </filter>
+    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#5a1730" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="540" cy="700" r="440" fill="url(#glow)"/>
+
+  <!-- Big quote card -->
+  <g filter="url(#soft)">
+    <rect x="80" y="360" width="920" height="720" rx="30" fill="#ffffff" opacity="0.8"/>
+  </g>
+  <text x="150" y="560" fill="#ec6a8c" font-family="Georgia, serif" font-size="240" font-weight="800" opacity="0.6">&#8220;</text>
+  <g fill="#a83a5a" opacity="0.16">
+    <rect x="150" y="560" width="780" height="30" rx="15"/>
+    <rect x="150" y="620" width="700" height="30" rx="15"/>
+    <rect x="150" y="680" width="760" height="30" rx="15"/>
+    <rect x="150" y="740" width="520" height="30" rx="15"/>
+  </g>
+  <rect x="150" y="860" width="12" height="70" rx="6" fill="#ec6a8c"/>
+  <text x="184" y="898" fill="#a83a5a" font-family="'Segoe UI', sans-serif" font-size="26" font-weight="800">ATTRIBUTION</text>
+  <text x="184" y="936" fill="#a83a5a" font-family="'Segoe UI', sans-serif" font-size="20" font-weight="600" opacity="0.7">Source / role</text>
+
+  <!-- Cloud head only -->
+  <g transform="translate(880, 300)" filter="url(#cloudShadow)">
+    <g>
+      <circle cx="-34" cy="12" r="38" fill="url(#cloudFill)"/>
+      <circle cx="34" cy="12" r="38" fill="url(#cloudFill)"/>
+      <circle cx="-16" cy="-22" r="32" fill="url(#cloudFill)"/>
+      <circle cx="18" cy="-22" r="32" fill="url(#cloudFill)"/>
+      <ellipse cx="0" cy="16" rx="60" ry="42" fill="url(#cloudFill)"/>
+    </g>
+    <polygon points="-38,-30 0,-46 38,-30 0,-14" fill="#2c5f7c"/>
+    <ellipse cx="-14" cy="2" rx="8" ry="10" fill="#fff"/>
+    <circle cx="-13" cy="4" r="5.5" fill="#25384a"/>
+    <ellipse cx="14" cy="2" rx="8" ry="10" fill="#fff"/>
+    <circle cx="15" cy="4" r="5.5" fill="#25384a"/>
+    <path d="M-8,20 Q0,28 8,20" fill="none" stroke="#d45b5b" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Narration -->
+  <g filter="url(#soft)">
+    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#5a1730" opacity="0.92"/>
+  </g>
+  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#ec6a8c"/>
+  <text x="90" y="1614" fill="#f6c2d2" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
+  <rect x="0" y="1884" width="1080" height="8" fill="#5a1730" opacity="0.12"/>
+  <rect x="0" y="1884" width="360" height="8" fill="#ec6a8c"/>
+</svg>

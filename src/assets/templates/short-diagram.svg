@@ -1,68 +1,102 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#e8f8e8"/>
-      <stop offset="100%" stop-color="#d0f0d0"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#ecf9ec"/>
+      <stop offset="100%" stop-color="#cdeecd"/>
     </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#81c784" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#81c784" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8fd192"/>
+      <stop offset="100%" stop-color="#66b06a"/>
+    </linearGradient>
+    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e4f4e6"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDeviation="20" flood-color="#0f3d22" flood-opacity="0.22"/>
+    </filter>
+    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f3d22" flood-opacity="0.24"/>
+    </filter>
   </defs>
-  <!-- Background -->
+
   <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="540" cy="460" r="440" fill="url(#glow)"/>
+
+  <g fill="#66b06a" opacity="0.14">
+    <circle cx="160" cy="900" r="7"/>
+    <circle cx="940" cy="960" r="9"/>
+    <circle cx="320" cy="1220" r="5"/>
+    <circle cx="820" cy="1180" r="6"/>
+  </g>
+
   <!-- Title bar -->
-  <rect x="50" y="70" width="980" height="60" rx="10" fill="#00000008"/>
-  <text x="70" y="108" fill="#2c3e5040" font-family="sans-serif" font-size="14" font-weight="700">TOPIC TITLE</text>
-  <!-- Cloudy center -->
-  <g transform="translate(540, 460)">
-    <ellipse cx="0" cy="20" rx="70" ry="56" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
-    <circle cx="0" cy="-30" r="48" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
-    <circle cx="-30" cy="-16" r="30" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
-    <circle cx="30" cy="-16" r="30" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
-    <circle cx="-16" cy="-56" r="26" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
-    <circle cx="16" cy="-56" r="26" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
-    <polygon points="-38,-66 0,-82 38,-66 0,-56" fill="#2c5f7c"/>
-    <line x1="0" y1="-68" x2="28" y2="-52" stroke="#f5a975" stroke-width="3"/>
-    <ellipse cx="-16" cy="-34" rx="9" ry="11" fill="#fff"/>
-    <circle cx="-16" cy="-34" r="7" fill="#2c3e50"/>
-    <circle cx="-13" cy="-37" r="2.5" fill="#fff"/>
-    <ellipse cx="16" cy="-34" rx="9" ry="11" fill="#fff"/>
-    <circle cx="16" cy="-34" r="7" fill="#2c3e50"/>
-    <circle cx="19" cy="-37" r="2.5" fill="#fff"/>
-    <ellipse cx="0" cy="-10" rx="10" ry="7" fill="#d45b5b"/>
-    <ellipse cx="-32" cy="-20" rx="9" ry="5" fill="#ffb4b4" opacity="0.3"/>
-    <ellipse cx="32" cy="-20" rx="9" ry="5" fill="#ffb4b4" opacity="0.3"/>
-    <!-- Arms presenting -->
-    <line x1="-66" y1="6" x2="-120" y2="-16" stroke="#4a7c9c" stroke-width="8" stroke-linecap="round"/>
-    <circle cx="-124" cy="-18" r="9" fill="#f0f8ff"/>
-    <line x1="66" y1="6" x2="120" y2="-16" stroke="#4a7c9c" stroke-width="8" stroke-linecap="round"/>
-    <circle cx="124" cy="-18" r="9" fill="#f0f8ff"/>
-    <line x1="-20" y1="70" x2="-26" y2="120" stroke="#4a7c9c" stroke-width="8" stroke-linecap="round"/>
-    <ellipse cx="-26" cy="126" rx="14" ry="7" fill="#3a6a88"/>
-    <line x1="20" y1="70" x2="26" y2="120" stroke="#4a7c9c" stroke-width="8" stroke-linecap="round"/>
-    <ellipse cx="26" cy="126" rx="14" ry="7" fill="#3a6a88"/>
+  <g filter="url(#soft)">
+    <rect x="50" y="70" width="980" height="70" rx="18" fill="#ffffff" opacity="0.7"/>
   </g>
+  <rect x="76" y="92" width="14" height="26" rx="7" fill="#4f9e54"/>
+  <text x="104" y="114" fill="#3f7f43" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">TOPIC TITLE</text>
+
+  <!-- Connection lines -->
+  <g stroke="#66b06a" stroke-width="2.5" stroke-dasharray="7 5" opacity="0.4">
+    <line x1="540" y1="420" x2="210" y2="262"/>
+    <line x1="540" y1="420" x2="870" y2="282"/>
+    <line x1="540" y1="500" x2="170" y2="622"/>
+    <line x1="540" y1="500" x2="890" y2="602"/>
+    <line x1="540" y1="410" x2="520" y2="202"/>
+  </g>
+
   <!-- Orbiting topic pills -->
-  <g>
-    <rect x="140" y="240" width="140" height="44" rx="22" fill="#81c784" opacity="0.7"/>
-    <text x="170" y="268" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 1</text>
-    <rect x="800" y="260" width="140" height="44" rx="22" fill="#81c784" opacity="0.7"/>
-    <text x="830" y="288" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 2</text>
-    <rect x="100" y="600" width="140" height="44" rx="22" fill="#81c784" opacity="0.7"/>
-    <text x="130" y="628" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 3</text>
-    <rect x="820" y="580" width="140" height="44" rx="22" fill="#81c784" opacity="0.7"/>
-    <text x="850" y="608" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 4</text>
-    <rect x="440" y="180" width="160" height="44" rx="22" fill="#81c784" opacity="0.7"/>
-    <text x="470" y="208" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 5</text>
+  <g filter="url(#soft)">
+    <rect x="140" y="238" width="150" height="52" rx="26" fill="url(#pill)"/>
+    <rect x="796" y="256" width="150" height="52" rx="26" fill="url(#pill)"/>
+    <rect x="96" y="596" width="150" height="52" rx="26" fill="url(#pill)"/>
+    <rect x="816" y="576" width="150" height="52" rx="26" fill="url(#pill)"/>
+    <rect x="436" y="176" width="170" height="52" rx="26" fill="url(#pill)"/>
   </g>
-  <!-- Connection lines from Cloudy to topics -->
-  <g stroke="#81c784" stroke-width="2" stroke-dasharray="6 4" opacity="0.35">
-    <line x1="540" y1="380" x2="210" y2="262"/>
-    <line x1="540" y1="380" x2="870" y2="282"/>
-    <line x1="540" y1="460" x2="170" y2="622"/>
-    <line x1="540" y1="460" x2="890" y2="602"/>
-    <line x1="540" y1="380" x2="520" y2="202"/>
+  <g fill="#ffffff" font-family="'Segoe UI', sans-serif" font-size="20" font-weight="800" letter-spacing="1">
+    <text x="176" y="272">TOPIC 1</text>
+    <text x="832" y="290">TOPIC 2</text>
+    <text x="132" y="630">TOPIC 3</text>
+    <text x="852" y="610">TOPIC 4</text>
+    <text x="472" y="210">TOPIC 5</text>
   </g>
+
+  <!-- Cloud head only (no body) center -->
+  <g transform="translate(540, 440)" filter="url(#cloudShadow)">
+    <g>
+      <circle cx="-52" cy="20" r="58" fill="url(#cloudFill)"/>
+      <circle cx="52" cy="20" r="58" fill="url(#cloudFill)"/>
+      <circle cx="-26" cy="-34" r="50" fill="url(#cloudFill)"/>
+      <circle cx="30" cy="-34" r="50" fill="url(#cloudFill)"/>
+      <ellipse cx="0" cy="24" rx="92" ry="62" fill="url(#cloudFill)"/>
+    </g>
+    <polygon points="-58,-46 0,-72 58,-46 0,-20" fill="#22506a"/>
+    <polygon points="-58,-46 0,-66 58,-46 0,-26" fill="#2c5f7c"/>
+    <path d="M38,-36 L38,6" stroke="#f5a975" stroke-width="4.5" stroke-linecap="round"/>
+    <circle cx="38" cy="10" r="6" fill="#f5a975"/>
+    <ellipse cx="-22" cy="0" rx="12" ry="14" fill="#fff"/>
+    <circle cx="-21" cy="2" r="8" fill="#25384a"/>
+    <circle cx="-17" cy="-3" r="3" fill="#fff"/>
+    <ellipse cx="22" cy="0" rx="12" ry="14" fill="#fff"/>
+    <circle cx="23" cy="2" r="8" fill="#25384a"/>
+    <circle cx="27" cy="-3" r="3" fill="#fff"/>
+    <path d="M-13,26 Q0,38 13,26" fill="none" stroke="#d45b5b" stroke-width="5.5" stroke-linecap="round"/>
+    <ellipse cx="-42" cy="20" rx="12" ry="7" fill="#ffb4b4" opacity="0.4"/>
+    <ellipse cx="42" cy="20" rx="12" ry="7" fill="#ffb4b4" opacity="0.4"/>
+  </g>
+
   <!-- Narration area -->
-  <rect x="40" y="1560" width="1000" height="280" rx="16" fill="#0f3d22" opacity="0.88"/>
-  <rect x="60" y="1580" width="5" height="60" rx="2" fill="#81c784"/>
-  <text x="80" y="1606" fill="#81c78480" font-family="sans-serif" font-size="14" font-weight="700">NARRATION</text>
-  <rect x="0" y="1880" width="1080" height="6" fill="#00000012"/>
+  <g filter="url(#soft)">
+    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#0f3d22" opacity="0.92"/>
+  </g>
+  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#81c784"/>
+  <text x="90" y="1614" fill="#c6ecc8" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
+
+  <rect x="0" y="1884" width="1080" height="8" fill="#0f3d22" opacity="0.12"/>
+  <rect x="0" y="1884" width="360" height="8" fill="#81c784"/>
 </svg>
