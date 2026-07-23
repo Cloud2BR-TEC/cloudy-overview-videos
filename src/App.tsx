@@ -686,6 +686,7 @@ function App() {
   const [shortTopicId, setShortTopicId] = useState(1)
   const [isShortPreviewPlaying, setIsShortPreviewPlaying] = useState(false)
   const [shortPreviewBeatIdx, setShortPreviewBeatIdx] = useState(0)
+  const [pausedShortBeatIndex, setPausedShortBeatIndex] = useState<number | null>(null)
   const [isRenderingShort, setIsRenderingShort] = useState(false)
   const [shortRenderProgress, setShortRenderProgress] = useState(0)
   const shortRenderAbortRef = useRef(false)
@@ -1417,6 +1418,7 @@ function App() {
     const runId = ++shortPreviewRunIdRef.current
     shortPreviewAbortRef.current = false
     setIsShortPreviewPlaying(true)
+    setPausedShortBeatIndex(null)
     setShortPreviewBeatIdx(startBeat)
     for (let i = startBeat; i < shortSourceScenes.length; i++) {
       if (shortPreviewAbortRef.current || runId !== shortPreviewRunIdRef.current) break
@@ -1443,11 +1445,13 @@ function App() {
   }
 
   function stopShortPreview() {
+    const pausedAt = shortPreviewBeatIdx
     shortPreviewRunIdRef.current += 1
     shortPreviewAbortRef.current = true
     window.speechSynthesis.cancel()
     setIsShortPreviewPlaying(false)
-    setStatus('Cloudy Shorts preview stopped.')
+    setPausedShortBeatIndex(pausedAt)
+    setStatus(`Paused at beat ${pausedAt + 1} of ${shortSourceScenes.length}.`)
   }
 
   function seekShortToBeat(beatIndex: number) {
@@ -2211,9 +2215,14 @@ function App() {
                 </select>
                 <span className="shorts-runtime">{durationLabel(shortRuntime)} short</span>
                 {isShortPreviewPlaying ? (
-                  <button className="secondary-button" type="button" onClick={stopShortPreview}>Stop preview</button>
+                  <button className="secondary-button" type="button" onClick={stopShortPreview}>⏸ Pause</button>
                 ) : (
-                  <button className="primary-button" type="button" onClick={() => void previewShort(0)} disabled={isRenderingShort}>Preview short</button>
+                  <>
+                    {pausedShortBeatIndex !== null && (
+                      <button className="secondary-button" type="button" onClick={() => void previewShort(pausedShortBeatIndex)} disabled={isRenderingShort}>▶ Resume beat {pausedShortBeatIndex + 1}</button>
+                    )}
+                    <button className="primary-button" type="button" onClick={() => void previewShort(0)} disabled={isRenderingShort}>▶ {pausedShortBeatIndex === null ? 'Play' : 'Replay'}</button>
+                  </>
                 )}
               </section>
               <nav className="timeline-bar" aria-label="Short video timeline">
