@@ -2265,28 +2265,7 @@ function App() {
                   </div>
                   <span className="shorts-watermark" aria-hidden="true">Cloud2BR</span>
                 </article>
-                <aside className="shorts-library" aria-labelledby="shorts-library-title">
-                  <div>
-                    <p className="eyebrow">Templates & elements</p>
-                    <h2 id="shorts-library-title">Scene backgrounds</h2>
-                  </div>
-                  <div className="short-template-grid">
-                    {['Intro', 'Presenting', 'Whiteboard', 'Diagram', 'Recap'].slice(0, shortSourceScenes.length).map((name, i) => (
-                      <article className="short-template-thumb" key={name}>
-                        <img src={shortTemplateUrls[i]} alt={`${name} template`} />
-                        <span>{name}</span>
-                      </article>
-                    ))}
-                  </div>
-                  <div className="short-asset-grid">
-                    {shortAssetEntries.map((asset, index) => (
-                      <article className={`short-asset ${asset.kind}`} key={`${asset.kind}-${asset.name}-${index}`}>
-                        {asset.image ? <img src={asset.image} alt={`Scene element: ${asset.name}`} /> : asset.kind === 'cloudy' ? <CloudyAvatar size={48} /> : <span className="short-asset-token">{asset.name.slice(0, 2).toUpperCase()}</span>}
-                        <strong>{asset.name}</strong>
-                        <small>{asset.detail}</small>
-                      </article>
-                    ))}
-                  </div>
+                <aside className="shorts-library">
                   <div className="shorts-export-actions">
                     {isRenderingShort ? (
                       <button className="secondary-button" type="button" onClick={cancelShortVideo}>Cancel render ({shortRenderProgress}%)</button>
