@@ -159,7 +159,7 @@
 .unified-stage .slide-cloudy svg { max-width: 100%; height: auto; }
 .unified-stage .slide-narration { grid-column: 1 / -1; grid-row: 2; max-height: 168px; overflow-y: auto; scrollbar-color: #6f99b1 #dceaf1; }
 .unified-stage .slide-narration p { display: block; overflow: visible; -webkit-line-clamp: unset; }
-.preview-watermark { position: absolute; z-index: 5; top: 12px; right: 12px; color: rgba(217, 238, 246, .62); font-size: 13px; font-weight: 800; line-height: 1; text-shadow: 0 2px 5px rgba(0, 0, 0, .68); pointer-events: none; }
+.preview-watermark { position: absolute; z-index: 5; right: 14px; bottom: 14px; color: rgba(217, 238, 246, .68); font-size: 10px; font-weight: 700; line-height: 1; text-shadow: 0 1px 4px rgba(0, 0, 0, .72); pointer-events: none; }
 
 @media (max-width: 760px) {
 	.scene-picker { grid-template-columns: 1fr; gap: 7px; padding: 12px; }
@@ -174,5 +174,5 @@
 	.slide-supporting-copy ul { gap: 9px; }
 	.slide-supporting-copy li { font-size: 11px; line-height: 1.45; }
 	.unified-stage .slide-narration { grid-row: 3; }
-	.preview-watermark { top: 8px; right: 8px; font-size: 9px; }
+	.preview-watermark { right: 9px; bottom: 9px; font-size: 8px; }
 }
