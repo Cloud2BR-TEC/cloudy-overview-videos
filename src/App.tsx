@@ -1460,12 +1460,6 @@ function App() {
     setTimeout(() => void previewShort(beatIndex), 100)
   }
 
-  function seekOverviewToSlide(slideIndex: number) {
-    if (isVideoPreviewPlaying) pauseVideoPreview()
-    setSelectedSceneId(scenes[slideIndex]?.id ?? scenes[0].id)
-    setTimeout(() => void startVideoPreview(slideIndex), 100)
-  }
-
   function downloadShortScript() {
     if (!repository || !shortNarration) return
     const beats = shortSourceScenes.map((scene, index) => `${index + 1}. ${scene.title}\n${scene.narration}`).join('\n\n')
@@ -2478,16 +2472,6 @@ function App() {
                       </label>
                     </div>
                   </div>
-                  <nav className="timeline-bar overview-timeline" aria-label="Video timeline">
-                    {scenes.map((s, i) => {
-                      const isActive = isVideoPreviewPlaying && videoPreviewSceneIdx === i
-                      const isPast = isVideoPreviewPlaying && videoPreviewSceneIdx > i
-                      const isCurrent = !isVideoPreviewPlaying && selectedSceneId === s.id
-                      return (
-                        <button key={s.id} type="button" className={`timeline-segment${isActive ? ' active' : ''}${isPast ? ' past' : ''}${isCurrent ? ' current' : ''}`} style={{ flex: effectiveSceneDuration(s, playbackSpeed) }} onClick={() => seekOverviewToSlide(i)} title={`${i + 1}. ${s.title}`} />
-                      )
-                    })}
-                  </nav>
                   <p className="sr-only" aria-live="polite" aria-atomic="true">
                     {isVideoPreviewPlaying
                       ? `Playing slide ${videoPreviewSceneIdx + 1} of ${scenes.length}: ${presentedScene.title}. ${presentedScene.narration}`
