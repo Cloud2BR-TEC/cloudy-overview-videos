@@ -1550,6 +1550,7 @@ function App() {
                       <span className="slide-narration-label">{isVideoPreviewPlaying ? 'Now reading' : 'Cloudy narration'}</span>
                       <p>{presentedScene.narration}</p>
                     </div>
+                    <span className="preview-watermark" aria-hidden="true">Cloud2BR</span>
                   </div>
                   <div className="video-scene-progress" aria-label="Presentation sections">
                     {scenes.map((scene, index) => (
