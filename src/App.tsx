@@ -31,6 +31,7 @@ type Scene = {
   supportingPoints: string[]
 }
 type WorkflowStep = 'source' | 'story' | 'voice' | 'export'
+type StudioMode = 'landing' | 'overview' | 'shorts'
 
 const starterRepository = 'https://github.com/Cloud2BR-TEC/ai-academy-101-ml'
 const SLIDES_PER_SECTION = 10
@@ -617,7 +618,56 @@ function generateNarrationAudio(
   })
 }
 
+function StudioLanding({ onSelect }: { onSelect: (mode: Exclude<StudioMode, 'landing'>) => void }) {
+  return (
+    <main className="studio-landing">
+      <header className="landing-topbar">
+        <div className="landing-brand" aria-label="Cloudy Video Studio">
+          <CloudyAvatar size={48} />
+          <span><strong>Cloudy</strong><small>Cloud2BR Video Studio</small></span>
+        </div>
+      </header>
+      <section className="landing-content" aria-labelledby="studio-choice-title">
+        <div className="landing-intro">
+          <p className="eyebrow">Cloud2BR production desk</p>
+          <h1 id="studio-choice-title">Choose your video format.</h1>
+          <p>Turn public repository documentation into a detailed overview or a concise narrated short.</p>
+        </div>
+        <div className="mode-grid">
+          <article className="mode-card overview-mode">
+            <div className="mode-card-visual" aria-hidden="true">
+              <CloudyAvatar size={116} />
+              <span className="mode-frame frame-one"></span>
+              <span className="mode-frame frame-two"></span>
+            </div>
+            <div className="mode-card-copy">
+              <p className="eyebrow">Long form</p>
+              <h2>Cloudy YouTube Overview Videos</h2>
+              <p>Build a documented 8-12 minute explainer with an editable 50-slide storyboard, narration, captions, chapters, and publishing assets.</p>
+              <button className="primary-button" type="button" onClick={() => onSelect('overview')}>Open overview studio</button>
+            </div>
+          </article>
+          <article className="mode-card shorts-mode">
+            <div className="shorts-card-visual" aria-hidden="true">
+              <span className="shorts-signal signal-one"></span>
+              <span className="shorts-signal signal-two"></span>
+              <div className="shorts-phone"><CloudyAvatar size={76} /><span>60s</span></div>
+            </div>
+            <div className="mode-card-copy">
+              <p className="eyebrow">Short form</p>
+              <h2>Cloudy Short Videos</h2>
+              <p>Create a one-minute, story-led explanation of a repository topic. Cloudy assembles a compact script and a reusable visual asset library from the documentation.</p>
+              <button className="primary-button" type="button" onClick={() => onSelect('shorts')}>Open Shorts studio</button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  )
+}
+
 function App() {
+  const [studioMode, setStudioMode] = useState<StudioMode>('landing')
   const [repositoryUrl, setRepositoryUrl] = useState(starterRepository)
   const [repository, setRepository] = useState<Repository | null>(null)
   const [scenes, setScenes] = useState<Scene[]>(starterScenes)
@@ -632,6 +682,8 @@ function App() {
   const [videoPreviewSceneIdx, setVideoPreviewSceneIdx] = useState(0)
   const [pausedVideoPreviewIndex, setPausedVideoPreviewIndex] = useState<number | null>(null)
   const [playbackSpeed, setPlaybackSpeed] = useState<(typeof PLAYBACK_SPEED_OPTIONS)[number]>(1)
+  const [shortTopicId, setShortTopicId] = useState(1)
+  const [isShortPreviewPlaying, setIsShortPreviewPlaying] = useState(false)
   const renderAbortRef = useRef(false)
   const renderAbortControllerRef = useRef<AbortController | null>(null)
   const videoPreviewAbortRef = useRef(false)
@@ -659,6 +711,16 @@ function App() {
   const videoPreviewScene = scenes[videoPreviewSceneIdx] ?? scenes[0]
   const presentedScene = isVideoPreviewPlaying ? videoPreviewScene : selectedScene
   const presentedAsset = presentedScene.asset
+  const shortTopic = scenes.find((scene) => scene.id === shortTopicId) ?? scenes[0]
+  const shortSourceScenes = scenes.filter((scene) => scene.section === shortTopic.section).slice(0, 5)
+  const shortNarration = shortSourceScenes.map((scene) => scene.narration).join(' ')
+  const shortRuntime = shortSourceScenes.reduce((total, scene) => total + effectiveSceneDuration(scene, playbackSpeed), 0)
+  const shortAssetEntries = [
+    { kind: 'cloudy', name: 'Cloudy host', detail: 'Narrator and guide', image: null },
+    { kind: 'concept', name: shortTopic.title, detail: 'Primary concept', image: null },
+    ...(shortTopic.assets.slice(0, 3).map((asset) => ({ kind: 'source', name: repositoryAssetLabel(asset), detail: 'Repository visual', image: asset }))),
+    ...((repository?.topics ?? []).slice(0, 2).map((topic) => ({ kind: 'topic', name: topic, detail: 'Topic object', image: null }))),
+  ]
 
   async function loadRepository(value: string) {
     const parsed = parseRepositoryUrl(value)
@@ -765,6 +827,7 @@ function App() {
       setRepository(newRepo)
       setScenes(generatedScenes)
       setSelectedSceneId(generatedScenes[0].id)
+      setShortTopicId(generatedScenes[0].id)
       const matchedImageCount = generatedScenes.filter((scene) => scene.asset).length
       const imageNote = assets.length ? `${matchedImageCount} slide${matchedImageCount === 1 ? '' : 's'} received a verified topic-matched image; unmatched slides use the material-focused placeholder.` : 'No English or default-language images found — Cloudy will present with a branded placeholder.'
       const documentationNote = documentationFileCount ? `Grounded in the main README and ${documentationFileCount} English documentation file${documentationFileCount === 1 ? '' : 's'}.` : 'No English docs/ Markdown files were loaded; using the main README and repository structure.'
@@ -1318,16 +1381,140 @@ function App() {
     document.getElementById(`${step}-section`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  async function previewShort() {
+    if (isShortPreviewPlaying || !shortNarration) return
+    window.speechSynthesis.cancel()
+    const voice = await resolveVoice()
+    const utterance = new SpeechSynthesisUtterance(shortNarration)
+    utterance.voice = voice
+    utterance.lang = voice?.lang ?? 'en-US'
+    utterance.rate = VOICE_RATE * playbackSpeed
+    utterance.pitch = 1
+    utterance.onend = () => setIsShortPreviewPlaying(false)
+    utterance.onerror = () => setIsShortPreviewPlaying(false)
+    window.speechSynthesis.speak(utterance)
+    setIsShortPreviewPlaying(true)
+    setStatus(`Cloudy is previewing the ${durationLabel(shortRuntime)} short at ${speedLabel(playbackSpeed)}.`)
+  }
+
+  function stopShortPreview() {
+    window.speechSynthesis.cancel()
+    setIsShortPreviewPlaying(false)
+    setStatus('Cloudy Shorts preview stopped.')
+  }
+
+  function downloadShortScript() {
+    if (!repository || !shortNarration) return
+    const beats = shortSourceScenes.map((scene, index) => `${index + 1}. ${scene.title}\n${scene.narration}`).join('\n\n')
+    const assets = shortAssetEntries.map((asset) => `- ${asset.name}: ${asset.detail}`).join('\n')
+    const content = `# Cloudy Short: ${shortTopic.title}\n\n- Repository: ${repository.fullName}\n- Runtime: ${durationLabel(shortRuntime)} at ${speedLabel(playbackSpeed)}\n- Format: Vertical short\n\n## Narration\n\n${shortNarration}\n\n## Story beats\n\n${beats}\n\n## Production assets\n\n${assets}\n`
+    downloadFile(`cloudy-short-${normalizedSentence(shortTopic.title).replace(/\s+/g, '-') || 'topic'}.md`, content, 'text/markdown')
+    setStatus('Cloudy Shorts script downloaded.')
+  }
+
+  if (studioMode === 'landing') {
+    return <StudioLanding onSelect={setStudioMode} />
+  }
+
+  if (studioMode === 'shorts') {
+    return (
+      <main className="shorts-shell">
+        <header className="topbar studio-topbar">
+          <button className="brand brand-button" type="button" onClick={() => setStudioMode('landing')}>
+            <img src={cloudyLogo} alt="Cloudy" />
+            <span><strong>Cloudy</strong><small>Cloud2BR Video Studio</small></span>
+          </button>
+          <nav className="studio-mode-tabs" aria-label="Video studios">
+            <button type="button" onClick={() => setStudioMode('overview')}>Overview videos</button>
+            <button type="button" className="active" aria-current="page">Cloudy Shorts</button>
+          </nav>
+        </header>
+        <section className="shorts-workspace">
+          <div className="shorts-heading">
+            <div>
+              <p className="eyebrow">Short-form story studio</p>
+              <h1>Turn a documented topic into a one-minute Cloudy story.</h1>
+            </div>
+            <p className="status" aria-live="polite">{status}</p>
+          </div>
+          {!repository ? (
+            <form className="shorts-source" onSubmit={(event) => { event.preventDefault(); void loadRepository(repositoryUrl) }}>
+              <label htmlFor="shorts-repository-url">Public GitHub repository</label>
+              <div className="url-entry">
+                <input id="shorts-repository-url" type="text" inputMode="url" autoCapitalize="none" spellCheck={false} value={repositoryUrl} onChange={(event) => setRepositoryUrl(event.target.value)} placeholder="https://github.com/owner/repository" />
+                <button className="primary-button" type="submit" disabled={isLoading}>{isLoading ? 'Reading...' : 'Build Shorts library'}</button>
+              </div>
+              <p>Cloudy will use English documentation and linked repository visuals to build short-form story material.</p>
+            </form>
+          ) : (
+            <>
+              <section className="shorts-controls" aria-label="Short video controls">
+                <label htmlFor="short-topic">Topic to explain</label>
+                <select id="short-topic" value={shortTopic.id} onChange={(event) => setShortTopicId(Number(event.target.value))} disabled={isShortPreviewPlaying}>
+                  {scenes.map((scene) => <option key={scene.id} value={scene.id}>{scene.title}</option>)}
+                </select>
+                <span className="shorts-runtime">{durationLabel(shortRuntime)} short</span>
+                {isShortPreviewPlaying ? (
+                  <button className="secondary-button" type="button" onClick={stopShortPreview}>Stop preview</button>
+                ) : (
+                  <button className="primary-button" type="button" onClick={() => void previewShort()}>Preview short</button>
+                )}
+                <button className="secondary-button" type="button" onClick={downloadShortScript}>Download short script</button>
+              </section>
+              <section className="shorts-production-grid">
+                <article className="short-stage" aria-label={`Cloudy Short preview: ${shortTopic.title}`}>
+                  <div className="short-stage-copy">
+                    <p className="eyebrow">Cloudy Short</p>
+                    <h2>{shortTopic.title}</h2>
+                    <p>{shortNarration}</p>
+                  </div>
+                  <div className="short-stage-host">
+                    <CloudyAvatar speaking={isShortPreviewPlaying} size={156} />
+                    <span>{durationLabel(shortRuntime)}</span>
+                  </div>
+                  <span className="shorts-watermark" aria-hidden="true">Cloud2BR</span>
+                </article>
+                <aside className="shorts-library" aria-labelledby="shorts-library-title">
+                  <div>
+                    <p className="eyebrow">Production assets</p>
+                    <h2 id="shorts-library-title">Topic-aware library</h2>
+                  </div>
+                  <div className="short-asset-grid">
+                    {shortAssetEntries.map((asset, index) => (
+                      <article className={`short-asset ${asset.kind}`} key={`${asset.kind}-${asset.name}-${index}`}>
+                        {asset.image ? <img src={asset.image} alt={`Repository asset: ${asset.name}`} /> : asset.kind === 'cloudy' ? <CloudyAvatar size={48} /> : <span className="short-asset-token">{asset.name.slice(0, 2).toUpperCase()}</span>}
+                        <strong>{asset.name}</strong>
+                        <small>{asset.detail}</small>
+                      </article>
+                    ))}
+                  </div>
+                </aside>
+              </section>
+              <section className="shorts-beats" aria-labelledby="shorts-beats-title">
+                <div><p className="eyebrow">Narrative sequence</p><h2 id="shorts-beats-title">Five documented beats</h2></div>
+                <ol>{shortSourceScenes.map((scene) => <li key={scene.id}><span>{String(scene.slideInSection).padStart(2, '0')}</span><div><strong>{scene.title}</strong><p>{scene.narration}</p></div></li>)}</ol>
+              </section>
+            </>
+          )}
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="https://github.com/Cloud2BR-TEC/Cloudy-overview-videos" target="_blank" rel="noreferrer">
+        <button className="brand brand-button" type="button" onClick={() => setStudioMode('landing')}>
           <img src={cloudyLogo} alt="Cloudy" />
           <span>
             <strong>Cloudy</strong>
             <small>Repository Video Studio</small>
           </span>
-        </a>
+        </button>
+        <nav className="studio-mode-tabs" aria-label="Video studios">
+          <button type="button" className="active" aria-current="page">Overview videos</button>
+          <button type="button" onClick={() => setStudioMode('shorts')}>Cloudy Shorts</button>
+        </nav>
       </header>
       <section className="workspace">
         <aside className="rail" aria-label="Project workflow">
