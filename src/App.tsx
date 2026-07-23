@@ -39,7 +39,7 @@ const TEMPLATE_SLIDE_SECONDS = 12
 const VOICE_RATE = 1.15
 const BASE_NARRATION_WORDS_PER_MINUTE = 130
 const CLOUDY_NARRATOR = 'Lessac'
-const PLAYBACK_SPEED_OPTIONS = [1, 1.25, 1.5, 1.75, 2, 2.5] as const
+const PLAYBACK_SPEED_OPTIONS = [1, 1.25, 1.5, 1.75, 2, 2.5, 3] as const
 const SLIDE_FOCUS: Record<string, string> = {
   Overview: 'Begin with the central idea and the context needed to understand the repository.',
   Purpose: 'Clarify the problem this work is intended to address and why that goal matters.',
@@ -2224,6 +2224,12 @@ function App() {
                     <button className="primary-button" type="button" onClick={() => void previewShort(0)} disabled={isRenderingShort}>▶ {pausedShortBeatIndex === null ? 'Play' : 'Replay'}</button>
                   </>
                 )}
+                <label className="playback-speed" htmlFor="short-speed">
+                  Speed
+                  <select id="short-speed" value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Number(event.target.value) as (typeof PLAYBACK_SPEED_OPTIONS)[number])} disabled={isShortPreviewPlaying}>
+                    {PLAYBACK_SPEED_OPTIONS.map((speed) => <option key={speed} value={speed}>{speedLabel(speed)}</option>)}
+                  </select>
+                </label>
               </section>
               <nav className="timeline-bar" aria-label="Short video timeline">
                 {shortSourceScenes.map((beatScene, i) => {
