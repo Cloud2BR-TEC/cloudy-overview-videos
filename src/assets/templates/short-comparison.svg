@@ -1,79 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#eef0fb"/>
-      <stop offset="100%" stop-color="#d3d8f4"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
-      <stop offset="0%" stop-color="#7986cb" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#7986cb" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#e7eafb"/>
-    </linearGradient>
-    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#1e2350" flood-opacity="0.22"/>
-    </filter>
-    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1e2350" flood-opacity="0.22"/>
-    </filter>
+    <linearGradient id="comparison-bg" x2="1" y2="1"><stop stop-color="#f3f6ef"/><stop offset="1" stop-color="#cbdcc8"/></linearGradient>
+    <linearGradient id="comparison-cloud" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#e3eee1"/></linearGradient>
+    <filter id="comparison-shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dy="18" stdDeviation="20" flood-color="#24352a" flood-opacity=".2"/></filter>
   </defs>
-
-  <rect width="1080" height="1920" fill="url(#bg)"/>
-  <circle cx="540" cy="380" r="420" fill="url(#glow)"/>
-
-  <!-- Title chip -->
-  <rect x="360" y="150" width="360" height="66" rx="33" fill="#7986cb" opacity="0.18"/>
-  <text x="540" y="192" fill="#4a55a5" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="3" text-anchor="middle">VS COMPARISON</text>
-
-  <!-- Cloud head only center top -->
-  <g transform="translate(540, 320)" filter="url(#cloudShadow)">
-    <g>
-      <circle cx="-34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="-16" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <circle cx="18" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <ellipse cx="0" cy="16" rx="60" ry="42" fill="url(#cloudFill)"/>
-    </g>
-    <polygon points="-38,-30 0,-46 38,-30 0,-14" fill="#2c5f7c"/>
-    <ellipse cx="-14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="-13" cy="4" r="5.5" fill="#25384a"/>
-    <ellipse cx="14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="15" cy="4" r="5.5" fill="#25384a"/>
-    <path d="M-8,20 Q0,28 8,20" fill="none" stroke="#d45b5b" stroke-width="3.5" stroke-linecap="round"/>
+  <rect width="1920" height="1080" fill="url(#comparison-bg)"/>
+  <path d="M960 0H1920V850H1140Z" fill="#173e42" opacity=".07"/><path d="M0 700L560 180 690 310 230 850H0Z" fill="#d06b51" opacity=".09"/>
+  <text x="80" y="112" fill="#54705a" font-family="Segoe UI, sans-serif" font-size="22" font-weight="800" letter-spacing="4">SIDE BY SIDE</text>
+  <!-- Cloudy head, cap, and face only -->
+  <g transform="translate(310 520) scale(1.82)" filter="url(#comparison-shadow)">
+    <circle cx="-62" cy="18" r="58" fill="url(#comparison-cloud)"/><circle cx="62" cy="18" r="58" fill="url(#comparison-cloud)"/><circle cx="-31" cy="-35" r="53" fill="url(#comparison-cloud)"/><circle cx="32" cy="-35" r="53" fill="url(#comparison-cloud)"/><ellipse cy="28" rx="104" ry="70" fill="url(#comparison-cloud)"/>
+    <polygon points="-72,-54 0,-82 72,-54 0,-27" fill="#173e42"/><polygon points="-72,-54 0,-73 72,-54 0,-35" fill="#2e6568"/><path d="M53-49V-4" stroke="#d06b51" stroke-width="6"/><circle cx="53" cy="3" r="8" fill="#d06b51"/>
+    <ellipse cx="-31" cy="10" rx="16" ry="20" fill="#fff"/><circle cx="-28" cy="14" r="10" fill="#22383a"/><ellipse cx="31" cy="10" rx="16" ry="20" fill="#fff"/><circle cx="34" cy="14" r="10" fill="#22383a"/><path d="M-22 43Q0 64 22 43" fill="none" stroke="#c45c62" stroke-width="7" stroke-linecap="round"/>
   </g>
-
-  <!-- Two columns -->
-  <g filter="url(#soft)">
-    <rect x="60" y="440" width="450" height="640" rx="24" fill="#ffffff" opacity="0.75"/>
-    <rect x="570" y="440" width="450" height="640" rx="24" fill="#ffffff" opacity="0.75"/>
-  </g>
-  <rect x="60" y="440" width="450" height="90" rx="24" fill="#7986cb" opacity="0.85"/>
-  <rect x="570" y="440" width="450" height="90" rx="24" fill="#5c6bc0" opacity="0.85"/>
-  <text x="285" y="500" fill="#fff" font-family="'Segoe UI', sans-serif" font-size="26" font-weight="800" text-anchor="middle">OPTION A</text>
-  <text x="795" y="500" fill="#fff" font-family="'Segoe UI', sans-serif" font-size="26" font-weight="800" text-anchor="middle">OPTION B</text>
-  <g fill="#4a55a5" opacity="0.14">
-    <rect x="92" y="576" width="386" height="22" rx="11"/>
-    <rect x="92" y="628" width="330" height="22" rx="11"/>
-    <rect x="92" y="680" width="360" height="22" rx="11"/>
-    <rect x="92" y="732" width="300" height="22" rx="11"/>
-    <rect x="602" y="576" width="386" height="22" rx="11"/>
-    <rect x="602" y="628" width="330" height="22" rx="11"/>
-    <rect x="602" y="680" width="360" height="22" rx="11"/>
-    <rect x="602" y="732" width="300" height="22" rx="11"/>
-  </g>
-
-  <!-- VS badge -->
-  <circle cx="540" cy="760" r="46" fill="#3949ab"/>
-  <text x="540" y="772" fill="#fff" font-family="'Segoe UI', sans-serif" font-size="30" font-weight="800" text-anchor="middle">VS</text>
-
-  <!-- Narration -->
-  <g filter="url(#soft)">
-    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#1e2350" opacity="0.92"/>
-  </g>
-  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#7986cb"/>
-  <text x="90" y="1614" fill="#c3c9f2" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
-  <rect x="0" y="1884" width="1080" height="8" fill="#1e2350" opacity="0.12"/>
-  <rect x="0" y="1884" width="360" height="8" fill="#7986cb"/>
+  <!-- Comparison panels: x=620 y=180 width=560 height=540 and x=1220 y=180 width=560 height=540 -->
+  <g filter="url(#comparison-shadow)" fill="#fff"><rect x="620" y="180" width="560" height="540" rx="22"/><rect x="1220" y="180" width="560" height="540" rx="22"/></g>
+  <path d="M620 202A22 22 0 01642 180H1158A22 22 0 011180 202V286H620Z" fill="#d06b51"/><path d="M1220 202A22 22 0 011242 180H1758A22 22 0 011780 202V286H1220Z" fill="#173e42"/>
+  <text x="900" y="248" text-anchor="middle" fill="#fff" font-family="Segoe UI, sans-serif" font-size="28" font-weight="800">OPTION A</text><text x="1500" y="248" text-anchor="middle" fill="#fff" font-family="Segoe UI, sans-serif" font-size="28" font-weight="800">OPTION B</text>
+  <g fill="#789083" opacity=".25"><rect x="680" y="345" width="425" height="22" rx="11"/><rect x="680" y="427" width="370" height="22" rx="11"/><rect x="680" y="509" width="400" height="22" rx="11"/><rect x="1280" y="345" width="425" height="22" rx="11"/><rect x="1280" y="427" width="370" height="22" rx="11"/><rect x="1280" y="509" width="400" height="22" rx="11"/></g>
+  <circle cx="1200" cy="450" r="48" fill="#f4f6f0" stroke="#6c806f" stroke-width="3"/><text x="1200" y="462" text-anchor="middle" fill="#33483a" font-family="Segoe UI, sans-serif" font-size="30" font-weight="900">VS</text>
+  <!-- Narration band: x=80 y=850 width=1760 height=160 -->
+  <rect x="80" y="850" width="1760" height="160" rx="18" fill="#1f3327" filter="url(#comparison-shadow)"/><rect x="80" y="850" width="12" height="160" rx="6" fill="#d06b51"/><text x="130" y="907" fill="#e89a83" font-family="Segoe UI, sans-serif" font-size="20" font-weight="800" letter-spacing="3">NARRATION</text>
 </svg>

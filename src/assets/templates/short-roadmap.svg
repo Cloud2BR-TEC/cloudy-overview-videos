@@ -1,83 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#efeafb"/>
-      <stop offset="100%" stop-color="#d7cbf1"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
-      <stop offset="0%" stop-color="#9575cd" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#9575cd" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="node" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#b39ddb"/>
-      <stop offset="100%" stop-color="#7e57c2"/>
-    </linearGradient>
-    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#eae2f7"/>
-    </linearGradient>
-    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#241640" flood-opacity="0.22"/>
-    </filter>
-    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#241640" flood-opacity="0.22"/>
-    </filter>
-  </defs>
-
-  <rect width="1080" height="1920" fill="url(#bg)"/>
-  <circle cx="540" cy="380" r="400" fill="url(#glow)"/>
-
-  <!-- Title chip -->
-  <rect x="390" y="150" width="300" height="66" rx="33" fill="#9575cd" opacity="0.22"/>
-  <text x="540" y="192" fill="#5e35b1" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="3" text-anchor="middle">ROADMAP</text>
-
-  <!-- Cloud head only -->
-  <g transform="translate(540, 320)" filter="url(#cloudShadow)">
-    <g>
-      <circle cx="-34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="-16" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <circle cx="18" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <ellipse cx="0" cy="16" rx="60" ry="42" fill="url(#cloudFill)"/>
-    </g>
-    <polygon points="-38,-30 0,-46 38,-30 0,-14" fill="#2c5f7c"/>
-    <ellipse cx="-14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="-13" cy="4" r="5.5" fill="#25384a"/>
-    <ellipse cx="14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="15" cy="4" r="5.5" fill="#25384a"/>
-    <path d="M-8,20 Q0,28 8,20" fill="none" stroke="#d45b5b" stroke-width="3.5" stroke-linecap="round"/>
-  </g>
-
-  <!-- Winding roadmap path -->
-  <path d="M180,520 C400,520 400,700 600,700 C800,700 800,880 500,880 C260,880 260,1060 820,1060"
-        fill="none" stroke="#9575cd" stroke-width="10" stroke-linecap="round" stroke-dasharray="4 26" opacity="0.5"/>
-
-  <!-- Milestone nodes -->
-  <g filter="url(#soft)">
-    <circle cx="180" cy="520" r="42" fill="url(#node)"/>
-    <circle cx="600" cy="700" r="42" fill="url(#node)"/>
-    <circle cx="500" cy="880" r="42" fill="url(#node)"/>
-    <circle cx="820" cy="1060" r="42" fill="url(#node)"/>
-  </g>
-  <g fill="#fff" font-family="'Segoe UI', sans-serif" font-size="30" font-weight="800" text-anchor="middle">
-    <text x="180" y="532">1</text>
-    <text x="600" y="712">2</text>
-    <text x="500" y="892">3</text>
-    <text x="820" y="1072">4</text>
-  </g>
-  <g fill="#5e35b1" opacity="0.2">
-    <rect x="250" y="500" width="240" height="20" rx="10"/>
-    <rect x="670" y="680" width="240" height="20" rx="10"/>
-    <rect x="150" y="940" width="240" height="20" rx="10"/>
-    <rect x="540" y="1120" width="240" height="20" rx="10"/>
-  </g>
-
-  <!-- Narration -->
-  <g filter="url(#soft)">
-    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#241640" opacity="0.92"/>
-  </g>
-  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#9575cd"/>
-  <text x="90" y="1614" fill="#cdbdea" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
-  <rect x="0" y="1884" width="1080" height="8" fill="#241640" opacity="0.12"/>
-  <rect x="0" y="1884" width="360" height="8" fill="#9575cd"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs><linearGradient id="road-new-bg" x2="1" y2="1"><stop stop-color="#f5eff8"/><stop offset="1" stop-color="#d9d2e8"/></linearGradient><linearGradient id="road-new-cloud" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#ece6f3"/></linearGradient><linearGradient id="road-new-node" y2="1"><stop stop-color="#a884c4"/><stop offset="1" stop-color="#72508f"/></linearGradient><filter id="road-new-shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dy="15" stdDeviation="19" flood-color="#2f2040" flood-opacity=".24"/></filter></defs>
+  <rect width="1920" height="1080" fill="url(#road-new-bg)"/><path d="M0 0H600L420 820H0Z" fill="#8d6aaa" opacity=".1"/>
+  <text x="80" y="105" fill="#72508f" font-family="Segoe UI, sans-serif" font-size="24" font-weight="800" letter-spacing="4">ROADMAP</text>
+  <g transform="translate(330 430)" filter="url(#road-new-shadow)"><circle cx="-78" cy="20" r="72" fill="url(#road-new-cloud)"/><circle cx="78" cy="20" r="72" fill="url(#road-new-cloud)"/><circle cx="-36" cy="-48" r="62" fill="url(#road-new-cloud)"/><circle cx="38" cy="-48" r="62" fill="url(#road-new-cloud)"/><ellipse cy="28" rx="126" ry="82" fill="url(#road-new-cloud)"/><polygon points="-76,-62 0,-96 76,-62 0,-28" fill="#244e68"/><polygon points="-76,-62 0,-86 76,-62 0,-38" fill="#36728f"/><ellipse cx="-31" cy="4" rx="15" ry="18" fill="#fff"/><circle cx="-29" cy="7" r="10" fill="#263b4a"/><ellipse cx="31" cy="4" rx="15" ry="18" fill="#fff"/><circle cx="33" cy="7" r="10" fill="#263b4a"/><path d="M-18 42Q0 59 18 42" fill="none" stroke="#d45b5b" stroke-width="7" stroke-linecap="round"/></g>
+  <path d="M650 555C790 330 920 330 1050 505S1310 680 1435 475 1640 310 1760 390" fill="none" stroke="#a286b9" stroke-width="14" stroke-linecap="round" opacity=".55"/><path d="M650 555C790 330 920 330 1050 505S1310 680 1435 475 1640 310 1760 390" fill="none" stroke="#72508f" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 24"/>
+  <g filter="url(#road-new-shadow)"><circle cx="680" cy="510" r="46" fill="url(#road-new-node)"/><circle cx="960" cy="420" r="46" fill="url(#road-new-node)"/><circle cx="1240" cy="590" r="46" fill="url(#road-new-node)"/><circle cx="1500" cy="395" r="46" fill="url(#road-new-node)"/><circle cx="1740" cy="380" r="46" fill="#d9a646"/></g>
+  <g fill="#fff" font-family="Segoe UI, sans-serif" font-size="27" font-weight="900" text-anchor="middle"><text x="680" y="520">1</text><text x="960" y="430">2</text><text x="1240" y="600">3</text><text x="1500" y="405">4</text><path d="M1720 380L1734 394 1761 362" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <rect x="80" y="850" width="1760" height="160" rx="20" fill="#382747" opacity=".96" filter="url(#road-new-shadow)"/><rect x="108" y="880" width="6" height="70" rx="3" fill="#b695ce"/><text x="142" y="910" fill="#decbea" font-family="Segoe UI, sans-serif" font-size="20" font-weight="800" letter-spacing="3">NARRATION</text><line x1="142" y1="954" x2="1788" y2="954" stroke="#fff" stroke-opacity=".2" stroke-width="2"/>
 </svg>

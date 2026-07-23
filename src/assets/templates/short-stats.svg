@@ -1,81 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#fff6e6"/>
-      <stop offset="100%" stop-color="#ffe4b0"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
-      <stop offset="0%" stop-color="#ffb300" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#ffb300" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="cardA" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffd54f"/>
-      <stop offset="100%" stop-color="#ffb300"/>
-    </linearGradient>
-    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#fff1d4"/>
-    </linearGradient>
-    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#5a3e00" flood-opacity="0.20"/>
-    </filter>
-    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#5a3e00" flood-opacity="0.22"/>
-    </filter>
+    <linearGradient id="stats-bg" x2="1" y2="1"><stop stop-color="#17172b"/><stop offset="1" stop-color="#272547"/></linearGradient>
+    <linearGradient id="stats-cloud" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#e7e6f4"/></linearGradient>
+    <filter id="stats-shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dy="18" stdDeviation="20" flood-color="#05050c" flood-opacity=".42"/></filter>
+    <pattern id="stats-dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="2" fill="#fff" opacity=".07"/></pattern>
   </defs>
-
-  <rect width="1080" height="1920" fill="url(#bg)"/>
-  <circle cx="540" cy="420" r="420" fill="url(#glow)"/>
-
-  <!-- Title chip -->
-  <rect x="390" y="150" width="300" height="66" rx="33" fill="#ffb300" opacity="0.2"/>
-  <text x="540" y="192" fill="#a06a00" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="3" text-anchor="middle">KEY STATS</text>
-
-  <!-- Cloud head only -->
-  <g transform="translate(540, 320)" filter="url(#cloudShadow)">
-    <g>
-      <circle cx="-34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="-16" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <circle cx="18" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <ellipse cx="0" cy="16" rx="60" ry="42" fill="url(#cloudFill)"/>
-    </g>
-    <polygon points="-38,-30 0,-46 38,-30 0,-14" fill="#2c5f7c"/>
-    <ellipse cx="-14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="-13" cy="4" r="5.5" fill="#25384a"/>
-    <ellipse cx="14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="15" cy="4" r="5.5" fill="#25384a"/>
-    <path d="M-8,20 Q0,28 8,20" fill="none" stroke="#d45b5b" stroke-width="3.5" stroke-linecap="round"/>
+  <rect width="1920" height="1080" fill="url(#stats-bg)"/><rect width="1920" height="850" fill="url(#stats-dots)"/>
+  <path d="M0 760L460 280 650 470 990 80 1300 360 1680 30 1920 230" fill="none" stroke="#4fd1c5" stroke-width="4" opacity=".12"/>
+  <text x="80" y="112" fill="#f7c948" font-family="Segoe UI, sans-serif" font-size="22" font-weight="800" letter-spacing="4">KEY STATS</text>
+  <!-- Cloudy head, cap, and face only -->
+  <g transform="translate(310 520) scale(1.82)" filter="url(#stats-shadow)">
+    <circle cx="-62" cy="18" r="58" fill="url(#stats-cloud)"/><circle cx="62" cy="18" r="58" fill="url(#stats-cloud)"/><circle cx="-31" cy="-35" r="53" fill="url(#stats-cloud)"/><circle cx="32" cy="-35" r="53" fill="url(#stats-cloud)"/><ellipse cy="28" rx="104" ry="70" fill="url(#stats-cloud)"/>
+    <polygon points="-72,-54 0,-82 72,-54 0,-27" fill="#f7c948"/><polygon points="-72,-54 0,-73 72,-54 0,-35" fill="#ffe080"/><path d="M53-49V-4" stroke="#4fd1c5" stroke-width="6"/><circle cx="53" cy="3" r="8" fill="#4fd1c5"/>
+    <ellipse cx="-31" cy="10" rx="16" ry="20" fill="#fff"/><circle cx="-28" cy="14" r="10" fill="#24243b"/><ellipse cx="31" cy="10" rx="16" ry="20" fill="#fff"/><circle cx="34" cy="14" r="10" fill="#24243b"/><path d="M-22 43Q0 64 22 43" fill="none" stroke="#cb5e68" stroke-width="7" stroke-linecap="round"/>
   </g>
-
-  <!-- Stat cards -->
-  <g filter="url(#soft)">
-    <rect x="70" y="460" width="440" height="300" rx="24" fill="#ffffff" opacity="0.85"/>
-    <rect x="570" y="460" width="440" height="300" rx="24" fill="#ffffff" opacity="0.85"/>
-    <rect x="70" y="800" width="440" height="300" rx="24" fill="#ffffff" opacity="0.85"/>
-    <rect x="570" y="800" width="440" height="300" rx="24" fill="#ffffff" opacity="0.85"/>
-  </g>
-  <g font-family="'Segoe UI', sans-serif" text-anchor="middle">
-    <text x="290" y="600" fill="#a06a00" font-size="90" font-weight="800">00%</text>
-    <text x="290" y="680" fill="#8a7a55" font-size="24" font-weight="600">Metric one</text>
-    <text x="790" y="600" fill="#a06a00" font-size="90" font-weight="800">0.0x</text>
-    <text x="790" y="680" fill="#8a7a55" font-size="24" font-weight="600">Metric two</text>
-    <text x="290" y="940" fill="#a06a00" font-size="90" font-weight="800">000</text>
-    <text x="290" y="1020" fill="#8a7a55" font-size="24" font-weight="600">Metric three</text>
-    <text x="790" y="940" fill="#a06a00" font-size="90" font-weight="800">00k</text>
-    <text x="790" y="1020" fill="#8a7a55" font-size="24" font-weight="600">Metric four</text>
-  </g>
-  <rect x="70" y="460" width="10" height="300" rx="5" fill="url(#cardA)"/>
-  <rect x="570" y="460" width="10" height="300" rx="5" fill="url(#cardA)"/>
-  <rect x="70" y="800" width="10" height="300" rx="5" fill="url(#cardA)"/>
-  <rect x="570" y="800" width="10" height="300" rx="5" fill="url(#cardA)"/>
-
-  <!-- Narration -->
-  <g filter="url(#soft)">
-    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#5a3e00" opacity="0.92"/>
-  </g>
-  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#ffb300"/>
-  <text x="90" y="1614" fill="#ffe0a3" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
-  <rect x="0" y="1884" width="1080" height="8" fill="#5a3e00" opacity="0.12"/>
-  <rect x="0" y="1884" width="360" height="8" fill="#ffb300"/>
+  <!-- Stats cards use the same 2x2 overall region: x=620..1780, y=180..720 -->
+  <g filter="url(#stats-shadow)" fill="#323154" stroke="#4b4a70" stroke-width="2"><rect x="620" y="180" width="560" height="250" rx="22"/><rect x="1220" y="180" width="560" height="250" rx="22"/><rect x="620" y="470" width="560" height="250" rx="22"/><rect x="1220" y="470" width="560" height="250" rx="22"/></g>
+  <g fill="#f7c948"><rect x="620" y="180" width="10" height="250" rx="5"/><rect x="1220" y="470" width="10" height="250" rx="5"/></g><g fill="#4fd1c5"><rect x="1220" y="180" width="10" height="250" rx="5"/><rect x="620" y="470" width="10" height="250" rx="5"/></g>
+  <g font-family="Segoe UI, sans-serif" fill="#aaa9c4" font-size="20" font-weight="700" letter-spacing="2"><text x="675" y="240">METRIC 01</text><text x="1275" y="240">METRIC 02</text><text x="675" y="530">METRIC 03</text><text x="1275" y="530">METRIC 04</text></g>
+  <g fill="#fff" opacity=".15"><rect x="675" y="286" width="300" height="76" rx="12"/><rect x="1275" y="286" width="300" height="76" rx="12"/><rect x="675" y="576" width="300" height="76" rx="12"/><rect x="1275" y="576" width="300" height="76" rx="12"/></g>
+  <!-- Narration band: x=80 y=850 width=1760 height=160 -->
+  <rect x="80" y="850" width="1760" height="160" rx="18" fill="#f7f3e8" filter="url(#stats-shadow)"/><rect x="80" y="850" width="12" height="160" rx="6" fill="#f7c948"/><text x="130" y="907" fill="#9c7521" font-family="Segoe UI, sans-serif" font-size="20" font-weight="800" letter-spacing="3">NARRATION</text>
 </svg>

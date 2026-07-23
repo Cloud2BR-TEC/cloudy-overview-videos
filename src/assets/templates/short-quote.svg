@@ -1,66 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#fdeef3"/>
-      <stop offset="100%" stop-color="#f6d4e0"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
-      <stop offset="0%" stop-color="#ec6a8c" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#ec6a8c" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#fbe4ec"/>
-    </linearGradient>
-    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#5a1730" flood-opacity="0.20"/>
-    </filter>
-    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#5a1730" flood-opacity="0.22"/>
-    </filter>
-  </defs>
-
-  <rect width="1080" height="1920" fill="url(#bg)"/>
-  <circle cx="540" cy="700" r="440" fill="url(#glow)"/>
-
-  <!-- Big quote card -->
-  <g filter="url(#soft)">
-    <rect x="80" y="360" width="920" height="720" rx="30" fill="#ffffff" opacity="0.8"/>
-  </g>
-  <text x="150" y="560" fill="#ec6a8c" font-family="Georgia, serif" font-size="240" font-weight="800" opacity="0.6">&#8220;</text>
-  <g fill="#a83a5a" opacity="0.16">
-    <rect x="150" y="560" width="780" height="30" rx="15"/>
-    <rect x="150" y="620" width="700" height="30" rx="15"/>
-    <rect x="150" y="680" width="760" height="30" rx="15"/>
-    <rect x="150" y="740" width="520" height="30" rx="15"/>
-  </g>
-  <rect x="150" y="860" width="12" height="70" rx="6" fill="#ec6a8c"/>
-  <text x="184" y="898" fill="#a83a5a" font-family="'Segoe UI', sans-serif" font-size="26" font-weight="800">ATTRIBUTION</text>
-  <text x="184" y="936" fill="#a83a5a" font-family="'Segoe UI', sans-serif" font-size="20" font-weight="600" opacity="0.7">Source / role</text>
-
-  <!-- Cloud head only -->
-  <g transform="translate(880, 300)" filter="url(#cloudShadow)">
-    <g>
-      <circle cx="-34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="-16" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <circle cx="18" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <ellipse cx="0" cy="16" rx="60" ry="42" fill="url(#cloudFill)"/>
-    </g>
-    <polygon points="-38,-30 0,-46 38,-30 0,-14" fill="#2c5f7c"/>
-    <ellipse cx="-14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="-13" cy="4" r="5.5" fill="#25384a"/>
-    <ellipse cx="14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="15" cy="4" r="5.5" fill="#25384a"/>
-    <path d="M-8,20 Q0,28 8,20" fill="none" stroke="#d45b5b" stroke-width="3.5" stroke-linecap="round"/>
-  </g>
-
-  <!-- Narration -->
-  <g filter="url(#soft)">
-    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#5a1730" opacity="0.92"/>
-  </g>
-  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#ec6a8c"/>
-  <text x="90" y="1614" fill="#f6c2d2" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
-  <rect x="0" y="1884" width="1080" height="8" fill="#5a1730" opacity="0.12"/>
-  <rect x="0" y="1884" width="360" height="8" fill="#ec6a8c"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs><linearGradient id="quote-bg" x2="1" y2="1"><stop stop-color="#fbf8f2"/><stop offset="1" stop-color="#eadfd2"/></linearGradient><linearGradient id="quote-cloud" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#eee8df"/></linearGradient><filter id="quote-shadow" x="-25%" y="-25%" width="150%" height="165%"><feDropShadow dy="14" stdDeviation="18" flood-color="#4a362a" flood-opacity="0.2"/></filter></defs>
+  <rect width="1920" height="1080" fill="url(#quote-bg)"/><rect x="0" width="580" height="820" fill="#244c4a"/><path d="M510 0H580V820H430Z" fill="#d99758" opacity="0.75"/><text x="90" y="118" fill="#f0c190" font-family="Segoe UI, sans-serif" font-size="22" font-weight="800" letter-spacing="4">QUOTED</text>
+  <g filter="url(#quote-shadow)"><circle cx="235" cy="465" r="108" fill="url(#quote-cloud)"/><circle cx="401" cy="465" r="108" fill="url(#quote-cloud)"/><circle cx="277" cy="375" r="98" fill="url(#quote-cloud)"/><circle cx="365" cy="375" r="98" fill="url(#quote-cloud)"/><ellipse cx="318" cy="482" rx="180" ry="118" fill="url(#quote-cloud)"/><polygon points="202,360 318,316 434,360 318,404" fill="#b86d3f"/><polygon points="202,360 318,330 434,360 318,390" fill="#dc965d"/><path d="M402 370V440" stroke="#f0c190" stroke-width="10"/><circle cx="402" cy="450" r="13" fill="#f0c190"/><ellipse cx="266" cy="454" rx="25" ry="32" fill="#fff"/><circle cx="272" cy="462" r="16" fill="#24403f"/><ellipse cx="370" cy="454" rx="25" ry="32" fill="#fff"/><circle cx="376" cy="462" r="16" fill="#24403f"/><path d="M282 510Q318 542 354 510" fill="none" stroke="#c65b64" stroke-width="11" stroke-linecap="round"/></g>
+  <g filter="url(#quote-shadow)"><rect x="650" y="115" width="1160" height="610" rx="20" fill="#fffdf9"/></g><rect x="650" y="115" width="14" height="610" rx="7" fill="#d99758"/><text x="720" y="270" fill="#d99758" font-family="Georgia, serif" font-size="150" font-weight="700">“</text><rect x="820" y="465" width="760" height="2" fill="#d8cabe"/><circle cx="1690" cy="588" r="54" fill="#244c4a"/><text x="1690" y="617" text-anchor="middle" fill="#f0c190" font-family="Georgia, serif" font-size="68">”</text>
+  <rect x="80" y="850" width="1760" height="160" rx="18" fill="#244c4a" filter="url(#quote-shadow)"/><rect x="80" y="850" width="12" height="160" rx="6" fill="#d99758"/><text x="130" y="907" fill="#f0c190" font-family="Segoe UI, sans-serif" font-size="20" font-weight="800" letter-spacing="3">NARRATION</text>
 </svg>

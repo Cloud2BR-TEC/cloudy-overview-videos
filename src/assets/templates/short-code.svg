@@ -1,85 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#0f2027"/>
-      <stop offset="100%" stop-color="#182f37"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.5">
-      <stop offset="0%" stop-color="#4db6ac" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#4db6ac" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#d9f2ef"/>
-    </linearGradient>
-    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#04120f" flood-opacity="0.4"/>
-    </filter>
-    <filter id="cloudShadow" x="-60%" y="-60%" width="220%" height="220%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#04120f" flood-opacity="0.3"/>
-    </filter>
+    <linearGradient id="code-bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#08191e"/><stop offset="1" stop-color="#12343a"/></linearGradient>
+    <linearGradient id="code-cloud" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d7f4ef"/></linearGradient>
+    <filter id="code-shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#020b0d" flood-opacity=".42"/></filter>
   </defs>
-
-  <rect width="1080" height="1920" fill="url(#bg)"/>
-  <circle cx="540" cy="440" r="420" fill="url(#glow)"/>
-
-  <!-- Code window -->
-  <g filter="url(#soft)">
-    <rect x="70" y="230" width="940" height="820" rx="22" fill="#0b1a1f"/>
+  <rect width="1920" height="1080" fill="url(#code-bg)"/><path d="M0 160C260 40 420 60 610 220V820C390 740 210 760 0 900Z" fill="#1b5660" opacity=".28"/>
+  <text x="80" y="105" fill="#75ddd0" font-family="Segoe UI, sans-serif" font-size="24" font-weight="700" letter-spacing="4">CODE WALKTHROUGH</text>
+  <g transform="translate(330 430)" filter="url(#code-shadow)">
+    <circle cx="-78" cy="20" r="72" fill="url(#code-cloud)"/><circle cx="78" cy="20" r="72" fill="url(#code-cloud)"/><circle cx="-36" cy="-48" r="62" fill="url(#code-cloud)"/><circle cx="38" cy="-48" r="62" fill="url(#code-cloud)"/><ellipse cy="28" rx="126" ry="82" fill="url(#code-cloud)"/>
+    <polygon points="-76,-62 0,-96 76,-62 0,-28" fill="#24516c"/><polygon points="-76,-62 0,-86 76,-62 0,-38" fill="#367594"/><path d="M50-53V5" stroke="#f2a66f" stroke-width="6" stroke-linecap="round"/><circle cx="50" cy="12" r="8" fill="#f2a66f"/>
+    <ellipse cx="-31" cy="4" rx="15" ry="18" fill="#fff"/><circle cx="-29" cy="7" r="10" fill="#233849"/><circle cx="-25" cy="2" r="3" fill="#fff"/><ellipse cx="31" cy="4" rx="15" ry="18" fill="#fff"/><circle cx="33" cy="7" r="10" fill="#233849"/><circle cx="37" cy="2" r="3" fill="#fff"/><path d="M-18 42Q0 59 18 42" fill="none" stroke="#d45b5b" stroke-width="7" stroke-linecap="round"/>
   </g>
-  <rect x="70" y="230" width="940" height="64" rx="22" fill="#12262d"/>
-  <rect x="70" y="272" width="940" height="22" fill="#12262d"/>
-  <circle cx="112" cy="262" r="10" fill="#ff5f56"/>
-  <circle cx="150" cy="262" r="10" fill="#ffbd2e"/>
-  <circle cx="188" cy="262" r="10" fill="#27c93f"/>
-  <text x="540" y="269" fill="#4db6ac" font-family="'DM Mono', monospace" font-size="20" font-weight="700" text-anchor="middle" opacity="0.7">main.ts</text>
-
-  <!-- Code lines -->
-  <g font-family="'DM Mono', monospace" font-size="24">
-    <text x="110" y="360" fill="#6b8a86">01</text>
-    <rect x="170" y="342" width="300" height="20" rx="10" fill="#c792ea" opacity="0.5"/>
-    <rect x="486" y="342" width="180" height="20" rx="10" fill="#82aaff" opacity="0.5"/>
-    <text x="110" y="410" fill="#6b8a86">02</text>
-    <rect x="210" y="392" width="240" height="20" rx="10" fill="#4db6ac" opacity="0.6"/>
-    <rect x="466" y="392" width="360" height="20" rx="10" fill="#ffffff" opacity="0.14"/>
-    <text x="110" y="460" fill="#6b8a86">03</text>
-    <rect x="250" y="442" width="200" height="20" rx="10" fill="#f78c6c" opacity="0.6"/>
-    <rect x="466" y="442" width="300" height="20" rx="10" fill="#ffffff" opacity="0.14"/>
-    <text x="110" y="510" fill="#6b8a86">04</text>
-    <rect x="250" y="492" width="420" height="20" rx="10" fill="#ffffff" opacity="0.14"/>
-    <text x="110" y="560" fill="#6b8a86">05</text>
-    <rect x="210" y="542" width="180" height="20" rx="10" fill="#c3e88d" opacity="0.6"/>
-    <text x="110" y="610" fill="#6b8a86">06</text>
-    <rect x="170" y="592" width="120" height="20" rx="10" fill="#c792ea" opacity="0.5"/>
-    <text x="110" y="660" fill="#6b8a86">07</text>
-    <rect x="250" y="642" width="360" height="20" rx="10" fill="#ffffff" opacity="0.14"/>
-    <text x="110" y="710" fill="#6b8a86">08</text>
-    <rect x="170" y="692" width="80" height="20" rx="10" fill="#82aaff" opacity="0.5"/>
+  <g filter="url(#code-shadow)"><rect x="620" y="110" width="1160" height="650" rx="24" fill="#071216"/></g><path d="M644 110H1756Q1780 110 1780 134V184H620V134Q620 110 644 110Z" fill="#10272d"/>
+  <circle cx="665" cy="147" r="10" fill="#ff6259"/><circle cx="701" cy="147" r="10" fill="#ffc143"/><circle cx="737" cy="147" r="10" fill="#36cf63"/><text x="1200" y="155" text-anchor="middle" fill="#75ddd0" opacity=".75" font-family="Consolas, monospace" font-size="20">main.ts</text>
+  <g font-family="Consolas, monospace" font-size="24"><g fill="#496970" text-anchor="end"><text x="682" y="246">01</text><text x="682" y="306">02</text><text x="682" y="366">03</text><text x="682" y="426">04</text><text x="682" y="486">05</text><text x="682" y="546">06</text><text x="682" y="606">07</text><text x="682" y="666">08</text></g>
+    <rect x="725" y="642" width="12" height="30" fill="#75ddd0"/>
   </g>
-
-  <!-- Cloud head only -->
-  <g transform="translate(880, 940)" filter="url(#cloudShadow)">
-    <g>
-      <circle cx="-34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="34" cy="12" r="38" fill="url(#cloudFill)"/>
-      <circle cx="-16" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <circle cx="18" cy="-22" r="32" fill="url(#cloudFill)"/>
-      <ellipse cx="0" cy="16" rx="60" ry="42" fill="url(#cloudFill)"/>
-    </g>
-    <polygon points="-38,-30 0,-46 38,-30 0,-14" fill="#2c5f7c"/>
-    <ellipse cx="-14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="-13" cy="4" r="5.5" fill="#25384a"/>
-    <ellipse cx="14" cy="2" rx="8" ry="10" fill="#fff"/>
-    <circle cx="15" cy="4" r="5.5" fill="#25384a"/>
-    <path d="M-8,20 Q0,28 8,20" fill="none" stroke="#d45b5b" stroke-width="3.5" stroke-linecap="round"/>
-  </g>
-
-  <!-- Narration -->
-  <g filter="url(#soft)">
-    <rect x="40" y="1560" width="1000" height="290" rx="26" fill="#04120f" opacity="0.92"/>
-  </g>
-  <rect x="66" y="1584" width="6" height="66" rx="3" fill="#4db6ac"/>
-  <text x="90" y="1614" fill="#a5e0d9" font-family="'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="2">NARRATION</text>
-  <rect x="0" y="1884" width="1080" height="8" fill="#ffffff" opacity="0.12"/>
-  <rect x="0" y="1884" width="360" height="8" fill="#4db6ac"/>
+  <g filter="url(#code-shadow)"><rect x="80" y="850" width="1760" height="160" rx="20" fill="#041013" opacity=".94"/></g><rect x="108" y="880" width="6" height="70" rx="3" fill="#75ddd0"/><text x="142" y="910" fill="#75ddd0" font-family="Segoe UI, sans-serif" font-size="20" font-weight="800" letter-spacing="3">NARRATION</text><line x1="142" y1="954" x2="1788" y2="954" stroke="#9ac7c3" stroke-opacity=".2" stroke-width="2"/>
 </svg>

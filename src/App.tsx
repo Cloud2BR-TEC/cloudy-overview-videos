@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import './App.css'
 import CloudyAvatar from './CloudyAvatar'
 
@@ -29,6 +29,46 @@ const SHORT_TEMPLATES = [
 ] as const
 
 const SHORT_TEMPLATE_INDEX: Record<string, number> = Object.fromEntries(SHORT_TEMPLATES.map((template, index) => [template.key, index]))
+
+type ShortRect = readonly [x: number, y: number, width: number, height: number]
+type ShortTemplateLayout = {
+  title: ShortRect
+  items: readonly ShortRect[]
+  media?: readonly ShortRect[]
+  titleColor: string
+  contentColor: string
+  align?: 'left' | 'center'
+  mono?: boolean
+}
+
+const SHORT_NARRATION_RECT: ShortRect = [80, 850, 1760, 160]
+const LEFT_TITLE: ShortRect = [80, 170, 490, 230]
+
+const SHORT_TEMPLATE_LAYOUTS: Record<string, ShortTemplateLayout> = {
+  hero: { title: [680, 235, 1080, 300], items: [[680, 555, 940, 120]], titleColor: '#ffffff', contentColor: '#cceee8' },
+  intro: { title: [640, 160, 1165, 100], items: [[730, 300, 440, 65], [1325, 300, 440, 65], [730, 420, 440, 65], [1325, 420, 440, 65]], titleColor: '#153f39', contentColor: '#244b45' },
+  presenting: { title: LEFT_TITLE, items: [], media: [[760, 120, 1020, 600]], titleColor: '#17384b', contentColor: '#17384b' },
+  whiteboard: { title: LEFT_TITLE, items: [[700, 285, 195, 105], [1110, 285, 160, 105], [1460, 285, 250, 105], [700, 530, 350, 95], [1330, 530, 380, 95]], titleColor: '#203946', contentColor: '#17384b', align: 'center' },
+  diagram: { title: LEFT_TITLE, items: [[630, 215, 190, 105], [630, 555, 190, 105], [1135, 365, 300, 160], [1715, 215, 60, 105], [1715, 555, 60, 105]], titleColor: '#173c30', contentColor: '#173c30', align: 'center' },
+  timeline: { title: LEFT_TITLE, items: [[630, 220, 240, 115], [910, 570, 240, 115], [1250, 220, 240, 115], [1530, 570, 240, 115]], titleColor: '#f2fdff', contentColor: '#17475b', align: 'center' },
+  comparison: { title: LEFT_TITLE, items: [[680, 330, 425, 300], [1280, 330, 425, 300]], titleColor: '#303f78', contentColor: '#303f78' },
+  quote: { title: LEFT_TITLE, items: [[820, 270, 850, 340]], titleColor: '#5b3425', contentColor: '#5b3425', align: 'center' },
+  stats: { title: LEFT_TITLE, items: [[670, 250, 460, 140], [1270, 250, 460, 140], [670, 540, 460, 140], [1270, 540, 460, 140]], titleColor: '#303f78', contentColor: '#303f78', align: 'center' },
+  code: { title: LEFT_TITLE, items: [[725, 220, 900, 70], [725, 315, 900, 70], [725, 410, 900, 70], [725, 505, 900, 70], [725, 600, 900, 70]], titleColor: '#d9f2ef', contentColor: '#a5e0d9', mono: true },
+  terminal: { title: LEFT_TITLE, items: [[675, 220, 980, 70], [675, 315, 980, 70], [675, 410, 980, 70], [675, 505, 980, 70], [675, 600, 980, 70]], titleColor: '#d9f2ef', contentColor: '#a5e0d9', mono: true },
+  steps: { title: LEFT_TITLE, items: [[750, 160, 930, 82], [750, 290, 930, 82], [750, 420, 930, 82], [750, 550, 930, 82], [750, 680, 930, 82]], titleColor: '#592a1d', contentColor: '#74341f' },
+  question: { title: LEFT_TITLE, items: [[830, 300, 850, 330]], titleColor: '#ffffff', contentColor: '#ffffff', align: 'center' },
+  checklist: { title: LEFT_TITLE, items: [[750, 160, 930, 82], [750, 290, 930, 82], [750, 420, 930, 82], [750, 550, 930, 82], [750, 680, 930, 82]], titleColor: '#17384b', contentColor: '#17384b' },
+  gallery: { title: LEFT_TITLE, items: [], media: [[760, 160, 490, 250], [1290, 160, 490, 250], [760, 450, 490, 250], [1290, 450, 490, 250]], titleColor: '#24445a', contentColor: '#24445a' },
+  callout: { title: LEFT_TITLE, items: [[700, 260, 1000, 340]], titleColor: '#ffffff', contentColor: '#ffffff', align: 'center' },
+  roadmap: { title: LEFT_TITLE, items: [[630, 535, 180, 110], [870, 300, 180, 110], [1150, 615, 180, 110], [1410, 275, 180, 110], [1635, 470, 180, 110]], titleColor: '#ffffff', contentColor: '#34215b', align: 'center' },
+  recap: { title: [640, 160, 1150, 90], items: [[690, 285, 460, 130], [1280, 285, 460, 130], [690, 495, 460, 130], [1280, 495, 460, 130]], titleColor: '#603419', contentColor: '#603419' },
+  outro: { title: [890, 300, 680, 210], items: [[990, 535, 480, 120]], titleColor: '#ffffff', contentColor: '#e8dcff', align: 'center' },
+}
+
+function shortRectStyle([x, y, width, height]: ShortRect): CSSProperties {
+  return { left: `${x / 19.2}%`, top: `${y / 10.8}%`, width: `${width / 19.2}%`, height: `${height / 10.8}%` }
+}
 
 // Content-aware keyword rules used to pick the most fitting template for each slide's text.
 const SHORT_TEMPLATE_KEYWORDS: { key: string; pattern: RegExp }[] = [
@@ -75,6 +115,16 @@ function planShortTemplateIndices(slides: { title: string; narration: string }[]
     usedKeys.add(key)
     return SHORT_TEMPLATE_INDEX[key] ?? 0
   })
+}
+
+type ShortAction = 'intro' | 'presenting' | 'whiteboard' | 'diagram' | 'farewell'
+
+function shortActionForTemplate(templateKey: string): ShortAction {
+  if (['recap', 'outro'].includes(templateKey)) return 'farewell'
+  if (['diagram', 'roadmap'].includes(templateKey)) return 'diagram'
+  if (['whiteboard', 'steps', 'timeline', 'checklist'].includes(templateKey)) return 'whiteboard'
+  if (['presenting', 'comparison', 'stats', 'gallery', 'code', 'terminal'].includes(templateKey)) return 'presenting'
+  return 'intro'
 }
 
 type Repository = {
@@ -800,6 +850,12 @@ function App() {
   const shortSourceScenes = scenes.filter((scene) => scene.section === shortTopic.section).slice(0, 5)
   const shortNarration = shortSourceScenes.map((scene) => scene.narration).join(' ')
   const shortRuntime = shortSourceScenes.reduce((total) => total + shortSlideDuration(playbackSpeed), 0)
+  const shortTemplateIndices = planShortTemplateIndices(shortSourceScenes)
+  const activeShortTemplate = SHORT_TEMPLATES[shortTemplateIndices[shortPreviewBeatIdx] ?? 0] ?? SHORT_TEMPLATES[0]
+  const activeShortScene = shortSourceScenes[shortPreviewBeatIdx] ?? shortTopic
+  const activeShortLayout = SHORT_TEMPLATE_LAYOUTS[activeShortTemplate.key]
+  const activeShortAssets = activeShortScene.assets.length ? activeShortScene.assets.slice(0, 4) : activeShortScene.asset ? [activeShortScene.asset] : []
+  const activeShortBullets = (activeShortScene.bullets.length ? activeShortScene.bullets : extractBullets(activeShortScene.narration)).slice(0, 5)
   const shortAssetEntries = [
     { kind: 'cloudy', name: 'Cloudy', detail: 'Protagonist — flies through each world', image: null },
     { kind: 'concept', name: shortTopic.title, detail: 'Topic environment theme', image: null },
@@ -1568,8 +1624,8 @@ function App() {
     }
     const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find((type) => MediaRecorder.isTypeSupported(type)) ?? 'video/webm'
     const canvas = document.createElement('canvas')
-    canvas.width = 1080
-    canvas.height = 1920
+    canvas.width = 1920
+    canvas.height = 1080
     const ctxMaybe = canvas.getContext('2d')
     if (!ctxMaybe) return
     const ctx: CanvasRenderingContext2D = ctxMaybe
@@ -1592,18 +1648,18 @@ function App() {
           const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' })
           const objectUrl = URL.createObjectURL(blob)
           const img = new Image()
-          img.width = 1080
-          img.height = 1920
+          img.width = 1920
+          img.height = 1080
           await new Promise<void>((resolve, reject) => {
             img.onload = () => resolve()
             img.onerror = () => reject()
             img.src = objectUrl
           })
           const offscreen = document.createElement('canvas')
-          offscreen.width = 1080
-          offscreen.height = 1920
+          offscreen.width = 1920
+          offscreen.height = 1080
           const offCtx = offscreen.getContext('2d')
-          offCtx?.drawImage(img, 0, 0, 1080, 1920)
+          offCtx?.drawImage(img, 0, 0, 1920, 1080)
           URL.revokeObjectURL(objectUrl)
           return offscreen
         } catch {
@@ -1692,9 +1748,9 @@ function App() {
       const activeSentenceIdx = Math.min(narSentences.length - 1, Math.floor(sceneProgress * narSentences.length))
       const activeSentence = narSentences[activeSentenceIdx] ?? scene.narration
 
-      // ── Scene actions: intro, presenting, whiteboard, diagram, farewell ──
-      const actions = ['intro', 'presenting', 'whiteboard', 'diagram', 'farewell'] as const
-      const action = actions[sceneIdx % actions.length]
+      // Match the foreground composition to the content-selected background template.
+      const selectedTemplate = SHORT_TEMPLATES[slideTemplateIndices[sceneIdx] ?? 0] ?? SHORT_TEMPLATES[0]
+      const action = shortActionForTemplate(selectedTemplate.key)
 
       // ── Background: content-aware template or fallback gradient ──
       const tpl = templateImages[slideTemplateIndices[sceneIdx] ?? 0]
@@ -1997,12 +2053,48 @@ function App() {
 
       // ── Scene-specific content ──
       const accentColor = ['#4fc3f7', '#ce93d8', '#81c784', '#ffb74d', '#90caf9'][sceneIdx % 5]
-      const bullets = (scene.bullets?.length ? scene.bullets : extractBullets(scene.narration)).slice(0, 4)
+      const bullets = (scene.bullets?.length ? scene.bullets : extractBullets(scene.narration)).slice(0, 5)
       const topics = (repository?.topics ?? []).slice(0, 6)
       const sceneAssetImages = scene.assets.map((a) => assetImageByUrl.get(a)).filter((img): img is HTMLImageElement => Boolean(img))
       const bgImg = sceneAssetImages[0] ?? null
 
-      if (action === 'intro') {
+      if (tpl) {
+        // Loaded SVG templates own the composition. Populate their purpose-built slots directly.
+        const drawSlotText = (text: string, x: number, y: number, width: number, height: number, maxSize = 36, color = '#17384b', align: CanvasTextAlign = 'left') => {
+          const layout = fitCanvasText(ctx, text, width, height, maxSize, 16, '700')
+          ctx.save()
+          ctx.globalAlpha = eased
+          ctx.fillStyle = color
+          ctx.font = `700 ${layout.fontSize}px Manrope, sans-serif`
+          ctx.textAlign = align
+          const textX = align === 'center' ? x + width / 2 : x
+          layout.lines.forEach((line, index) => ctx.fillText(line, textX, y + layout.lineHeight + index * layout.lineHeight))
+          ctx.restore()
+        }
+        const drawSlotImage = (image: HTMLImageElement, x: number, y: number, width: number, height: number) => {
+          ctx.save()
+          ctx.beginPath()
+          ctx.roundRect(x, y, width, height, 12)
+          ctx.clip()
+          ctx.fillStyle = '#f8fcff'
+          ctx.fillRect(x, y, width, height)
+          drawContainImage(ctx, image, x, y, width, height)
+          ctx.restore()
+        }
+        const key = selectedTemplate.key
+        const layout = SHORT_TEMPLATE_LAYOUTS[key]
+        const titleSize = layout.title[2] > 700 ? 64 : 48
+        drawSlotText(scene.title, ...layout.title, titleSize, layout.titleColor, layout.align)
+        layout.media?.forEach((slot, index) => {
+          const image = sceneAssetImages[index]
+          if (image) drawSlotImage(image, ...slot)
+        })
+        bullets.slice(0, layout.items.length).forEach((bullet, index) => {
+          const slot = layout.items[index]
+          const contentSize = layout.mono ? 26 : slot[2] < 220 ? 22 : 30
+          drawSlotText(bullet, ...slot, contentSize, layout.contentColor, layout.align)
+        })
+      } else if (action === 'intro') {
         // ── Cloudy walks in from left, title appears ──
         const walkX = eased * W * 0.38
         drawCloudy(walkX, H * 0.52, 1.6, eased < 0.9 ? 'walk' : 'wave')
@@ -2231,33 +2323,25 @@ function App() {
         }
       }
 
-      // ── Subtitle bar ──
-      ctx.fillStyle = 'rgba(20, 40, 60, 0.88)'
-      ctx.beginPath()
-      ctx.roundRect(30, H - 300, W - 60, 220, 14)
-      ctx.fill()
-      // Accent stripe
-      ctx.fillStyle = accentColor
-      ctx.fillRect(50, H - 290, 4, 50)
-      // Subtitle text
+      // ── Narration text inside the template's reserved horizontal band ──
       ctx.fillStyle = '#fff'
-      const subLayout = fitCanvasText(ctx, activeSentence, W - 120, 180, 26, 16)
+      const subLayout = fitCanvasText(ctx, activeSentence, 1600, 82, 28, 18)
       ctx.font = `400 ${subLayout.fontSize}px Manrope, sans-serif`
-      subLayout.lines.forEach((line, i) => ctx.fillText(line, 68, H - 268 + i * subLayout.lineHeight))
+      subLayout.lines.forEach((line, i) => ctx.fillText(line, 142, 930 + i * subLayout.lineHeight))
 
       // ── Progress bar ──
       const progress = Math.min(1, elapsed / totalSeconds)
       ctx.fillStyle = 'rgba(0,0,0,.12)'
-      ctx.fillRect(0, H - 52, W, 6)
+      ctx.fillRect(0, H - 18, W, 6)
       ctx.fillStyle = accentColor
-      ctx.fillRect(0, H - 52, W * progress, 6)
+      ctx.fillRect(0, H - 18, W * progress, 6)
 
       // ── Watermark ──
       ctx.save()
       ctx.globalAlpha = 0.4
       ctx.fillStyle = '#607080'
       ctx.font = '700 16px Manrope, sans-serif'
-      ctx.fillText('Cloud2BR', W - 140, H - 28)
+      ctx.fillText('Cloud2BR', W - 150, H - 28)
       ctx.restore()
     }
 
@@ -2288,7 +2372,7 @@ function App() {
     link.download = `cloudy-short-${normalizedSentence(shortTopic.title).replace(/\s+/g, '-') || 'topic'}-${speedLabel(playbackSpeed)}.webm`
     link.click()
     URL.revokeObjectURL(url)
-    setStatus(`Cloudy Short video downloaded (${durationLabel(shortRuntime)}, vertical 1080×1920).`)
+    setStatus(`Cloudy Short video downloaded (${durationLabel(shortRuntime)}, horizontal 1920×1080).`)
   }
 
   function cancelShortVideo() {
@@ -2357,13 +2441,21 @@ function App() {
                 </label>
               </section>
               <section className="shorts-production-grid">
-                <article className="short-stage" aria-label={`Cloudy Short preview: ${shortTopic.title}`}>
-                  <div className="short-stage-copy">
-                    <h2>{shortTopic.title}</h2>
-                    <p>{shortSourceScenes[shortPreviewBeatIdx]?.narration ?? shortNarration}</p>
+                <article className={`short-stage template-${activeShortTemplate.key}`} aria-label={`Cloudy Short preview: ${shortTopic.title}`}>
+                  <img className="short-stage-template" src={activeShortTemplate.url} alt="" aria-hidden="true" />
+                  <div className="short-stage-media" aria-label="Repository visuals">
+                    {activeShortAssets.slice(0, activeShortLayout.media?.length ?? 0).map((asset, index) => (
+                      <img key={asset} src={asset} alt={`${activeShortScene.assetLabel} ${index + 1}`} style={shortRectStyle(activeShortLayout.media?.[index] ?? [0, 0, 0, 0])} />
+                    ))}
                   </div>
-                  <div className="short-stage-host">
-                    <CloudyAvatar speaking={isShortPreviewPlaying} size={156} />
+                  <h2 className="short-stage-title" style={{ ...shortRectStyle(activeShortLayout.title), color: activeShortLayout.titleColor }}>{activeShortScene.title}</h2>
+                  <div className={`short-stage-content${activeShortLayout.mono ? ' mono' : ''}`}>
+                    {activeShortBullets.slice(0, activeShortLayout.items.length).map((bullet, index) => (
+                      <p key={`${index}-${bullet}`} style={{ ...shortRectStyle(activeShortLayout.items[index]), color: activeShortLayout.contentColor, textAlign: activeShortLayout.align }}>{bullet}</p>
+                    ))}
+                  </div>
+                  <div className="short-stage-narration" style={shortRectStyle(SHORT_NARRATION_RECT)}>
+                    <p>{activeShortScene.narration ?? shortNarration}</p>
                   </div>
                   <span className="shorts-watermark" aria-hidden="true">Cloud2BR</span>
                 </article>
