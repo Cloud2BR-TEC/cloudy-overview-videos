@@ -1587,28 +1587,24 @@ function App() {
       const actions = ['intro', 'presenting', 'whiteboard', 'diagram', 'farewell'] as const
       const action = actions[sceneIdx % actions.length]
 
-      // ── Background: clean studio / classroom feel ──
-      const bgColors = [
-        ['#e8f4f8', '#d0e8f2'], // light blue
-        ['#f0e8f8', '#e0d4f0'], // lavender
-        ['#e8f8e8', '#d0f0d0'], // mint
-        ['#fdf4e8', '#f8e8d0'], // warm cream
-        ['#e8f0f8', '#d4e4f4'], // sky
-      ]
-      const [bgTop, bgBot] = bgColors[sceneIdx % bgColors.length]
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, H)
-      bgGrad.addColorStop(0, bgTop)
-      bgGrad.addColorStop(1, bgBot)
-      ctx.fillStyle = bgGrad
-      ctx.fillRect(0, 0, W, H)
-
-      // ── Template background ──
+      // ── Background: template or fallback gradient ──
       const tpl = templateImages[sceneIdx % templateImages.length]
       if (tpl) {
-        ctx.save()
-        ctx.globalAlpha = 0.35
         ctx.drawImage(tpl, 0, 0, W, H)
-        ctx.restore()
+      } else {
+        const bgColors = [
+          ['#e8f4f8', '#d0e8f2'],
+          ['#f0e8f8', '#e0d4f0'],
+          ['#e8f8e8', '#d0f0d0'],
+          ['#fdf4e8', '#f8e8d0'],
+          ['#e8f0f8', '#d4e4f4'],
+        ]
+        const [bgTop, bgBot] = bgColors[sceneIdx % bgColors.length]
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, H)
+        bgGrad.addColorStop(0, bgTop)
+        bgGrad.addColorStop(1, bgBot)
+        ctx.fillStyle = bgGrad
+        ctx.fillRect(0, 0, W, H)
       }
 
       // Floor
