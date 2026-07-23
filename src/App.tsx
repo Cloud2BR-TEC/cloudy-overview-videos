@@ -221,6 +221,23 @@ function isEnglishImagePath(value: string) {
 function isEnglishDocumentationPath(value: string) {
   return /^docs\//i.test(value) && /\.mdx?$/i.test(value) && isEnglishImagePath(value) && !isExcludedRepositoryPath(value)
 }
+function documentationLanguagePriority(path: string) {
+  const normalized = decodeURIComponent(path).toLowerCase()
+  const segments = normalized.split('/').filter(Boolean)
+  const englishLocale = /^(?:en(?:[-_](?:us|gb|ca|au|nz|ie))?|english)$/
+  const localizationIndex = segments.findIndex((segment) => /^(?:i18n|l10n|locale|locales|translation|translations)$/.test(segment))
+  if (localizationIndex >= 0) return englishLocale.test(segments[localizationIndex + 1] ?? '') ? 3 : 0
+  const fileName = segments.at(-1) ?? ''
+  const localeSuffix = fileName.match(/[._-](en(?:[-_](?:us|gb|ca|au|nz|ie))?|english)(?=\.[^.]+$)/)?.[1]
+  return localeSuffix ? 2 : 1
+}
+function documentationContentKey(path: string) {
+  return decodeURIComponent(path)
+    .toLowerCase()
+    .replace(/^docs\//, '')
+    .replace(/^(?:i18n|l10n|locale|locales|translation|translations)\/(?:en(?:[-_][a-z]{2,4})?|english)\//, '')
+    .replace(/[._-](?:en(?:[-_][a-z]{2,4})?|english)(?=\.mdx?$)/, '')
+}
 function repositoryImageScore(path: string) {
   const normalized = path.toLowerCase()
   let score = 0
@@ -672,7 +689,11 @@ function App() {
       const treeEntries = treeData?.tree ?? []
       const documentationPaths = treeEntries
         .filter((entry) => entry.type === 'blob' && isEnglishDocumentationPath(entry.path) && (entry.size ?? 0) <= 500_000)
-        .sort((left, right) => repositoryFileScore(right.path) - repositoryFileScore(left.path) || left.path.localeCompare(right.path))
+        .sort((left, right) => {
+          const languagePriority = documentationLanguagePriority(right.path) - documentationLanguagePriority(left.path)
+          return languagePriority || repositoryFileScore(right.path) - repositoryFileScore(left.path) || left.path.localeCompare(right.path)
+        })
+        .filter((entry, index, entries) => entries.findIndex((candidate) => documentationContentKey(candidate.path) === documentationContentKey(entry.path)) === index)
         .map((entry) => entry.path)
         .slice(0, 24)
       const documentationTexts = await Promise.all(
@@ -688,6 +709,7 @@ function App() {
       )
       const documentation = documentationTexts.filter(Boolean).join('\n\n')
       const documentationFileCount = documentationTexts.filter(Boolean).length
+      const storyboardSource = documentation || readmeText
       const repositoryImages = treeEntries
         .filter(
           (entry) =>
@@ -710,7 +732,7 @@ function App() {
         license: data.license?.spdx_id ?? 'No license detected',
         stars: data.stargazers_count,
         openIssues: data.open_issues_count,
-        readme: readmeText,
+        readme: storyboardSource,
         documentation,
         assets,
       }
