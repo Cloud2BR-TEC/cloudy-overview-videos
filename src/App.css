@@ -30,6 +30,9 @@
 .presentation-toolbar .eyebrow { margin-bottom: 3px; }
 .presentation-toolbar strong { color: #29443b; font-size: 12px; }
 .presentation-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+.playback-speed { display: inline-flex; align-items: center; gap: 6px; color: #173f55; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.playback-speed select { min-width: 62px; padding: 8px 7px; border: 1px solid #6f99b1; border-radius: 4px; background: #f6fbfd; color: #102f43; font: 700 12px 'Manrope', sans-serif; }
+.playback-speed select:disabled { border-color: #9cb8c7; background: #d9e7ee; color: #7893a1; cursor: not-allowed; }
 .unified-stage { grid-template-columns: minmax(0, 1fr) 156px; min-height: 270px; }
 .unified-stage .slide-left { overflow: hidden; padding: 22px 24px 16px; }
 .unified-stage .slide-title { font-size: 21px; }
@@ -44,6 +47,7 @@
 	.presentation-toolbar { align-items: flex-start; flex-direction: column; }
 	.presentation-actions { flex-direction: column; width: 100%; }
 	.presentation-actions button { width: 100%; }
+	.playback-speed { justify-content: space-between; }
 	.unified-stage { grid-template-columns: minmax(0, 1fr) 116px; }
 	.unified-stage .slide-left { padding: 16px; }
 	.unified-stage .slide-title { font-size: 17px; }

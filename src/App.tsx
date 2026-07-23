@@ -37,6 +37,7 @@ const SLIDES_PER_SECTION = 10
 const TEMPLATE_SLIDE_SECONDS = 12
 const VOICE_RATE = 1.15
 const BASE_NARRATION_WORDS_PER_MINUTE = 130
+const PLAYBACK_SPEED_OPTIONS = [0.75, 1, 1.25, 1.5] as const
 const SLIDE_FOCUS: Record<string, string> = {
   Overview: 'Begin with the central idea and the context needed to understand the repository.',
   Purpose: 'Clarify the problem this work is intended to address and why that goal matters.',
@@ -185,10 +186,25 @@ async function fetchWithRetry(input: RequestInfo | URL, init: RequestInit, attem
 }
 
 function durationLabel(seconds: number) {
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+  const wholeSeconds = Math.floor(seconds)
+  return `${Math.floor(wholeSeconds / 60)}:${String(wholeSeconds % 60).padStart(2, '0')}`
 }
 function timestamp(seconds: number) {
-  return `00:${durationLabel(seconds)}.000`
+  const milliseconds = Math.round(seconds * 1_000)
+  const hours = Math.floor(milliseconds / 3_600_000)
+  const minutes = Math.floor((milliseconds % 3_600_000) / 60_000)
+  const remainingSeconds = Math.floor((milliseconds % 60_000) / 1_000)
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}.${String(milliseconds % 1_000).padStart(3, '0')}`
+}
+function chapterTimestamp(seconds: number) {
+  const wholeSeconds = Math.floor(seconds)
+  return `${Math.floor(wholeSeconds / 60)}:${String(wholeSeconds % 60).padStart(2, '0')}`
+}
+function effectiveSceneDuration(scene: Scene, playbackSpeed: number) {
+  return scene.duration / playbackSpeed
+}
+function speedLabel(playbackSpeed: number) {
+  return `${playbackSpeed}x`
 }
 function decodeBase64(value: string) {
   return new TextDecoder().decode(Uint8Array.from(atob(value.replace(/\s/g, '')), (character) => character.charCodeAt(0)))
@@ -615,6 +631,7 @@ function App() {
   const [isVideoPreviewPlaying, setIsVideoPreviewPlaying] = useState(false)
   const [videoPreviewSceneIdx, setVideoPreviewSceneIdx] = useState(0)
   const [pausedVideoPreviewIndex, setPausedVideoPreviewIndex] = useState<number | null>(null)
+  const [playbackSpeed, setPlaybackSpeed] = useState<(typeof PLAYBACK_SPEED_OPTIONS)[number]>(1)
   const renderAbortRef = useRef(false)
   const renderAbortControllerRef = useRef<AbortController | null>(null)
   const videoPreviewAbortRef = useRef(false)
@@ -623,6 +640,7 @@ function App() {
   const repositoryLoadAbortRef = useRef<AbortController | null>(null)
   const repositoryLoadIdRef = useRef(0)
   const totalDuration = scenes.reduce((total, scene) => total + scene.duration, 0)
+  const effectiveTotalDuration = scenes.reduce((total, scene) => total + effectiveSceneDuration(scene, playbackSpeed), 0)
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId) ?? scenes[0]
   const selectedSceneIndex = scenes.findIndex((scene) => scene.id === selectedScene.id)
   const hasRepository = Boolean(repository)
@@ -785,7 +803,7 @@ function App() {
       setStatus('Complete every export requirement before downloading the project setup.')
       return
     }
-    downloadFile('cloudy-video-project.json', JSON.stringify({ repositoryUrl, repository, scenes }, null, 2), 'application/json')
+    downloadFile(`cloudy-video-project-${speedLabel(playbackSpeed)}.json`, JSON.stringify({ repositoryUrl, repository, scenes, playbackSpeed, runtime: effectiveTotalDuration }, null, 2), 'application/json')
     setStatus('Project JSON downloaded.')
   }
   function exportCaptions() {
@@ -797,11 +815,11 @@ function App() {
     const content = scenes
       .map((scene, index) => {
         const start = timestamp(cursor)
-        cursor += scene.duration
+        cursor += effectiveSceneDuration(scene, playbackSpeed)
         return `${index + 1}\n${start} --> ${timestamp(cursor)}\n${scene.narration}`
       })
       .join('\n\n')
-    downloadFile('cloudy-captions.srt', content, 'application/x-subrip')
+    downloadFile(`cloudy-captions-${speedLabel(playbackSpeed)}.srt`, content, 'application/x-subrip')
     setStatus('Editable SRT captions downloaded.')
   }
   function exportWebVtt() {
@@ -813,11 +831,11 @@ function App() {
     const content = scenes
       .map((scene) => {
         const start = timestamp(cursor).replace(',', '.')
-        cursor += scene.duration
+        cursor += effectiveSceneDuration(scene, playbackSpeed)
         return `${start} --> ${timestamp(cursor).replace(',', '.')}\n${scene.narration}`
       })
       .join('\n\n')
-    downloadFile('cloudy-captions.vtt', `WEBVTT\n\n${content}\n`, 'text/vtt')
+    downloadFile(`cloudy-captions-${speedLabel(playbackSpeed)}.vtt`, `WEBVTT\n\n${content}\n`, 'text/vtt')
     setStatus('WebVTT captions downloaded. Add this file as the captions track when publishing the video.')
   }
   function exportTranscript() {
@@ -828,7 +846,7 @@ function App() {
     const content = scenes
       .map((scene, index) => `Slide ${index + 1}: ${scene.title}\n\n${scene.narration}`)
       .join('\n\n')
-    downloadFile('cloudy-video-transcript.txt', content, 'text/plain')
+    downloadFile(`cloudy-video-transcript-${speedLabel(playbackSpeed)}.txt`, `Playback speed: ${speedLabel(playbackSpeed)}\n\n${content}`, 'text/plain')
     setStatus('Plain-text video transcript downloaded.')
   }
   function exportDescriptiveTranscript() {
@@ -843,11 +861,11 @@ function App() {
           ? `Repository visual: ${scene.assets.map(repositoryAssetLabel).join('; ')}`
           : `Presentation content: ${scene.supportingPoints.join('; ')}`
         const entry = `[${timestamp(cursor).replace(',', '.')}] Slide ${index + 1}: ${scene.title}\nVisual description: ${visualDescription}\nNarration: ${scene.narration}`
-        cursor += scene.duration
+        cursor += effectiveSceneDuration(scene, playbackSpeed)
         return entry
       })
       .join('\n\n')
-    downloadFile('cloudy-descriptive-transcript.txt', content, 'text/plain')
+    downloadFile(`cloudy-descriptive-transcript-${speedLabel(playbackSpeed)}.txt`, content, 'text/plain')
     setStatus('Descriptive transcript downloaded.')
   }
   function exportChapters() {
@@ -861,10 +879,10 @@ function App() {
       .map((scene) => {
         const totalSeconds = cursor
         const label = `Section ${scene.section}: ${scene.title}`
-        cursor += scenes.filter((item) => item.section === scene.section).reduce((total, item) => total + item.duration, 0)
-        return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')} ${label}`
+        cursor += scenes.filter((item) => item.section === scene.section).reduce((total, item) => total + effectiveSceneDuration(item, playbackSpeed), 0)
+        return `${chapterTimestamp(totalSeconds)} ${label}`
       })
-    downloadFile('cloudy-youtube-chapters.txt', chapters.join('\n'), 'text/plain')
+    downloadFile(`cloudy-youtube-chapters-${speedLabel(playbackSpeed)}.txt`, chapters.join('\n'), 'text/plain')
     setStatus('YouTube chapter markers downloaded.')
   }
   function exportPublishingPackage() {
@@ -876,16 +894,16 @@ function App() {
     const chapters = scenes
       .filter((scene) => scene.slideInSection === 1)
       .map((scene) => {
-        const label = `${Math.floor(cursor / 60)}:${String(cursor % 60).padStart(2, '0')} Section ${scene.section}: ${scene.title}`
-        cursor += scenes.filter((item) => item.section === scene.section).reduce((total, item) => total + item.duration, 0)
+        const label = `${chapterTimestamp(cursor)} Section ${scene.section}: ${scene.title}`
+        cursor += scenes.filter((item) => item.section === scene.section).reduce((total, item) => total + effectiveSceneDuration(item, playbackSpeed), 0)
         return label
       })
       .join('\n')
     const transcript = scenes
       .map((scene, index) => `### ${index + 1}. ${scene.title}\n\n${scene.narration}`)
       .join('\n\n')
-    const content = `# ${repository.fullName} | Cloudy Overview\n\n## Video details\n\n- Runtime: ${durationLabel(totalDuration)}\n- Source: ${repositoryUrl}\n- Language: English\n- Captions: Upload cloudy-captions.vtt as the English captions track.\n\n## Description\n\n${repository.description}\n\nThis overview is grounded in the public repository documentation and visuals.\n\n## Chapters\n\n${chapters}\n\n## Accessibility assets\n\n- cloudy-captions.srt\n- cloudy-captions.vtt\n- cloudy-video-transcript.txt\n- cloudy-descriptive-transcript.txt\n\n## Transcript\n\n${transcript}\n`
-    downloadFile('cloudy-publishing-package.md', content, 'text/markdown')
+    const content = `# ${repository.fullName} | Cloudy Overview\n\n## Video details\n\n- Runtime: ${durationLabel(effectiveTotalDuration)}\n- Playback speed: ${speedLabel(playbackSpeed)}\n- Source: ${repositoryUrl}\n- Language: English\n- Captions: Upload cloudy-captions-${speedLabel(playbackSpeed)}.vtt as the English captions track.\n\n## Description\n\n${repository.description}\n\nThis overview is grounded in the public repository documentation and visuals.\n\n## Chapters\n\n${chapters}\n\n## Accessibility assets\n\n- cloudy-captions-${speedLabel(playbackSpeed)}.srt\n- cloudy-captions-${speedLabel(playbackSpeed)}.vtt\n- cloudy-video-transcript-${speedLabel(playbackSpeed)}.txt\n- cloudy-descriptive-transcript-${speedLabel(playbackSpeed)}.txt\n\n## Transcript\n\n${transcript}\n`
+    downloadFile(`cloudy-publishing-package-${speedLabel(playbackSpeed)}.md`, content, 'text/markdown')
     setStatus('Publishing package downloaded with video details, chapters, captions guidance, and transcript.')
   }
   async function exportVideo() {
@@ -960,7 +978,7 @@ function App() {
       if (event.data.size) chunks.push(event.data)
     })
     const videoReady = new Promise<Blob>((resolve) => recorder.addEventListener('stop', () => resolve(new Blob(chunks, { type: 'video/webm' })), { once: true }))
-    const totalSeconds = scenes.reduce((total, scene) => total + scene.duration, 0)
+    const totalSeconds = scenes.reduce((total, scene) => total + effectiveSceneDuration(scene, playbackSpeed), 0)
     const startedAt = performance.now()
     setRenderProgress(0)
     setStatus('Rendering the complete video with automatic Cloudy narration. Keep this tab active.')
@@ -973,7 +991,7 @@ function App() {
       let sceneIndex = scenes.length - 1
       const scene =
         scenes.find((item, index) => {
-          sceneOffset += item.duration
+          sceneOffset += effectiveSceneDuration(item, playbackSpeed)
           if (elapsedSeconds < sceneOffset) {
             sceneIndex = index
             return true
@@ -989,7 +1007,7 @@ function App() {
         }
         const source = audioContext.createBufferSource()
         source.buffer = narrationBuffers[sceneIndex]
-        source.playbackRate.value = VOICE_RATE
+        source.playbackRate.value = VOICE_RATE * playbackSpeed
         source.connect(audioDestination)
         source.addEventListener('ended', () => {
           if (activeNarrationSource === source) setIsSpeaking(false)
@@ -998,8 +1016,9 @@ function App() {
         setIsSpeaking(true)
         source.start()
       }
-      const sceneElapsed = elapsedSeconds - (sceneOffset - scene.duration)
-      const sceneProgress = Math.min(1, sceneElapsed / scene.duration)
+      const sceneDuration = effectiveSceneDuration(scene, playbackSpeed)
+      const sceneElapsed = elapsedSeconds - (sceneOffset - sceneDuration)
+      const sceneProgress = Math.min(1, sceneElapsed / sceneDuration)
       const pulse = 0.5 + Math.sin(sceneElapsed * 1.2) * 0.5
       const entrance = Math.min(1, sceneElapsed / 0.6)
       const eased = 1 - (1 - entrance) ** 3
@@ -1161,7 +1180,7 @@ function App() {
     const url = URL.createObjectURL(video)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'cloudy-video.webm'
+    link.download = `cloudy-video-${speedLabel(playbackSpeed)}.webm`
     link.click()
     URL.revokeObjectURL(url)
     setStatus('Complete WebM video downloaded with Cloudy narration and on-screen captions.')
@@ -1207,7 +1226,7 @@ function App() {
     const utterance = new SpeechSynthesisUtterance(selectedScene.narration)
     utterance.voice = femaleVoice
     utterance.lang = femaleVoice?.lang ?? 'en-US'
-    utterance.rate = VOICE_RATE
+    utterance.rate = VOICE_RATE * playbackSpeed
     utterance.pitch = 1.1
     utterance.onend = () => setIsSpeaking(false)
     utterance.onerror = () => setIsSpeaking(false)
@@ -1235,7 +1254,7 @@ function App() {
         const utterance = new SpeechSynthesisUtterance(scenes[i].narration)
         utterance.voice = voice
         utterance.lang = voice?.lang ?? 'en-US'
-        utterance.rate = VOICE_RATE
+        utterance.rate = VOICE_RATE * playbackSpeed
         utterance.pitch = 1.1
         utterance.onstart = () => setIsSpeaking(true)
         utterance.onend = () => {
@@ -1387,7 +1406,7 @@ function App() {
                   <h2>Cloudy’s explainer</h2>
                 </div>
                 <div className={`duration-pill ${inTargetRange ? 'ready' : ''}`}>
-                  {durationLabel(totalDuration)} <small>{inTargetRange ? 'Within 8-12 minute target' : 'Target: 8-12 min'}</small>
+                  {durationLabel(effectiveTotalDuration)} <small>{speedLabel(playbackSpeed)} playback · {inTargetRange ? '10-minute base template' : 'Target: 8-12 min base template'}</small>
                 </div>
               </div>
               <div className="story-grid">
@@ -1460,6 +1479,12 @@ function App() {
                           </button>
                         </>
                       )}
+                      <label className="playback-speed" htmlFor="playback-speed">
+                        Speed
+                        <select id="playback-speed" value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Number(event.target.value) as (typeof PLAYBACK_SPEED_OPTIONS)[number])} disabled={isVideoPreviewPlaying || isSpeaking}>
+                          {PLAYBACK_SPEED_OPTIONS.map((speed) => <option key={speed} value={speed}>{speedLabel(speed)}</option>)}
+                        </select>
+                      </label>
                     </div>
                   </div>
                   <p className="sr-only" aria-live="polite" aria-atomic="true">
