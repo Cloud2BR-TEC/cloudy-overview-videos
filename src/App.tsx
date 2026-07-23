@@ -685,10 +685,13 @@ function App() {
   const [playbackSpeed, setPlaybackSpeed] = useState<(typeof PLAYBACK_SPEED_OPTIONS)[number]>(1)
   const [shortTopicId, setShortTopicId] = useState(1)
   const [isShortPreviewPlaying, setIsShortPreviewPlaying] = useState(false)
+  const [shortPreviewBeatIdx, setShortPreviewBeatIdx] = useState(0)
   const [isRenderingShort, setIsRenderingShort] = useState(false)
   const [shortRenderProgress, setShortRenderProgress] = useState(0)
   const shortRenderAbortRef = useRef(false)
   const shortRenderAbortControllerRef = useRef<AbortController | null>(null)
+  const shortPreviewRunIdRef = useRef(0)
+  const shortPreviewAbortRef = useRef(false)
   const renderAbortRef = useRef(false)
   const renderAbortControllerRef = useRef<AbortController | null>(null)
   const videoPreviewAbortRef = useRef(false)
@@ -1403,7 +1406,7 @@ function App() {
     document.getElementById(`${step}-section`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  async function previewShort() {
+  async function previewShort(startBeat = 0) {
     if (isShortPreviewPlaying || !shortNarration) return
     window.speechSynthesis.cancel()
     const voice = await resolveVoice()
@@ -1411,22 +1414,52 @@ function App() {
       setStatus(`No compatible female browser voice is available. Video exports use Cloudy’s ${CLOUDY_NARRATOR} voice.`)
       return
     }
-    const utterance = new SpeechSynthesisUtterance(shortNarration)
-    utterance.voice = voice
-    utterance.lang = voice?.lang ?? 'en-US'
-    utterance.rate = VOICE_RATE * playbackSpeed
-    utterance.pitch = 1
-    utterance.onend = () => setIsShortPreviewPlaying(false)
-    utterance.onerror = () => setIsShortPreviewPlaying(false)
-    window.speechSynthesis.speak(utterance)
+    const runId = ++shortPreviewRunIdRef.current
+    shortPreviewAbortRef.current = false
     setIsShortPreviewPlaying(true)
-    setStatus(`Cloudy is previewing the ${durationLabel(shortRuntime)} short at ${speedLabel(playbackSpeed)}.`)
+    setShortPreviewBeatIdx(startBeat)
+    for (let i = startBeat; i < shortSourceScenes.length; i++) {
+      if (shortPreviewAbortRef.current || runId !== shortPreviewRunIdRef.current) break
+      setShortPreviewBeatIdx(i)
+      await new Promise<void>((resolve) => {
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(shortSourceScenes[i].narration)
+        utterance.voice = voice
+        utterance.lang = voice.lang ?? 'en-US'
+        utterance.rate = VOICE_RATE * playbackSpeed
+        utterance.pitch = 1
+        utterance.onend = () => resolve()
+        utterance.onerror = () => resolve()
+        window.speechSynthesis.speak(utterance)
+      })
+      if (!shortPreviewAbortRef.current && runId === shortPreviewRunIdRef.current && i < shortSourceScenes.length - 1) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 300))
+      }
+    }
+    if (runId !== shortPreviewRunIdRef.current) return
+    window.speechSynthesis.cancel()
+    setIsShortPreviewPlaying(false)
+    setShortPreviewBeatIdx(0)
   }
 
   function stopShortPreview() {
+    shortPreviewRunIdRef.current += 1
+    shortPreviewAbortRef.current = true
     window.speechSynthesis.cancel()
     setIsShortPreviewPlaying(false)
     setStatus('Cloudy Shorts preview stopped.')
+  }
+
+  function seekShortToBeat(beatIndex: number) {
+    if (isShortPreviewPlaying) stopShortPreview()
+    setShortPreviewBeatIdx(beatIndex)
+    setTimeout(() => void previewShort(beatIndex), 100)
+  }
+
+  function seekOverviewToSlide(slideIndex: number) {
+    if (isVideoPreviewPlaying) pauseVideoPreview()
+    setSelectedSceneId(scenes[slideIndex]?.id ?? scenes[0].id)
+    setTimeout(() => void startVideoPreview(slideIndex), 100)
   }
 
   function downloadShortScript() {
@@ -2180,7 +2213,7 @@ function App() {
                 {isShortPreviewPlaying ? (
                   <button className="secondary-button" type="button" onClick={stopShortPreview}>Stop preview</button>
                 ) : (
-                  <button className="primary-button" type="button" onClick={() => void previewShort()} disabled={isRenderingShort}>Preview short</button>
+                  <button className="primary-button" type="button" onClick={() => void previewShort(0)} disabled={isRenderingShort}>Preview short</button>
                 )}
                 {isRenderingShort ? (
                   <button className="secondary-button" type="button" onClick={cancelShortVideo}>Cancel render ({shortRenderProgress}%)</button>
@@ -2189,17 +2222,23 @@ function App() {
                 )}
                 <button className="secondary-button" type="button" onClick={downloadShortScript} disabled={isRenderingShort}>Download script</button>
               </section>
+              <nav className="timeline-bar" aria-label="Short video timeline">
+                {shortSourceScenes.map((beatScene, i) => {
+                  const isActive = isShortPreviewPlaying && shortPreviewBeatIdx === i
+                  const isPast = isShortPreviewPlaying && shortPreviewBeatIdx > i
+                  return (
+                    <button key={beatScene.id} type="button" className={`timeline-segment${isActive ? ' active' : ''}${isPast ? ' past' : ''}`} style={{ flex: effectiveSceneDuration(beatScene, playbackSpeed) }} onClick={() => seekShortToBeat(i)} title={beatScene.title}>
+                      <span className="timeline-label">{beatScene.title.length > 18 ? beatScene.title.slice(0, 16) + '…' : beatScene.title}</span>
+                    </button>
+                  )
+                })}
+              </nav>
               <section className="shorts-production-grid">
                 <article className="short-stage" aria-label={`Cloudy Short preview: ${shortTopic.title}`}>
                   <div className="short-stage-copy">
                     <p className="eyebrow">Animated Short Film</p>
                     <h2>{shortTopic.title}</h2>
-                    <p className="short-composition-hint">Cloudy walks, points, and presents across 5 animated scenes</p>
-                    <ul className="short-env-list">
-                      {['Walks in & introduces', 'Presents on screen', 'Draws on whiteboard', 'Shows topic diagram', 'Celebrates recap'].slice(0, shortSourceScenes.length).map((env, i) => (
-                        <li key={env}><span className="env-dot" style={{ background: ['#4fc3f7', '#ce93d8', '#81c784', '#ffb74d', '#90caf9'][i] }} />{env}</li>
-                      ))}
-                    </ul>
+                    <p>{shortSourceScenes[shortPreviewBeatIdx]?.narration.slice(0, 200) ?? shortNarration.slice(0, 200)}…</p>
                   </div>
                   <div className="short-stage-host">
                     <CloudyAvatar speaking={isShortPreviewPlaying} size={156} />
@@ -2422,6 +2461,16 @@ function App() {
                       </label>
                     </div>
                   </div>
+                  <nav className="timeline-bar overview-timeline" aria-label="Video timeline">
+                    {scenes.map((s, i) => {
+                      const isActive = isVideoPreviewPlaying && videoPreviewSceneIdx === i
+                      const isPast = isVideoPreviewPlaying && videoPreviewSceneIdx > i
+                      const isCurrent = !isVideoPreviewPlaying && selectedSceneId === s.id
+                      return (
+                        <button key={s.id} type="button" className={`timeline-segment${isActive ? ' active' : ''}${isPast ? ' past' : ''}${isCurrent ? ' current' : ''}`} style={{ flex: effectiveSceneDuration(s, playbackSpeed) }} onClick={() => seekOverviewToSlide(i)} title={`${i + 1}. ${s.title}`} />
+                      )
+                    })}
+                  </nav>
                   <p className="sr-only" aria-live="polite" aria-atomic="true">
                     {isVideoPreviewPlaying
                       ? `Playing slide ${videoPreviewSceneIdx + 1} of ${scenes.length}: ${presentedScene.title}. ${presentedScene.narration}`

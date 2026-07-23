@@ -230,6 +230,16 @@
 .short-env-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .short-env-list li { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid rgba(217,238,246,.22); border-radius: 4px; background: rgba(0,0,0,.25); color: #d9eef6; font-size: 11px; font-weight: 700; }
 .env-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.timeline-bar { display: flex; gap: 3px; margin-top: 14px; }
+.timeline-segment { position: relative; height: 32px; min-width: 0; border: 0; border-radius: 4px; padding: 0; background: #88abc0; cursor: pointer; transition: background .15s; overflow: hidden; }
+.timeline-segment:hover { background: #6f99b1; }
+.timeline-segment.active { background: #bd5c37; }
+.timeline-segment.past { background: #2b5976; }
+.timeline-segment.current { background: #397a9d; }
+.timeline-label { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 9px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; pointer-events: none; }
+.overview-timeline .timeline-segment { height: 8px; border-radius: 2px; }
+.overview-timeline { margin-top: 10px; margin-bottom: 6px; }
 .shorts-beats { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; margin-top: 24px; padding: 24px 0 0; border-top: 1px solid #88abc0; }
 .shorts-beats ol { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 0; list-style: none; }
 .shorts-beats li { min-width: 0; padding-top: 10px; border-top: 3px solid #397a9d; }
