@@ -1462,7 +1462,6 @@ function App() {
     setIsRenderingShort(true)
     setShortRenderProgress(0)
     setStatus('Loading visuals for Cloudy Short video...')
-    const cloudyImage = await loadImage(cloudyLogo).catch(() => null)
     const usedAssets = Array.from(new Set(shortSourceScenes.flatMap((scene) => scene.assets)))
     const assetImages = await Promise.all(usedAssets.map((asset) => loadImage(asset).catch(() => null)))
     const assetImageByUrl = new Map(usedAssets.map((asset, i) => [asset, assetImages[i]]))
@@ -1533,223 +1532,568 @@ function App() {
       const sceneDuration = effectiveSceneDuration(scene, playbackSpeed)
       const sceneElapsed = elapsed - (offset - sceneDuration)
       const sceneProgress = Math.min(1, sceneElapsed / sceneDuration)
-      const entrance = Math.min(1, sceneElapsed / 0.7)
+      const entrance = Math.min(1, sceneElapsed / 0.6)
       const eased = 1 - (1 - entrance) ** 3
       const W = canvas.width
       const H = canvas.height
       const t = elapsed
 
-      // ── Environment palettes per scene ──
-      const environments = [
-        { sky1: '#0b1628', sky2: '#1a3a5c', ground: '#0d2b3e', accent: '#4fc3f7', name: 'Data Ocean' },
-        { sky1: '#1b0a2e', sky2: '#3d1f6b', ground: '#2a1248', accent: '#ce93d8', name: 'Algorithm Galaxy' },
-        { sky1: '#0a2e1a', sky2: '#1b5e3a', ground: '#0f3d22', accent: '#81c784', name: 'Code Forest' },
-        { sky1: '#2e1a0a', sky2: '#6b3d1f', ground: '#3d220f', accent: '#ffb74d', name: 'Architecture Mesa' },
-        { sky1: '#0a1a2e', sky2: '#1f3d6b', ground: '#0f223d', accent: '#90caf9', name: 'Cloud Summit' },
+      // ── Narration sentences for subtitle sync ──
+      const narSentences = scene.narration.replace(/([.!?])\s+/g, '$1|').split('|').filter((s) => s.trim().length > 8)
+      const activeSentenceIdx = Math.min(narSentences.length - 1, Math.floor(sceneProgress * narSentences.length))
+      const activeSentence = narSentences[activeSentenceIdx] ?? scene.narration.slice(0, 140)
+
+      // ── Scene actions: intro, presenting, whiteboard, diagram, farewell ──
+      const actions = ['intro', 'presenting', 'whiteboard', 'diagram', 'farewell'] as const
+      const action = actions[sceneIdx % actions.length]
+
+      // ── Background: clean studio / classroom feel ──
+      const bgColors = [
+        ['#e8f4f8', '#d0e8f2'], // light blue
+        ['#f0e8f8', '#e0d4f0'], // lavender
+        ['#e8f8e8', '#d0f0d0'], // mint
+        ['#fdf4e8', '#f8e8d0'], // warm cream
+        ['#e8f0f8', '#d4e4f4'], // sky
       ]
-      const env = environments[sceneIdx % environments.length]
+      const [bgTop, bgBot] = bgColors[sceneIdx % bgColors.length]
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H)
+      bgGrad.addColorStop(0, bgTop)
+      bgGrad.addColorStop(1, bgBot)
+      ctx.fillStyle = bgGrad
+      ctx.fillRect(0, 0, W, H)
 
-      // ── Sky gradient ──
-      const sky = ctx.createLinearGradient(0, 0, 0, H * 0.65)
-      sky.addColorStop(0, env.sky1)
-      sky.addColorStop(1, env.sky2)
-      ctx.fillStyle = sky
-      ctx.fillRect(0, 0, W, H * 0.65)
-
-      // ── Stars / particles in sky ──
-      for (let i = 0; i < 40; i++) {
-        const sx = ((i * 137.5 + sceneIdx * 300 + t * 8) % W)
-        const sy = ((i * 97.3 + sceneIdx * 200) % (H * 0.55)) + 40
-        const twinkle = 0.3 + Math.sin(t * 3 + i * 2.1) * 0.3
-        ctx.fillStyle = `rgba(255,255,255,${twinkle})`
-        ctx.beginPath()
-        ctx.arc(sx, sy, 1.5 + Math.sin(t + i) * 0.5, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      // ── Background elements for the environment (parallax layers) ──
-      // Far layer — large shapes
-      ctx.save()
-      ctx.globalAlpha = 0.15
-      for (let i = 0; i < 5; i++) {
-        const bx = ((i * 280 - t * 12 + sceneIdx * 150) % (W + 300)) - 100
-        const by = H * 0.35 + Math.sin(i * 1.7) * 80
-        const bw = 180 + i * 40
-        const bh = 120 + i * 30
-        ctx.fillStyle = env.accent
-        ctx.beginPath()
-        ctx.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2)
-        ctx.fill()
-      }
-      ctx.restore()
-
-      // ── Ground / terrain ──
-      const groundY = H * 0.62
-      const groundGrad = ctx.createLinearGradient(0, groundY, 0, H)
-      groundGrad.addColorStop(0, env.ground)
-      groundGrad.addColorStop(1, env.sky1)
-      ctx.fillStyle = groundGrad
+      // Floor
+      ctx.fillStyle = 'rgba(0,0,0,0.06)'
+      ctx.fillRect(0, H * 0.72, W, H * 0.28)
+      ctx.strokeStyle = 'rgba(0,0,0,0.08)'
+      ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.moveTo(0, groundY)
-      // Terrain wave
-      for (let x = 0; x <= W; x += 4) {
-        const hill = Math.sin((x + t * 30 + sceneIdx * 400) * 0.008) * 40
-          + Math.sin((x + t * 15) * 0.02) * 20
-        ctx.lineTo(x, groundY + hill)
-      }
-      ctx.lineTo(W, H)
-      ctx.lineTo(0, H)
-      ctx.closePath()
-      ctx.fill()
+      ctx.moveTo(0, H * 0.72)
+      ctx.lineTo(W, H * 0.72)
+      ctx.stroke()
 
-      // ── Floating environment objects (concept tokens moving in the world) ──
-      const topics = (repository?.topics ?? []).slice(0, 5)
-      topics.forEach((topic, i) => {
-        const floatX = ((i * (W / topics.length) + t * 25 + sceneIdx * 100) % (W + 200)) - 100
-        const floatY = groundY - 60 - i * 50 + Math.sin(t * 1.2 + i * 3) * 30
-        const size = 28 + Math.sin(t * 0.8 + i) * 6
-        const spin = t * 0.5 + i * 1.2
+      // ── Draw Cloudy cartoon character ──
+      // Cloudy: cloud-shaped head, round body, stick arms and legs, big eyes, mouth
+      function drawCloudy(cx: number, cy: number, scale: number, pose: 'wave' | 'point-right' | 'point-up' | 'walk' | 'think' | 'present' | 'celebrate') {
+        const s = scale
         ctx.save()
-        ctx.translate(floatX, floatY)
-        ctx.rotate(spin)
-        ctx.fillStyle = env.accent
-        ctx.globalAlpha = 0.7 + Math.sin(t + i) * 0.2
-        // Rounded square object
+        ctx.translate(cx, cy)
+
+        // ── Legs (animated walk cycle or standing) ──
+        ctx.strokeStyle = '#4a7c9c'
+        ctx.lineWidth = 8 * s
+        ctx.lineCap = 'round'
+        const walkCycle = Math.sin(t * 6)
+        const legSpread = pose === 'walk' ? walkCycle * 18 * s : 0
+        // Left leg
         ctx.beginPath()
-        ctx.roundRect(-size / 2, -size / 2, size, size, 6)
+        ctx.moveTo(-16 * s, 50 * s)
+        ctx.lineTo((-16 - legSpread) * s, 100 * s)
+        ctx.stroke()
+        // Left foot
+        ctx.fillStyle = '#3a6a88'
+        ctx.beginPath()
+        ctx.ellipse((-16 - legSpread) * s, 104 * s, 12 * s, 6 * s, 0, 0, Math.PI * 2)
+        ctx.fill()
+        // Right leg
+        ctx.beginPath()
+        ctx.moveTo(16 * s, 50 * s)
+        ctx.lineTo((16 + legSpread) * s, 100 * s)
+        ctx.stroke()
+        // Right foot
+        ctx.beginPath()
+        ctx.ellipse((16 + legSpread) * s, 104 * s, 12 * s, 6 * s, 0, 0, Math.PI * 2)
+        ctx.fill()
+
+        // ── Body (round cloud-like torso) ──
+        ctx.fillStyle = '#f0f8ff'
+        ctx.strokeStyle = '#b0d4e8'
+        ctx.lineWidth = 3 * s
+        ctx.beginPath()
+        ctx.ellipse(0, 20 * s, 42 * s, 36 * s, 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.stroke()
+
+        // ── Arms (change per pose) ──
+        ctx.strokeStyle = '#4a7c9c'
+        ctx.lineWidth = 7 * s
+        ctx.lineCap = 'round'
+        if (pose === 'wave') {
+          // Left arm resting
+          ctx.beginPath()
+          ctx.moveTo(-40 * s, 16 * s)
+          ctx.lineTo(-60 * s, 40 * s)
+          ctx.stroke()
+          // Right arm waving (animated)
+          const waveAngle = Math.sin(t * 5) * 0.4
+          ctx.save()
+          ctx.translate(40 * s, 10 * s)
+          ctx.rotate(-1.2 + waveAngle)
+          ctx.beginPath()
+          ctx.moveTo(0, 0)
+          ctx.lineTo(50 * s, 0)
+          ctx.stroke()
+          // Hand
+          ctx.fillStyle = '#f0f8ff'
+          ctx.beginPath()
+          ctx.arc(52 * s, 0, 8 * s, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.restore()
+        } else if (pose === 'point-right' || pose === 'present') {
+          // Left arm on hip
+          ctx.beginPath()
+          ctx.moveTo(-40 * s, 14 * s)
+          ctx.quadraticCurveTo(-56 * s, 30 * s, -44 * s, 46 * s)
+          ctx.stroke()
+          // Right arm extended pointing
+          const pointBob = Math.sin(t * 3) * 4 * s
+          ctx.beginPath()
+          ctx.moveTo(40 * s, 14 * s)
+          ctx.lineTo(90 * s, -10 * s + pointBob)
+          ctx.stroke()
+          // Pointing hand
+          ctx.fillStyle = '#f0f8ff'
+          ctx.beginPath()
+          ctx.arc(92 * s, -12 * s + pointBob, 7 * s, 0, Math.PI * 2)
+          ctx.fill()
+          // Pointing finger
+          ctx.strokeStyle = '#f0f8ff'
+          ctx.lineWidth = 4 * s
+          ctx.beginPath()
+          ctx.moveTo(97 * s, -14 * s + pointBob)
+          ctx.lineTo(108 * s, -20 * s + pointBob)
+          ctx.stroke()
+        } else if (pose === 'point-up') {
+          // Left arm resting
+          ctx.beginPath()
+          ctx.moveTo(-40 * s, 16 * s)
+          ctx.lineTo(-55 * s, 42 * s)
+          ctx.stroke()
+          // Right arm pointing up
+          const upBob = Math.sin(t * 2.5) * 5 * s
+          ctx.beginPath()
+          ctx.moveTo(38 * s, 10 * s)
+          ctx.lineTo(50 * s, -40 * s + upBob)
+          ctx.stroke()
+          ctx.fillStyle = '#f0f8ff'
+          ctx.beginPath()
+          ctx.arc(52 * s, -44 * s + upBob, 7 * s, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.strokeStyle = '#f0f8ff'
+          ctx.lineWidth = 4 * s
+          ctx.beginPath()
+          ctx.moveTo(52 * s, -51 * s + upBob)
+          ctx.lineTo(52 * s, -64 * s + upBob)
+          ctx.stroke()
+        } else if (pose === 'think') {
+          // Left arm resting
+          ctx.beginPath()
+          ctx.moveTo(-40 * s, 16 * s)
+          ctx.lineTo(-58 * s, 38 * s)
+          ctx.stroke()
+          // Right arm to chin (thinking)
+          ctx.beginPath()
+          ctx.moveTo(38 * s, 14 * s)
+          ctx.quadraticCurveTo(44 * s, -10 * s, 20 * s, -40 * s)
+          ctx.stroke()
+          ctx.fillStyle = '#f0f8ff'
+          ctx.beginPath()
+          ctx.arc(18 * s, -42 * s, 7 * s, 0, Math.PI * 2)
+          ctx.fill()
+        } else if (pose === 'celebrate') {
+          // Both arms up
+          const cheerL = Math.sin(t * 6) * 0.3
+          const cheerR = Math.sin(t * 6 + 1) * 0.3
+          ctx.save()
+          ctx.translate(-40 * s, 8 * s)
+          ctx.rotate(-1.5 + cheerL)
+          ctx.beginPath()
+          ctx.moveTo(0, 0)
+          ctx.lineTo(50 * s, 0)
+          ctx.stroke()
+          ctx.fillStyle = '#f0f8ff'
+          ctx.beginPath()
+          ctx.arc(52 * s, 0, 8 * s, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.restore()
+          ctx.save()
+          ctx.translate(40 * s, 8 * s)
+          ctx.rotate(-1.5 + cheerR)
+          ctx.beginPath()
+          ctx.moveTo(0, 0)
+          ctx.lineTo(50 * s, 0)
+          ctx.stroke()
+          ctx.fillStyle = '#f0f8ff'
+          ctx.beginPath()
+          ctx.arc(52 * s, 0, 8 * s, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.restore()
+        } else {
+          // walk — arms swing
+          const armSwing = Math.sin(t * 6) * 0.5
+          ctx.save()
+          ctx.translate(-40 * s, 14 * s)
+          ctx.rotate(armSwing)
+          ctx.beginPath()
+          ctx.moveTo(0, 0)
+          ctx.lineTo(0, 46 * s)
+          ctx.stroke()
+          ctx.restore()
+          ctx.save()
+          ctx.translate(40 * s, 14 * s)
+          ctx.rotate(-armSwing)
+          ctx.beginPath()
+          ctx.moveTo(0, 0)
+          ctx.lineTo(0, 46 * s)
+          ctx.stroke()
+          ctx.restore()
+        }
+
+        // ── Head (cloud shape) ──
+        ctx.fillStyle = '#f0f8ff'
+        ctx.strokeStyle = '#b0d4e8'
+        ctx.lineWidth = 2.5 * s
+        ctx.beginPath()
+        ctx.arc(0, -30 * s, 32 * s, 0, Math.PI * 2) // main
+        ctx.fill()
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(-20 * s, -18 * s, 20 * s, 0, Math.PI * 2) // left puff
+        ctx.fill()
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(20 * s, -18 * s, 20 * s, 0, Math.PI * 2) // right puff
+        ctx.fill()
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(-10 * s, -48 * s, 18 * s, 0, Math.PI * 2) // top left
+        ctx.fill()
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(10 * s, -48 * s, 18 * s, 0, Math.PI * 2) // top right
+        ctx.fill()
+        ctx.stroke()
+
+        // Graduation cap
+        ctx.fillStyle = '#2c5f7c'
+        ctx.beginPath()
+        ctx.moveTo(-28 * s, -58 * s)
+        ctx.lineTo(0, -72 * s)
+        ctx.lineTo(28 * s, -58 * s)
+        ctx.lineTo(0, -50 * s)
+        ctx.closePath()
+        ctx.fill()
+        // Tassel
+        ctx.strokeStyle = '#f5a975'
+        ctx.lineWidth = 2.5 * s
+        const tasselSwing = Math.sin(t * 2) * 8 * s
+        ctx.beginPath()
+        ctx.moveTo(0, -60 * s)
+        ctx.quadraticCurveTo(20 * s + tasselSwing, -52 * s, 24 * s + tasselSwing, -40 * s)
+        ctx.stroke()
+
+        // ── Eyes (with blinking) ──
+        const blinkPhase = Math.sin(t * 4.2)
+        const eyeH = blinkPhase < -0.92 ? 1 : 8 * s
+        // Left eye
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        ctx.ellipse(-12 * s, -32 * s, 10 * s, 10 * s, 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#2c3e50'
+        ctx.beginPath()
+        ctx.ellipse(-12 * s, -32 * s, 6 * s, Math.min(6 * s, eyeH), 0, 0, Math.PI * 2)
         ctx.fill()
         ctx.fillStyle = '#fff'
-        ctx.font = `700 ${Math.round(size * 0.35)}px Manrope, sans-serif`
-        ctx.textAlign = 'center'
-        ctx.fillText(topic.slice(0, 4).toUpperCase(), 0, size * 0.12)
-        ctx.textAlign = 'left'
-        ctx.restore()
-      })
+        ctx.beginPath()
+        ctx.arc(-10 * s, -35 * s, 2.5 * s, 0, Math.PI * 2) // pupil highlight
+        ctx.fill()
+        // Right eye
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        ctx.ellipse(12 * s, -32 * s, 10 * s, 10 * s, 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#2c3e50'
+        ctx.beginPath()
+        ctx.ellipse(12 * s, -32 * s, 6 * s, Math.min(6 * s, eyeH), 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        ctx.arc(14 * s, -35 * s, 2.5 * s, 0, Math.PI * 2)
+        ctx.fill()
 
-      // ── Cloudy — the protagonist, flying through the environment ──
-      // Cloudy follows a path: rises at scene start, cruises mid-scene, descends at end
-      const pathPhase = sceneProgress
-      const cloudyBaseX = W * 0.35 + Math.sin(t * 0.6) * 80
-      const cloudyBaseY = groundY - 200
-        + Math.sin(pathPhase * Math.PI) * -120  // arc up in middle
-        + Math.sin(t * 1.8) * 15  // gentle bob
-      const cloudyTilt = Math.sin(t * 1.4) * 0.12 + (pathPhase < 0.3 ? (0.3 - pathPhase) * -0.3 : pathPhase > 0.7 ? (pathPhase - 0.7) * 0.3 : 0)
-      const cloudyScale = 1 + Math.sin(t * 2) * 0.04
-      // Trail particles behind Cloudy
-      for (let p = 0; p < 8; p++) {
-        const trailX = cloudyBaseX - 30 - p * 18 + Math.sin(t * 3 + p) * 5
-        const trailY = cloudyBaseY + 10 + p * 4 + Math.sin(t * 2.5 + p * 0.8) * 8
-        const trailAlpha = (1 - p / 8) * 0.4
-        ctx.fillStyle = `rgba(255,255,255,${trailAlpha})`
+        // ── Mouth (animated talking) ──
+        const talking = Math.abs(Math.sin(t * 8)) * 6 * s + 2 * s
+        ctx.fillStyle = '#d45b5b'
         ctx.beginPath()
-        ctx.arc(trailX, trailY, 6 - p * 0.5, 0, Math.PI * 2)
+        ctx.ellipse(0, -14 * s, 8 * s, talking, 0, 0, Math.PI * 2)
         ctx.fill()
-      }
-      if (cloudyImage) {
-        ctx.save()
-        ctx.translate(cloudyBaseX, cloudyBaseY)
-        ctx.rotate(cloudyTilt)
-        ctx.scale(cloudyScale, cloudyScale)
-        const cloudySize = 120
-        ctx.drawImage(cloudyImage, -cloudySize / 2, -cloudySize / 2, cloudySize, cloudySize)
-        ctx.restore()
-      } else {
-        // Fallback drawn cloud
-        ctx.save()
-        ctx.translate(cloudyBaseX, cloudyBaseY)
-        ctx.rotate(cloudyTilt)
-        ctx.scale(cloudyScale, cloudyScale)
-        ctx.fillStyle = '#f0f8ff'
+
+        // ── Blush ──
+        ctx.fillStyle = 'rgba(255, 180, 180, 0.35)'
         ctx.beginPath()
-        ctx.arc(0, 0, 40, 0, Math.PI * 2)
-        ctx.arc(-28, 10, 28, 0, Math.PI * 2)
-        ctx.arc(28, 10, 28, 0, Math.PI * 2)
-        ctx.arc(-14, -18, 24, 0, Math.PI * 2)
-        ctx.arc(14, -18, 24, 0, Math.PI * 2)
+        ctx.ellipse(-22 * s, -22 * s, 8 * s, 5 * s, 0, 0, Math.PI * 2)
         ctx.fill()
-        ctx.fillStyle = '#1a3a5c'
         ctx.beginPath()
-        ctx.arc(-10, -4, 5, 0, Math.PI * 2)
-        ctx.arc(10, -4, 5, 0, Math.PI * 2)
+        ctx.ellipse(22 * s, -22 * s, 8 * s, 5 * s, 0, 0, Math.PI * 2)
         ctx.fill()
+
         ctx.restore()
       }
 
-      // ── Scene/environment label ──
-      ctx.save()
-      ctx.globalAlpha = eased * 0.9
-      ctx.fillStyle = 'rgba(0,0,0,0.5)'
-      ctx.beginPath()
-      ctx.roundRect(40, 70, 280, 44, 8)
-      ctx.fill()
-      ctx.fillStyle = env.accent
-      ctx.font = '700 14px Manrope, sans-serif'
-      ctx.fillText(`SCENE ${sceneIdx + 1}`, 60, 94)
-      ctx.fillStyle = '#fff'
-      ctx.font = '700 14px Manrope, sans-serif'
-      ctx.fillText(`  ·  ${env.name.toUpperCase()}`, 60 + ctx.measureText(`SCENE ${sceneIdx + 1}`).width, 94)
-      ctx.restore()
-
-      // ── Topic title (appears with entrance) ──
-      ctx.save()
-      ctx.globalAlpha = eased
-      ctx.translate((1 - eased) * -30, 0)
-      const titleLayout = fitCanvasText(ctx, scene.title, W - 100, 100, 42, 24, '800')
-      ctx.fillStyle = '#fff'
-      ctx.font = `800 ${titleLayout.fontSize}px Manrope, sans-serif`
-      titleLayout.lines.forEach((line, i) => ctx.fillText(line, 50, 150 + i * titleLayout.lineHeight))
-      ctx.restore()
-
-      // ── Background asset image (faded into sky as part of environment) ──
+      // ── Scene-specific content ──
+      const accentColor = ['#4fc3f7', '#ce93d8', '#81c784', '#ffb74d', '#90caf9'][sceneIdx % 5]
+      const bullets = (scene.bullets?.length ? scene.bullets : extractBullets(scene.narration)).slice(0, 4)
+      const topics = (repository?.topics ?? []).slice(0, 6)
       const sceneAssetImages = scene.assets.map((a) => assetImageByUrl.get(a)).filter((img): img is HTMLImageElement => Boolean(img))
       const bgImg = sceneAssetImages[0] ?? null
-      if (bgImg) {
+
+      if (action === 'intro') {
+        // ── Cloudy walks in from left, title appears ──
+        const walkX = eased * W * 0.38
+        drawCloudy(walkX, H * 0.52, 1.6, eased < 0.9 ? 'walk' : 'wave')
+        // Title card on the right
         ctx.save()
-        ctx.globalAlpha = 0.18
-        const imgY = 200
-        const imgH = groundY - imgY - 40
+        ctx.globalAlpha = eased
+        ctx.fillStyle = 'rgba(0,0,0,0.06)'
         ctx.beginPath()
-        ctx.roundRect(W - 340, imgY, 300, imgH, 12)
-        ctx.clip()
-        drawContainImage(ctx, bgImg, W - 340, imgY, 300, imgH)
+        ctx.roundRect(W * 0.52, H * 0.15, W * 0.44, H * 0.42, 16)
+        ctx.fill()
+        ctx.fillStyle = accentColor
+        ctx.font = '700 18px Manrope, sans-serif'
+        ctx.fillText(`SCENE ${sceneIdx + 1}`, W * 0.56, H * 0.22)
+        const titleLayout = fitCanvasText(ctx, scene.title, W * 0.38, 120, 46, 24, '800')
+        ctx.fillStyle = '#1a2a3a'
+        ctx.font = `800 ${titleLayout.fontSize}px Manrope, sans-serif`
+        titleLayout.lines.forEach((line, i) => ctx.fillText(line, W * 0.56, H * 0.28 + i * titleLayout.lineHeight))
+        // Bullet points fade in
+        bullets.forEach((bullet, i) => {
+          const bulletAlpha = Math.max(0, Math.min(1, (sceneProgress - 0.2 - i * 0.12) * 4))
+          ctx.globalAlpha = bulletAlpha
+          ctx.fillStyle = accentColor
+          ctx.beginPath()
+          ctx.arc(W * 0.56, H * 0.40 + i * 42, 5, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.fillStyle = '#2c3e50'
+          ctx.font = '400 18px Manrope, sans-serif'
+          ctx.fillText(bullet.length > 50 ? bullet.slice(0, 48) + '…' : bullet, W * 0.58, H * 0.405 + i * 42)
+        })
         ctx.restore()
+
+      } else if (action === 'presenting') {
+        // ── Cloudy points at a big screen/monitor showing content ──
+        // Monitor
+        ctx.fillStyle = '#1e3a4f'
+        ctx.beginPath()
+        ctx.roundRect(W * 0.32, H * 0.08, W * 0.62, H * 0.48, 14)
+        ctx.fill()
+        // Screen inner
+        ctx.fillStyle = '#f8fcff'
+        ctx.beginPath()
+        ctx.roundRect(W * 0.34, H * 0.10, W * 0.58, H * 0.44, 8)
+        ctx.fill()
+        // Monitor stand
+        ctx.fillStyle = '#1e3a4f'
+        ctx.fillRect(W * 0.58, H * 0.56, W * 0.10, H * 0.04)
+        ctx.fillRect(W * 0.52, H * 0.59, W * 0.22, H * 0.015)
+        // Content on screen
+        if (bgImg) {
+          ctx.save()
+          ctx.beginPath()
+          ctx.roundRect(W * 0.36, H * 0.12, W * 0.54, H * 0.38, 4)
+          ctx.clip()
+          drawContainImage(ctx, bgImg, W * 0.36, H * 0.12, W * 0.54, H * 0.38)
+          ctx.restore()
+        } else {
+          ctx.fillStyle = accentColor
+          ctx.font = '800 28px Manrope, sans-serif'
+          ctx.fillText(scene.title, W * 0.38, H * 0.20)
+          bullets.forEach((bullet, i) => {
+            const bAlpha = Math.max(0, Math.min(1, (sceneProgress - i * 0.15) * 3))
+            ctx.save()
+            ctx.globalAlpha = bAlpha
+            ctx.fillStyle = accentColor
+            ctx.beginPath()
+            ctx.arc(W * 0.38, H * 0.27 + i * 52, 6, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.fillStyle = '#2c3e50'
+            ctx.font = '400 20px Manrope, sans-serif'
+            ctx.fillText(bullet.length > 42 ? bullet.slice(0, 40) + '…' : bullet, W * 0.40, H * 0.276 + i * 52)
+            ctx.restore()
+          })
+        }
+        // Cloudy standing beside it, pointing
+        drawCloudy(W * 0.16, H * 0.52, 1.4, 'point-right')
+
+      } else if (action === 'whiteboard') {
+        // ── Cloudy next to whiteboard writing/drawing concepts ──
+        // Whiteboard
+        ctx.fillStyle = '#fff'
+        ctx.strokeStyle = '#ccc'
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.roundRect(W * 0.06, H * 0.06, W * 0.58, H * 0.50, 6)
+        ctx.fill()
+        ctx.stroke()
+        // Whiteboard frame
+        ctx.fillStyle = '#8b8b8b'
+        ctx.fillRect(W * 0.06, H * 0.555, W * 0.58, 8)
+        // Whiteboard tray
+        ctx.fillStyle = '#aaa'
+        ctx.fillRect(W * 0.15, H * 0.56, W * 0.40, 10)
+        // Content appearing on whiteboard
+        ctx.fillStyle = '#1a2a3a'
+        ctx.font = '800 30px Manrope, sans-serif'
+        ctx.fillText(scene.title, W * 0.10, H * 0.14)
+        // Draw connecting lines / diagram on whiteboard
+        const diagramItems = bullets.slice(0, 4)
+        diagramItems.forEach((item, i) => {
+          const appear = Math.max(0, Math.min(1, (sceneProgress - i * 0.18) * 3.5))
+          if (appear <= 0) return
+          const bx = W * 0.10 + (i % 2) * W * 0.28
+          const by = H * 0.20 + Math.floor(i / 2) * H * 0.16
+          ctx.save()
+          ctx.globalAlpha = appear
+          // Box
+          ctx.fillStyle = accentColor
+          ctx.globalAlpha = appear * 0.15
+          ctx.beginPath()
+          ctx.roundRect(bx, by, W * 0.24, H * 0.11, 8)
+          ctx.fill()
+          ctx.globalAlpha = appear
+          ctx.strokeStyle = accentColor
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.roundRect(bx, by, W * 0.24, H * 0.11, 8)
+          ctx.stroke()
+          ctx.fillStyle = '#2c3e50'
+          ctx.font = '400 16px Manrope, sans-serif'
+          const label = item.length > 38 ? item.slice(0, 36) + '…' : item
+          ctx.fillText(label, bx + 12, by + H * 0.04)
+          // Connecting arrow
+          if (i > 0) {
+            ctx.strokeStyle = accentColor
+            ctx.lineWidth = 2
+            ctx.setLineDash([4, 4])
+            ctx.beginPath()
+            const prevBx = W * 0.10 + ((i - 1) % 2) * W * 0.28
+            const prevBy = H * 0.20 + Math.floor((i - 1) / 2) * H * 0.16
+            ctx.moveTo(prevBx + W * 0.12, prevBy + H * 0.11)
+            ctx.lineTo(bx + W * 0.12, by)
+            ctx.stroke()
+            ctx.setLineDash([])
+          }
+          ctx.restore()
+        })
+        // Cloudy pointing up at whiteboard
+        drawCloudy(W * 0.78, H * 0.46, 1.3, 'point-up')
+
+      } else if (action === 'diagram') {
+        // ── Cloudy presenting floating topic objects around it ──
+        drawCloudy(W * 0.5, H * 0.42, 1.5, 'present')
+        // Floating topic objects orbit around Cloudy
+        const allLabels = topics.length > 0 ? topics : scene.title.split(' ').filter((w) => w.length > 2).slice(0, 5)
+        allLabels.forEach((label, i) => {
+          const angle = (t * 0.6) + (i * Math.PI * 2 / allLabels.length)
+          const radius = 250 + Math.sin(t * 0.4 + i) * 30
+          const ox = W * 0.5 + Math.cos(angle) * radius
+          const oy = H * 0.38 + Math.sin(angle) * radius * 0.4
+          const objScale = 0.8 + Math.sin(t + i * 2) * 0.15
+          ctx.save()
+          ctx.translate(ox, oy)
+          ctx.scale(objScale, objScale)
+          // Rounded pill shape
+          ctx.fillStyle = accentColor
+          ctx.beginPath()
+          ctx.roundRect(-46, -20, 92, 40, 20)
+          ctx.fill()
+          ctx.fillStyle = '#fff'
+          ctx.font = '700 14px Manrope, sans-serif'
+          ctx.textAlign = 'center'
+          ctx.fillText(label.slice(0, 10).toUpperCase(), 0, 6)
+          ctx.textAlign = 'left'
+          ctx.restore()
+        })
+        // Scene label
+        ctx.fillStyle = 'rgba(0,0,0,0.05)'
+        ctx.beginPath()
+        ctx.roundRect(50, H * 0.06, W - 100, 50, 10)
+        ctx.fill()
+        ctx.fillStyle = accentColor
+        ctx.font = '700 16px Manrope, sans-serif'
+        ctx.fillText(`SCENE ${sceneIdx + 1}`, 70, H * 0.06 + 32)
+        ctx.fillStyle = '#2c3e50'
+        ctx.font = '700 18px Manrope, sans-serif'
+        ctx.fillText(scene.title, 170, H * 0.06 + 32)
+
+      } else {
+        // ── Farewell: Cloudy celebrates, recap card ──
+        // Recap card
+        ctx.fillStyle = 'rgba(0,0,0,0.05)'
+        ctx.beginPath()
+        ctx.roundRect(W * 0.08, H * 0.06, W * 0.84, H * 0.38, 16)
+        ctx.fill()
+        ctx.fillStyle = accentColor
+        ctx.font = '700 16px Manrope, sans-serif'
+        ctx.fillText('RECAP', W * 0.13, H * 0.12)
+        ctx.fillStyle = '#1a2a3a'
+        const recapLayout = fitCanvasText(ctx, scene.title, W * 0.74, 80, 38, 22, '800')
+        ctx.font = `800 ${recapLayout.fontSize}px Manrope, sans-serif`
+        recapLayout.lines.forEach((line, i) => ctx.fillText(line, W * 0.13, H * 0.18 + i * recapLayout.lineHeight))
+        // Key points
+        bullets.forEach((bullet, i) => {
+          const bAppear = Math.max(0, Math.min(1, (sceneProgress - i * 0.1) * 4))
+          ctx.save()
+          ctx.globalAlpha = bAppear
+          ctx.fillStyle = '#57ab5a'
+          ctx.font = '700 22px Manrope, sans-serif'
+          ctx.fillText('✓', W * 0.13, H * 0.26 + i * 40)
+          ctx.fillStyle = '#2c3e50'
+          ctx.font = '400 18px Manrope, sans-serif'
+          ctx.fillText(bullet.length > 48 ? bullet.slice(0, 46) + '…' : bullet, W * 0.16, H * 0.26 + i * 40)
+          ctx.restore()
+        })
+        // Cloudy celebrating
+        drawCloudy(W * 0.5, H * 0.58, 1.6, 'celebrate')
+        // Confetti
+        for (let i = 0; i < 20; i++) {
+          const cfx = ((i * 73 + t * 60) % W)
+          const cfy = ((i * 47 + t * 40 + Math.sin(t * 2 + i) * 30) % (H * 0.5)) + H * 0.3
+          const cfColor = ['#f5a975', '#4fc3f7', '#ce93d8', '#81c784', '#ffb74d'][i % 5]
+          ctx.fillStyle = cfColor
+          ctx.save()
+          ctx.translate(cfx, cfy)
+          ctx.rotate(t * 3 + i)
+          ctx.fillRect(-4, -4, 8, 8)
+          ctx.restore()
+        }
       }
 
-      // ── Subtitle panel ──
-      const narSentences = scene.narration.replace(/([.!?])\s+/g, '$1|').split('|').filter((s) => s.trim().length > 10)
-      const activeSentenceIdx = Math.min(narSentences.length - 1, Math.floor(sceneProgress * narSentences.length))
-      const activeSentence = narSentences[activeSentenceIdx] ?? scene.narration.slice(0, 120)
-
-      // Dark panel at bottom for narration
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.82)'
+      // ── Subtitle bar ──
+      ctx.fillStyle = 'rgba(20, 40, 60, 0.88)'
       ctx.beginPath()
-      ctx.roundRect(30, H - 340, W - 60, 260, 16)
+      ctx.roundRect(30, H - 300, W - 60, 220, 14)
       ctx.fill()
-      // Accent line
-      ctx.fillStyle = env.accent
-      ctx.fillRect(50, H - 330, 4, 60)
-      // Narration text
+      // Accent stripe
+      ctx.fillStyle = accentColor
+      ctx.fillRect(50, H - 290, 4, 50)
+      // Subtitle text
       ctx.fillStyle = '#fff'
-      const subLayout = fitCanvasText(ctx, activeSentence, W - 120, 200, 28, 16)
+      const subLayout = fitCanvasText(ctx, activeSentence, W - 120, 180, 26, 16)
       ctx.font = `400 ${subLayout.fontSize}px Manrope, sans-serif`
-      subLayout.lines.forEach((line, i) => ctx.fillText(line, 70, H - 305 + i * subLayout.lineHeight))
-
-      // ── Cinematic letterbox ──
-      ctx.fillStyle = '#000'
-      ctx.fillRect(0, 0, W, 50)
-      ctx.fillRect(0, H - 50, W, 50)
+      subLayout.lines.forEach((line, i) => ctx.fillText(line, 68, H - 268 + i * subLayout.lineHeight))
 
       // ── Progress bar ──
       const progress = Math.min(1, elapsed / totalSeconds)
-      ctx.fillStyle = 'rgba(255,255,255,.18)'
-      ctx.fillRect(0, H - 50, W, 4)
-      ctx.fillStyle = env.accent
-      ctx.fillRect(0, H - 50, W * progress, 4)
+      ctx.fillStyle = 'rgba(0,0,0,.12)'
+      ctx.fillRect(0, H - 52, W, 6)
+      ctx.fillStyle = accentColor
+      ctx.fillRect(0, H - 52, W * progress, 6)
 
       // ── Watermark ──
       ctx.save()
-      ctx.globalAlpha = 0.45
-      ctx.fillStyle = '#d9eef6'
+      ctx.globalAlpha = 0.4
+      ctx.fillStyle = '#607080'
       ctx.font = '700 16px Manrope, sans-serif'
       ctx.fillText('Cloud2BR', W - 140, H - 28)
       ctx.restore()
@@ -1850,9 +2194,9 @@ function App() {
                   <div className="short-stage-copy">
                     <p className="eyebrow">Animated Short Film</p>
                     <h2>{shortTopic.title}</h2>
-                    <p className="short-composition-hint">Cloudy flies through 5 environments explaining the topic</p>
+                    <p className="short-composition-hint">Cloudy walks, points, and presents across 5 animated scenes</p>
                     <ul className="short-env-list">
-                      {['Data Ocean', 'Algorithm Galaxy', 'Code Forest', 'Architecture Mesa', 'Cloud Summit'].slice(0, shortSourceScenes.length).map((env, i) => (
+                      {['Walks in & introduces', 'Presents on screen', 'Draws on whiteboard', 'Shows topic diagram', 'Celebrates recap'].slice(0, shortSourceScenes.length).map((env, i) => (
                         <li key={env}><span className="env-dot" style={{ background: ['#4fc3f7', '#ce93d8', '#81c784', '#ffb74d', '#90caf9'][i] }} />{env}</li>
                       ))}
                     </ul>
