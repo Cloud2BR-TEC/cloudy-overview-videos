@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f2b3d"/>
+      <stop offset="100%" stop-color="#1a4a5e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f5a975"/>
+      <stop offset="100%" stop-color="#e8824a"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <!-- Decorative grid -->
+  <g opacity="0.06">
+    <line x1="0" y1="400" x2="1080" y2="400" stroke="#fff" stroke-width="1"/>
+    <line x1="0" y1="800" x2="1080" y2="800" stroke="#fff" stroke-width="1"/>
+    <line x1="0" y1="1200" x2="1080" y2="1200" stroke="#fff" stroke-width="1"/>
+    <line x1="360" y1="0" x2="360" y2="1920" stroke="#fff" stroke-width="1"/>
+    <line x1="720" y1="0" x2="720" y2="1920" stroke="#fff" stroke-width="1"/>
+  </g>
+  <!-- Accent bar left -->
+  <rect x="50" y="280" width="8" height="300" rx="4" fill="url(#accent)"/>
+  <!-- Title text area -->
+  <rect x="80" y="280" width="620" height="140" rx="8" fill="none" stroke="#f5a975" stroke-width="2" stroke-dasharray="8 4" opacity="0.4"/>
+  <text x="94" y="320" fill="#f5a97580" font-family="sans-serif" font-size="14" font-weight="700">TITLE</text>
+  <!-- Subtitle text area -->
+  <rect x="80" y="440" width="620" height="120" rx="8" fill="none" stroke="#ffffff40" stroke-width="1" stroke-dasharray="6 4"/>
+  <text x="94" y="476" fill="#ffffff40" font-family="sans-serif" font-size="14" font-weight="700">SUBTITLE</text>
+  <!-- Cloudy character placeholder (right side) -->
+  <g transform="translate(820, 380)">
+    <!-- Cloud body -->
+    <ellipse cx="0" cy="20" rx="80" ry="60" fill="#f0f8ff" opacity="0.9"/>
+    <circle cx="-40" cy="40" r="40" fill="#f0f8ff" opacity="0.9"/>
+    <circle cx="40" cy="40" r="40" fill="#f0f8ff" opacity="0.9"/>
+    <circle cx="-20" cy="-20" r="36" fill="#f0f8ff" opacity="0.9"/>
+    <circle cx="20" cy="-20" r="36" fill="#f0f8ff" opacity="0.9"/>
+    <!-- Eyes -->
+    <ellipse cx="-18" cy="-4" rx="10" ry="12" fill="#fff"/>
+    <circle cx="-18" cy="-4" r="7" fill="#2c3e50"/>
+    <circle cx="-15" cy="-8" r="3" fill="#fff"/>
+    <ellipse cx="18" cy="-4" rx="10" ry="12" fill="#fff"/>
+    <circle cx="18" cy="-4" r="7" fill="#2c3e50"/>
+    <circle cx="21" cy="-8" r="3" fill="#fff"/>
+    <!-- Graduation cap -->
+    <polygon points="-40,-38 0,-56 40,-38 0,-26" fill="#2c5f7c"/>
+    <line x1="0" y1="-40" x2="30" y2="-24" stroke="#f5a975" stroke-width="3"/>
+    <!-- Mouth -->
+    <ellipse cx="0" cy="18" rx="10" ry="6" fill="#d45b5b"/>
+    <!-- Blush -->
+    <ellipse cx="-32" cy="8" rx="10" ry="6" fill="#ffb4b4" opacity="0.3"/>
+    <ellipse cx="32" cy="8" rx="10" ry="6" fill="#ffb4b4" opacity="0.3"/>
+  </g>
+  <!-- Content area (main body) -->
+  <rect x="50" y="640" width="980" height="500" rx="16" fill="#ffffff08" stroke="#ffffff15" stroke-width="1"/>
+  <text x="74" y="680" fill="#ffffff30" font-family="sans-serif" font-size="14" font-weight="700">CONTENT</text>
+  <!-- Bullet point zones -->
+  <g opacity="0.3">
+    <circle cx="90" cy="730" r="6" fill="#f5a975"/>
+    <rect x="112" y="718" width="880" height="24" rx="4" fill="#ffffff10"/>
+    <circle cx="90" cy="790" r="6" fill="#f5a975"/>
+    <rect x="112" y="778" width="880" height="24" rx="4" fill="#ffffff10"/>
+    <circle cx="90" cy="850" r="6" fill="#f5a975"/>
+    <rect x="112" y="838" width="880" height="24" rx="4" fill="#ffffff10"/>
+    <circle cx="90" cy="910" r="6" fill="#f5a975"/>
+    <rect x="112" y="898" width="880" height="24" rx="4" fill="#ffffff10"/>
+  </g>
+  <!-- Narration area (bottom) -->
+  <rect x="40" y="1560" width="1000" height="280" rx="16" fill="#00000088"/>
+  <rect x="60" y="1580" width="5" height="60" rx="2" fill="url(#accent)"/>
+  <text x="80" y="1606" fill="#f5a97580" font-family="sans-serif" font-size="14" font-weight="700">NARRATION</text>
+  <!-- Progress bar -->
+  <rect x="0" y="1880" width="1080" height="6" fill="#ffffff18"/>
+</svg>

@@ -2,6 +2,14 @@ import { useRef, useState } from 'react'
 import './App.css'
 import CloudyAvatar from './CloudyAvatar'
 
+const shortTemplateUrls = [
+  new URL('./assets/templates/short-intro.svg', import.meta.url).href,
+  new URL('./assets/templates/short-presenting.svg', import.meta.url).href,
+  new URL('./assets/templates/short-whiteboard.svg', import.meta.url).href,
+  new URL('./assets/templates/short-diagram.svg', import.meta.url).href,
+  new URL('./assets/templates/short-recap.svg', import.meta.url).href,
+]
+
 type Repository = {
   fullName: string
   description: string
@@ -1496,6 +1504,7 @@ function App() {
     const usedAssets = Array.from(new Set(shortSourceScenes.flatMap((scene) => scene.assets)))
     const assetImages = await Promise.all(usedAssets.map((asset) => loadImage(asset).catch(() => null)))
     const assetImageByUrl = new Map(usedAssets.map((asset, i) => [asset, assetImages[i]]))
+    const templateImages = await Promise.all(shortTemplateUrls.map((url) => loadImage(url).catch(() => null)))
     let narrationBuffers: AudioBuffer[]
     try {
       const narrationBlobs = await generateNarrationAudio(
@@ -1592,6 +1601,15 @@ function App() {
       bgGrad.addColorStop(1, bgBot)
       ctx.fillStyle = bgGrad
       ctx.fillRect(0, 0, W, H)
+
+      // ── Template background ──
+      const tpl = templateImages[sceneIdx % templateImages.length]
+      if (tpl) {
+        ctx.save()
+        ctx.globalAlpha = 0.35
+        ctx.drawImage(tpl, 0, 0, W, H)
+        ctx.restore()
+      }
 
       // Floor
       ctx.fillStyle = 'rgba(0,0,0,0.06)'
@@ -2249,8 +2267,16 @@ function App() {
                 </article>
                 <aside className="shorts-library" aria-labelledby="shorts-library-title">
                   <div>
-                    <p className="eyebrow">Worlds & objects</p>
-                    <h2 id="shorts-library-title">Scene elements</h2>
+                    <p className="eyebrow">Templates & elements</p>
+                    <h2 id="shorts-library-title">Scene backgrounds</h2>
+                  </div>
+                  <div className="short-template-grid">
+                    {['Intro', 'Presenting', 'Whiteboard', 'Diagram', 'Recap'].slice(0, shortSourceScenes.length).map((name, i) => (
+                      <article className="short-template-thumb" key={name}>
+                        <img src={shortTemplateUrls[i]} alt={`${name} template`} />
+                        <span>{name}</span>
+                      </article>
+                    ))}
                   </div>
                   <div className="short-asset-grid">
                     {shortAssetEntries.map((asset, index) => (

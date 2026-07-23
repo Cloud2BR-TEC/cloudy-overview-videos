@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0e8f8"/>
+      <stop offset="100%" stop-color="#e0d4f0"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <!-- Whiteboard -->
+  <rect x="60" y="70" width="660" height="560" rx="6" fill="#fff" stroke="#ccc" stroke-width="3"/>
+  <rect x="60" y="626" width="660" height="10" fill="#8b8b8b"/>
+  <rect x="180" y="632" width="420" height="12" rx="2" fill="#aaa"/>
+  <!-- Whiteboard title area -->
+  <rect x="90" y="100" width="600" height="50" rx="4" fill="none" stroke="#ce93d880" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="104" y="132" fill="#ce93d880" font-family="sans-serif" font-size="14" font-weight="700">BOARD TITLE</text>
+  <!-- Diagram boxes on whiteboard -->
+  <g>
+    <!-- Box 1 -->
+    <rect x="90" y="180" width="280" height="120" rx="10" fill="#ce93d815" stroke="#ce93d8" stroke-width="2"/>
+    <text x="106" y="210" fill="#ce93d860" font-family="sans-serif" font-size="12" font-weight="700">CONCEPT A</text>
+    <rect x="106" y="220" width="244" height="18" rx="3" fill="#ce93d810"/>
+    <rect x="106" y="244" width="200" height="18" rx="3" fill="#ce93d810"/>
+    <!-- Box 2 -->
+    <rect x="400" y="180" width="280" height="120" rx="10" fill="#ce93d815" stroke="#ce93d8" stroke-width="2"/>
+    <text x="416" y="210" fill="#ce93d860" font-family="sans-serif" font-size="12" font-weight="700">CONCEPT B</text>
+    <rect x="416" y="220" width="244" height="18" rx="3" fill="#ce93d810"/>
+    <rect x="416" y="244" width="200" height="18" rx="3" fill="#ce93d810"/>
+    <!-- Arrow down -->
+    <line x1="230" y1="300" x2="230" y2="360" stroke="#ce93d8" stroke-width="2" stroke-dasharray="5 4"/>
+    <polygon points="224,356 230,372 236,356" fill="#ce93d8"/>
+    <line x1="540" y1="300" x2="540" y2="360" stroke="#ce93d8" stroke-width="2" stroke-dasharray="5 4"/>
+    <polygon points="534,356 540,372 546,356" fill="#ce93d8"/>
+    <!-- Box 3 -->
+    <rect x="90" y="370" width="280" height="120" rx="10" fill="#ce93d815" stroke="#ce93d8" stroke-width="2"/>
+    <text x="106" y="400" fill="#ce93d860" font-family="sans-serif" font-size="12" font-weight="700">CONCEPT C</text>
+    <rect x="106" y="410" width="244" height="18" rx="3" fill="#ce93d810"/>
+    <!-- Box 4 -->
+    <rect x="400" y="370" width="280" height="120" rx="10" fill="#ce93d815" stroke="#ce93d8" stroke-width="2"/>
+    <text x="416" y="400" fill="#ce93d860" font-family="sans-serif" font-size="12" font-weight="700">CONCEPT D</text>
+    <rect x="416" y="410" width="244" height="18" rx="3" fill="#ce93d810"/>
+    <!-- Cross arrow -->
+    <line x1="370" y1="430" x2="400" y2="430" stroke="#ce93d8" stroke-width="2" stroke-dasharray="5 4"/>
+  </g>
+  <!-- Cloudy character (right side, pointing up) -->
+  <g transform="translate(880, 500)">
+    <ellipse cx="0" cy="20" rx="55" ry="46" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="0" cy="-26" r="40" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="-24" cy="-14" r="24" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="24" cy="-14" r="24" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="-12" cy="-48" r="22" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="12" cy="-48" r="22" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <polygon points="-32,-58 0,-74 32,-58 0,-48" fill="#2c5f7c"/>
+    <line x1="0" y1="-60" x2="24" y2="-44" stroke="#f5a975" stroke-width="3"/>
+    <ellipse cx="-12" cy="-28" rx="7" ry="9" fill="#fff"/>
+    <circle cx="-12" cy="-28" r="5" fill="#2c3e50"/>
+    <circle cx="-10" cy="-31" r="2" fill="#fff"/>
+    <ellipse cx="12" cy="-28" rx="7" ry="9" fill="#fff"/>
+    <circle cx="12" cy="-28" r="5" fill="#2c3e50"/>
+    <circle cx="14" cy="-31" r="2" fill="#fff"/>
+    <path d="M-6,-8 Q0,-1 6,-8" fill="none" stroke="#d45b5b" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="-26" cy="-16" rx="7" ry="4" fill="#ffb4b4" opacity="0.3"/>
+    <ellipse cx="26" cy="-16" rx="7" ry="4" fill="#ffb4b4" opacity="0.3"/>
+    <!-- Arm pointing up -->
+    <line x1="44" y1="6" x2="56" y2="-50" stroke="#4a7c9c" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="58" cy="-54" r="8" fill="#f0f8ff"/>
+    <line x1="58" y1="-62" x2="58" y2="-78" stroke="#f0f8ff" stroke-width="4" stroke-linecap="round"/>
+    <line x1="-44" y1="10" x2="-60" y2="44" stroke="#4a7c9c" stroke-width="7" stroke-linecap="round"/>
+    <line x1="-18" y1="60" x2="-22" y2="100" stroke="#4a7c9c" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="-22" cy="106" rx="12" ry="6" fill="#3a6a88"/>
+    <line x1="18" y1="60" x2="22" y2="100" stroke="#4a7c9c" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="22" cy="106" rx="12" ry="6" fill="#3a6a88"/>
+  </g>
+  <!-- Narration area -->
+  <rect x="40" y="1560" width="1000" height="280" rx="16" fill="#2a1248" opacity="0.88"/>
+  <rect x="60" y="1580" width="5" height="60" rx="2" fill="#ce93d8"/>
+  <text x="80" y="1606" fill="#ce93d880" font-family="sans-serif" font-size="14" font-weight="700">NARRATION</text>
+  <rect x="0" y="1880" width="1080" height="6" fill="#00000012"/>
+</svg>

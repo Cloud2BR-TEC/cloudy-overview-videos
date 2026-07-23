@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f8e8"/>
+      <stop offset="100%" stop-color="#d0f0d0"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <!-- Title bar -->
+  <rect x="50" y="70" width="980" height="60" rx="10" fill="#00000008"/>
+  <text x="70" y="108" fill="#2c3e5040" font-family="sans-serif" font-size="14" font-weight="700">TOPIC TITLE</text>
+  <!-- Cloudy center -->
+  <g transform="translate(540, 460)">
+    <ellipse cx="0" cy="20" rx="70" ry="56" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="0" cy="-30" r="48" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="-30" cy="-16" r="30" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="30" cy="-16" r="30" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="-16" cy="-56" r="26" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <circle cx="16" cy="-56" r="26" fill="#f0f8ff" stroke="#b0d4e8" stroke-width="2"/>
+    <polygon points="-38,-66 0,-82 38,-66 0,-56" fill="#2c5f7c"/>
+    <line x1="0" y1="-68" x2="28" y2="-52" stroke="#f5a975" stroke-width="3"/>
+    <ellipse cx="-16" cy="-34" rx="9" ry="11" fill="#fff"/>
+    <circle cx="-16" cy="-34" r="7" fill="#2c3e50"/>
+    <circle cx="-13" cy="-37" r="2.5" fill="#fff"/>
+    <ellipse cx="16" cy="-34" rx="9" ry="11" fill="#fff"/>
+    <circle cx="16" cy="-34" r="7" fill="#2c3e50"/>
+    <circle cx="19" cy="-37" r="2.5" fill="#fff"/>
+    <ellipse cx="0" cy="-10" rx="10" ry="7" fill="#d45b5b"/>
+    <ellipse cx="-32" cy="-20" rx="9" ry="5" fill="#ffb4b4" opacity="0.3"/>
+    <ellipse cx="32" cy="-20" rx="9" ry="5" fill="#ffb4b4" opacity="0.3"/>
+    <!-- Arms presenting -->
+    <line x1="-66" y1="6" x2="-120" y2="-16" stroke="#4a7c9c" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="-124" cy="-18" r="9" fill="#f0f8ff"/>
+    <line x1="66" y1="6" x2="120" y2="-16" stroke="#4a7c9c" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="124" cy="-18" r="9" fill="#f0f8ff"/>
+    <line x1="-20" y1="70" x2="-26" y2="120" stroke="#4a7c9c" stroke-width="8" stroke-linecap="round"/>
+    <ellipse cx="-26" cy="126" rx="14" ry="7" fill="#3a6a88"/>
+    <line x1="20" y1="70" x2="26" y2="120" stroke="#4a7c9c" stroke-width="8" stroke-linecap="round"/>
+    <ellipse cx="26" cy="126" rx="14" ry="7" fill="#3a6a88"/>
+  </g>
+  <!-- Orbiting topic pills -->
+  <g>
+    <rect x="140" y="240" width="140" height="44" rx="22" fill="#81c784" opacity="0.7"/>
+    <text x="170" y="268" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 1</text>
+    <rect x="800" y="260" width="140" height="44" rx="22" fill="#81c784" opacity="0.7"/>
+    <text x="830" y="288" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 2</text>
+    <rect x="100" y="600" width="140" height="44" rx="22" fill="#81c784" opacity="0.7"/>
+    <text x="130" y="628" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 3</text>
+    <rect x="820" y="580" width="140" height="44" rx="22" fill="#81c784" opacity="0.7"/>
+    <text x="850" y="608" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 4</text>
+    <rect x="440" y="180" width="160" height="44" rx="22" fill="#81c784" opacity="0.7"/>
+    <text x="470" y="208" fill="#fff" font-family="sans-serif" font-size="13" font-weight="700">TOPIC 5</text>
+  </g>
+  <!-- Connection lines from Cloudy to topics -->
+  <g stroke="#81c784" stroke-width="2" stroke-dasharray="6 4" opacity="0.35">
+    <line x1="540" y1="380" x2="210" y2="262"/>
+    <line x1="540" y1="380" x2="870" y2="282"/>
+    <line x1="540" y1="460" x2="170" y2="622"/>
+    <line x1="540" y1="460" x2="890" y2="602"/>
+    <line x1="540" y1="380" x2="520" y2="202"/>
+  </g>
+  <!-- Narration area -->
+  <rect x="40" y="1560" width="1000" height="280" rx="16" fill="#0f3d22" opacity="0.88"/>
+  <rect x="60" y="1580" width="5" height="60" rx="2" fill="#81c784"/>
+  <text x="80" y="1606" fill="#81c78480" font-family="sans-serif" font-size="14" font-weight="700">NARRATION</text>
+  <rect x="0" y="1880" width="1080" height="6" fill="#00000012"/>
+</svg>
