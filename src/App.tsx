@@ -37,7 +37,7 @@ const SLIDES_PER_SECTION = 10
 const TEMPLATE_SLIDE_SECONDS = 12
 const VOICE_RATE = 1.15
 const BASE_NARRATION_WORDS_PER_MINUTE = 130
-const PLAYBACK_SPEED_OPTIONS = [0.75, 1, 1.25, 1.5] as const
+const PLAYBACK_SPEED_OPTIONS = [1, 1.25, 1.5, 1.75, 2, 2.5] as const
 const SLIDE_FOCUS: Record<string, string> = {
   Overview: 'Begin with the central idea and the context needed to understand the repository.',
   Purpose: 'Clarify the problem this work is intended to address and why that goal matters.',
