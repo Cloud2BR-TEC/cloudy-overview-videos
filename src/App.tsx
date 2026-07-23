@@ -752,7 +752,7 @@ function App() {
     repositoryLoadAbortRef.current = loadController
     const timeoutId = window.setTimeout(() => loadController.abort('timeout'), 60_000)
     setIsLoading(true)
-    setStatus('Reviewing the repository README, folders, and images...')
+    setStatus('Reviewing the repository README, folders, and images.')
     try {
       const [repositoryResponse, readmeResponse] = await Promise.all([
         fetchWithRetry(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, {
@@ -779,7 +779,7 @@ function App() {
       const readmeData = readmeResponse.ok ? ((await readmeResponse.json()) as { content?: string }) : null
       const readmeText = readmeData?.content ? decodeBase64(readmeData.content) : ''
       const readmeImages = readmeText ? extractReadmeImageUrls(readmeText, parsed.owner, parsed.repo, data.default_branch) : []
-      setStatus('Repository found. Reading English documentation and visuals...')
+      setStatus('Repository found. Reading English documentation and visuals.')
       const treeResponse = await fetchWithRetry(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/${encodeURIComponent(data.default_branch)}?recursive=1`, { headers: apiHeaders, signal: loadController.signal })
       if (!treeResponse.ok) throw new Error(`GitHub could not read the repository files (${treeResponse.status}).`)
       const treeData = treeResponse.ok
@@ -837,7 +837,7 @@ function App() {
         documentation,
         assets,
       }
-      setStatus('Repository content loaded. Building 50 distinct slides...')
+      setStatus('Repository content loaded. Building 50 distinct slides.')
       await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
       if (loadController.signal.aborted) throw new DOMException('Repository load aborted', 'AbortError')
       const generatedScenes = buildScenes(newRepo)
@@ -1009,7 +1009,7 @@ function App() {
     renderAbortControllerRef.current = renderAbortController
     setIsRenderingVideo(true)
     setRenderProgress(0)
-    setStatus('Loading repository visuals for your video...')
+    setStatus('Loading repository visuals for your video.')
     const cloudyImage = await loadImage(cloudyLogo).catch(() => null)
     const usedAssets = Array.from(new Set(scenes.flatMap((scene) => scene.assets)))
     const assetImages = await Promise.all(usedAssets.map((asset) => loadImage(asset).catch(() => null)))
@@ -1027,7 +1027,7 @@ function App() {
         },
         renderAbortController.signal,
       )
-      setStatus('Decoding Cloudy narration for the video...')
+      setStatus('Decoding Cloudy narration for the video.')
       narrationBuffers = await Promise.all(narrationBlobs.map(async (blob) => audioContext.decodeAudioData(await blob.arrayBuffer())))
     } catch (error) {
       await audioContext.close()
@@ -1281,7 +1281,7 @@ function App() {
   function cancelVideoExport() {
     renderAbortRef.current = true
     renderAbortControllerRef.current?.abort()
-    setStatus('Stopping video render...')
+    setStatus('Stopping video render.')
   }
 
   function pickFemaleVoice() {
@@ -1500,7 +1500,7 @@ function App() {
     shortRenderAbortControllerRef.current = abortController
     setIsRenderingShort(true)
     setShortRenderProgress(0)
-    setStatus('Loading visuals for Cloudy Short video...')
+    setStatus('Loading visuals for Cloudy Short video.')
     const usedAssets = Array.from(new Set(shortSourceScenes.flatMap((scene) => scene.assets)))
     const assetImages = await Promise.all(usedAssets.map((asset) => loadImage(asset).catch(() => null)))
     const assetImageByUrl = new Map(usedAssets.map((asset, i) => [asset, assetImages[i]]))
@@ -1607,7 +1607,7 @@ function App() {
       // ── Narration sentences for subtitle sync ──
       const narSentences = scene.narration.replace(/([.!?])\s+/g, '$1|').split('|').filter((s) => s.trim().length > 8)
       const activeSentenceIdx = Math.min(narSentences.length - 1, Math.floor(sceneProgress * narSentences.length))
-      const activeSentence = narSentences[activeSentenceIdx] ?? scene.narration.slice(0, 140)
+      const activeSentence = narSentences[activeSentenceIdx] ?? scene.narration
 
       // ── Scene actions: intro, presenting, whiteboard, diagram, farewell ──
       const actions = ['intro', 'presenting', 'whiteboard', 'diagram', 'farewell'] as const
@@ -1945,9 +1945,10 @@ function App() {
           ctx.beginPath()
           ctx.arc(W * 0.56, H * 0.40 + i * 42, 5, 0, Math.PI * 2)
           ctx.fill()
+          const bulletLayout = fitCanvasText(ctx, bullet, W * 0.36, 58, 18, 12)
           ctx.fillStyle = '#2c3e50'
-          ctx.font = '400 18px Manrope, sans-serif'
-          ctx.fillText(bullet.length > 50 ? bullet.slice(0, 48) + '…' : bullet, W * 0.58, H * 0.405 + i * 42)
+          ctx.font = `400 ${bulletLayout.fontSize}px Manrope, sans-serif`
+          bulletLayout.lines.forEach((line, lineIdx) => ctx.fillText(line, W * 0.58, H * 0.405 + i * 42 + lineIdx * bulletLayout.lineHeight))
         })
         ctx.restore()
 
@@ -1987,9 +1988,10 @@ function App() {
             ctx.beginPath()
             ctx.arc(W * 0.38, H * 0.27 + i * 52, 6, 0, Math.PI * 2)
             ctx.fill()
+            const bulletLayout = fitCanvasText(ctx, bullet, W * 0.48, 70, 20, 12)
             ctx.fillStyle = '#2c3e50'
-            ctx.font = '400 20px Manrope, sans-serif'
-            ctx.fillText(bullet.length > 42 ? bullet.slice(0, 40) + '…' : bullet, W * 0.40, H * 0.276 + i * 52)
+            ctx.font = `400 ${bulletLayout.fontSize}px Manrope, sans-serif`
+            bulletLayout.lines.forEach((line, lineIdx) => ctx.fillText(line, W * 0.40, H * 0.276 + i * 52 + lineIdx * bulletLayout.lineHeight))
             ctx.restore()
           })
         }
@@ -2037,10 +2039,10 @@ function App() {
           ctx.beginPath()
           ctx.roundRect(bx, by, W * 0.24, H * 0.11, 8)
           ctx.stroke()
+          const itemLayout = fitCanvasText(ctx, item, W * 0.24 - 24, H * 0.11 - 18, 16, 10)
           ctx.fillStyle = '#2c3e50'
-          ctx.font = '400 16px Manrope, sans-serif'
-          const label = item.length > 38 ? item.slice(0, 36) + '…' : item
-          ctx.fillText(label, bx + 12, by + H * 0.04)
+          ctx.font = `400 ${itemLayout.fontSize}px Manrope, sans-serif`
+          itemLayout.lines.forEach((line, lineIdx) => ctx.fillText(line, bx + 12, by + 16 + lineIdx * itemLayout.lineHeight))
           // Connecting arrow
           if (i > 0) {
             ctx.strokeStyle = accentColor
@@ -2078,10 +2080,15 @@ function App() {
           ctx.beginPath()
           ctx.roundRect(-46, -20, 92, 40, 20)
           ctx.fill()
+          const orbitLabelLayout = fitCanvasText(ctx, label.toUpperCase(), 76, 26, 14, 9, '700')
           ctx.fillStyle = '#fff'
-          ctx.font = '700 14px Manrope, sans-serif'
+          ctx.font = `700 ${orbitLabelLayout.fontSize}px Manrope, sans-serif`
           ctx.textAlign = 'center'
-          ctx.fillText(label.slice(0, 10).toUpperCase(), 0, 6)
+          orbitLabelLayout.lines.forEach((line, lineIdx) => {
+            const totalHeight = orbitLabelLayout.lines.length * orbitLabelLayout.lineHeight
+            const topY = -Math.floor(totalHeight / 2) + orbitLabelLayout.lineHeight
+            ctx.fillText(line, 0, topY + lineIdx * orbitLabelLayout.lineHeight)
+          })
           ctx.textAlign = 'left'
           ctx.restore()
         })
@@ -2119,9 +2126,10 @@ function App() {
           ctx.fillStyle = '#57ab5a'
           ctx.font = '700 22px Manrope, sans-serif'
           ctx.fillText('✓', W * 0.13, H * 0.26 + i * 40)
+          const bulletLayout = fitCanvasText(ctx, bullet, W * 0.72, 54, 18, 12)
           ctx.fillStyle = '#2c3e50'
-          ctx.font = '400 18px Manrope, sans-serif'
-          ctx.fillText(bullet.length > 48 ? bullet.slice(0, 46) + '…' : bullet, W * 0.16, H * 0.26 + i * 40)
+          ctx.font = `400 ${bulletLayout.fontSize}px Manrope, sans-serif`
+          bulletLayout.lines.forEach((line, lineIdx) => ctx.fillText(line, W * 0.16, H * 0.26 + i * 40 + lineIdx * bulletLayout.lineHeight))
           ctx.restore()
         })
         // Cloudy celebrating
@@ -2203,7 +2211,7 @@ function App() {
   function cancelShortVideo() {
     shortRenderAbortRef.current = true
     shortRenderAbortControllerRef.current?.abort()
-    setStatus('Stopping short video render...')
+    setStatus('Stopping short video render.')
   }
 
   if (studioMode === 'landing') {
@@ -2229,14 +2237,14 @@ function App() {
               <p className="eyebrow">Short-form story studio</p>
               <h1>Turn a documented topic into a one-minute Cloudy story.</h1>
             </div>
-            {repository && <p className="status" aria-live="polite">{isRenderingShort ? `Rendering short video ${shortRenderProgress}%…` : isShortPreviewPlaying ? `Playing beat ${shortPreviewBeatIdx + 1} of ${shortSourceScenes.length}` : `${shortSourceScenes.length} beats · ${durationLabel(shortRuntime)} at ${speedLabel(playbackSpeed)}`}</p>}
+            {repository && <p className="status" aria-live="polite">{isRenderingShort ? `Rendering short video ${shortRenderProgress}%.` : isShortPreviewPlaying ? `Playing beat ${shortPreviewBeatIdx + 1} of ${shortSourceScenes.length}.` : `${shortSourceScenes.length} beats · ${durationLabel(shortRuntime)} at ${speedLabel(playbackSpeed)}.`}</p>}
           </div>
           {!repository ? (
             <form className="shorts-source" onSubmit={(event) => { event.preventDefault(); void loadRepository(repositoryUrl) }}>
               <label htmlFor="shorts-repository-url">Public GitHub repository</label>
               <div className="url-entry">
                 <input id="shorts-repository-url" type="text" inputMode="url" autoCapitalize="none" spellCheck={false} value={repositoryUrl} onChange={(event) => setRepositoryUrl(event.target.value)} placeholder="https://github.com/owner/repository" />
-                <button className="primary-button" type="submit" disabled={isLoading}>{isLoading ? 'Reading...' : 'Build Shorts library'}</button>
+                <button className="primary-button" type="submit" disabled={isLoading}>{isLoading ? 'Reading repository' : 'Build Shorts library'}</button>
               </div>
               <p>Cloudy will use English documentation and linked repository visuals to build short-form story material.</p>
             </form>
@@ -2265,22 +2273,11 @@ function App() {
                   </select>
                 </label>
               </section>
-              <nav className="timeline-bar" aria-label="Short video timeline">
-                {shortSourceScenes.map((beatScene, i) => {
-                  const isActive = isShortPreviewPlaying && shortPreviewBeatIdx === i
-                  const isPast = isShortPreviewPlaying && shortPreviewBeatIdx > i
-                  return (
-                    <button key={beatScene.id} type="button" className={`timeline-segment${isActive ? ' active' : ''}${isPast ? ' past' : ''}`} style={{ flex: effectiveSceneDuration(beatScene, playbackSpeed) }} onClick={() => seekShortToBeat(i)} title={beatScene.title}>
-                      <span className="timeline-label">{beatScene.title.length > 18 ? beatScene.title.slice(0, 16) + '…' : beatScene.title}</span>
-                    </button>
-                  )
-                })}
-              </nav>
               <section className="shorts-production-grid">
                 <article className="short-stage" aria-label={`Cloudy Short preview: ${shortTopic.title}`}>
                   <div className="short-stage-copy">
                     <h2>{shortTopic.title}</h2>
-                    <p>{shortSourceScenes[shortPreviewBeatIdx]?.narration.slice(0, 200) ?? shortNarration.slice(0, 200)}…</p>
+                    <p>{shortSourceScenes[shortPreviewBeatIdx]?.narration ?? shortNarration}</p>
                   </div>
                   <div className="short-stage-host">
                     <CloudyAvatar speaking={isShortPreviewPlaying} size={156} />
@@ -2300,7 +2297,18 @@ function App() {
               </section>
               <section className="shorts-beats" aria-labelledby="shorts-beats-title">
                 <div><p className="eyebrow">Narrative sequence</p><h2 id="shorts-beats-title">Five documented beats</h2></div>
-                <ol>{shortSourceScenes.map((scene) => <li key={scene.id}><span>{String(scene.slideInSection).padStart(2, '0')}</span><div><strong>{scene.title}</strong><p>{scene.narration}</p></div></li>)}</ol>
+                <ol>{shortSourceScenes.map((scene, i) => {
+                  const isActive = isShortPreviewPlaying && shortPreviewBeatIdx === i
+                  const isPast = isShortPreviewPlaying && shortPreviewBeatIdx > i
+                  return (
+                    <li key={scene.id} className={isActive ? 'active' : isPast ? 'past' : ''}>
+                      <button type="button" className="short-beat-button" onClick={() => seekShortToBeat(i)} title={`Go to beat ${i + 1}: ${scene.title}`}>
+                        <span>{String(scene.slideInSection).padStart(2, '0')}</span>
+                        <div><strong>{scene.title}</strong><p>{scene.narration}</p></div>
+                      </button>
+                    </li>
+                  )
+                })}</ol>
               </section>
             </>
           )}
@@ -2359,7 +2367,7 @@ function App() {
             <div className="url-entry">
               <input id="repository-url" type="text" inputMode="url" autoCapitalize="none" spellCheck={false} value={repositoryUrl} onChange={(event) => setRepositoryUrl(event.target.value)} placeholder="https://github.com/owner/repository" />
               <button className="primary-button" type="submit" disabled={isLoading}>
-                {isLoading ? 'Reading...' : 'Generate explainer'}
+                {isLoading ? 'Reading repository' : 'Generate explainer'}
               </button>
             </div>
             <p>Cloudy reads public repository details only. Private repositories are not available in this browser-only version.</p>
