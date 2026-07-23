@@ -2239,7 +2239,6 @@ function App() {
               <section className="shorts-production-grid">
                 <article className="short-stage" aria-label={`Cloudy Short preview: ${shortTopic.title}`}>
                   <div className="short-stage-copy">
-                    <p className="eyebrow">Animated Short Film</p>
                     <h2>{shortTopic.title}</h2>
                     <p>{shortSourceScenes[shortPreviewBeatIdx]?.narration.slice(0, 200) ?? shortNarration.slice(0, 200)}…</p>
                   </div>
