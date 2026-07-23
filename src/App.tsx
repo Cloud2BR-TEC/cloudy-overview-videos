@@ -803,6 +803,63 @@ function App() {
     downloadFile('cloudy-video-transcript.txt', content, 'text/plain')
     setStatus('Plain-text video transcript downloaded.')
   }
+  function exportDescriptiveTranscript() {
+    if (!isExportReady) {
+      setStatus('Complete every export requirement before downloading the descriptive transcript.')
+      return
+    }
+    let cursor = 0
+    const content = scenes
+      .map((scene, index) => {
+        const visualDescription = scene.assets.length
+          ? `Repository visual: ${scene.assets.map(repositoryAssetLabel).join('; ')}`
+          : `Supporting context: ${scene.supportingPoints.join('; ')}`
+        const entry = `[${timestamp(cursor).replace(',', '.')}] Slide ${index + 1}: ${scene.title}\nVisual description: ${visualDescription}\nNarration: ${scene.narration}`
+        cursor += scene.duration
+        return entry
+      })
+      .join('\n\n')
+    downloadFile('cloudy-descriptive-transcript.txt', content, 'text/plain')
+    setStatus('Descriptive transcript downloaded.')
+  }
+  function exportChapters() {
+    if (!isExportReady) {
+      setStatus('Complete every export requirement before downloading chapters.')
+      return
+    }
+    let cursor = 0
+    const chapters = scenes
+      .filter((scene) => scene.slideInSection === 1)
+      .map((scene) => {
+        const totalSeconds = cursor
+        const label = `Section ${scene.section}: ${scene.title}`
+        cursor += scenes.filter((item) => item.section === scene.section).reduce((total, item) => total + item.duration, 0)
+        return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')} ${label}`
+      })
+    downloadFile('cloudy-youtube-chapters.txt', chapters.join('\n'), 'text/plain')
+    setStatus('YouTube chapter markers downloaded.')
+  }
+  function exportPublishingPackage() {
+    if (!isExportReady || !repository) {
+      setStatus('Complete every export requirement before downloading the publishing package.')
+      return
+    }
+    let cursor = 0
+    const chapters = scenes
+      .filter((scene) => scene.slideInSection === 1)
+      .map((scene) => {
+        const label = `${Math.floor(cursor / 60)}:${String(cursor % 60).padStart(2, '0')} Section ${scene.section}: ${scene.title}`
+        cursor += scenes.filter((item) => item.section === scene.section).reduce((total, item) => total + item.duration, 0)
+        return label
+      })
+      .join('\n')
+    const transcript = scenes
+      .map((scene, index) => `### ${index + 1}. ${scene.title}\n\n${scene.narration}`)
+      .join('\n\n')
+    const content = `# ${repository.fullName} | Cloudy Overview\n\n## Video details\n\n- Runtime: ${durationLabel(totalDuration)}\n- Source: ${repositoryUrl}\n- Language: English\n- Captions: Upload cloudy-captions.vtt as the English captions track.\n\n## Description\n\n${repository.description}\n\nThis overview is grounded in the public repository documentation and visuals.\n\n## Chapters\n\n${chapters}\n\n## Accessibility assets\n\n- cloudy-captions.srt\n- cloudy-captions.vtt\n- cloudy-video-transcript.txt\n- cloudy-descriptive-transcript.txt\n\n## Transcript\n\n${transcript}\n`
+    downloadFile('cloudy-publishing-package.md', content, 'text/markdown')
+    setStatus('Publishing package downloaded with video details, chapters, captions guidance, and transcript.')
+  }
   async function exportVideo() {
     if (!isExportReady) {
       setStatus('Complete every export requirement before downloading the video.')
@@ -1497,6 +1554,15 @@ function App() {
             </button>
             <button className="secondary-button" type="button" onClick={exportTranscript} disabled={!isExportReady}>
               Download transcript
+            </button>
+            <button className="secondary-button" type="button" onClick={exportDescriptiveTranscript} disabled={!isExportReady}>
+              Download descriptive transcript
+            </button>
+            <button className="secondary-button" type="button" onClick={exportChapters} disabled={!isExportReady}>
+              Download YouTube chapters
+            </button>
+            <button className="secondary-button" type="button" onClick={exportPublishingPackage} disabled={!isExportReady}>
+              Download publishing package
             </button>
             <button className="secondary-button" type="button" onClick={exportProject} disabled={!isExportReady}>
               Download project setup
