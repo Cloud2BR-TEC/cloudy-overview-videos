@@ -37,6 +37,7 @@ type ShortTemplateLayout = {
   media?: readonly ShortRect[]
   titleColor: string
   contentColor: string
+  narrationColor?: string
   align?: 'left' | 'center'
   mono?: boolean
   // Plate = subtle backing panel that demarcates a text zone so text always fits legibly on top.
@@ -52,25 +53,25 @@ const SHORT_CLOUDY_RECT: ShortRect = [170, 315, 340, 320]
 const LEFT_TITLE: ShortRect = [80, 120, 505, 175]
 
 const SHORT_TEMPLATE_LAYOUTS: Record<string, ShortTemplateLayout> = {
-  hero: { title: [660, 300, 1120, 210], items: [[660, 560, 1060, 150]], titleColor: '#ffffff', contentColor: '#cceee8', align: 'center', dark: true, contentPlate: true, noTitlePlate: true },
+  hero: { title: [660, 300, 1120, 210], items: [[660, 560, 1060, 150]], titleColor: '#ffffff', contentColor: '#cceee8', narrationColor: '#17384b', align: 'center', dark: true, contentPlate: true, noTitlePlate: true },
   intro: { title: [640, 150, 1165, 90], items: [[640, 285, 570, 92], [1235, 285, 570, 92], [640, 405, 570, 92], [1235, 405, 570, 92]], titleColor: '#153f39', contentColor: '#244b45' },
-  presenting: { title: LEFT_TITLE, items: [], media: [[760, 120, 1020, 600]], titleColor: '#17384b', contentColor: '#17384b' },
+  presenting: { title: LEFT_TITLE, items: [], media: [[760, 120, 1020, 600]], titleColor: '#17384b', contentColor: '#17384b', narrationColor: '#17384b' },
   whiteboard: { title: LEFT_TITLE, items: [[690, 300, 215, 105], [1100, 300, 180, 105], [1450, 300, 270, 105], [690, 540, 370, 100], [1320, 540, 400, 100]], titleColor: '#203946', contentColor: '#17384b', align: 'center' },
   diagram: { title: LEFT_TITLE, items: [[620, 215, 210, 130], [620, 545, 210, 130], [1120, 360, 330, 175]], titleColor: '#173c30', contentColor: '#173c30', align: 'center' },
   timeline: { title: LEFT_TITLE, items: [[620, 205, 260, 150], [900, 555, 260, 150], [1240, 205, 260, 150], [1520, 555, 260, 150]], titleColor: '#f2fdff', contentColor: '#17475b', align: 'center', dark: true },
   comparison: { title: LEFT_TITLE, items: [[645, 335, 415, 290], [1245, 335, 415, 290]], titleColor: '#303f78', contentColor: '#303f78', align: 'center' },
   quote: { title: LEFT_TITLE, items: [[700, 260, 1020, 360]], titleColor: '#eef5f2', contentColor: '#263f3d', align: 'center', dark: true },
-  stats: { title: LEFT_TITLE, items: [[640, 210, 500, 180], [1200, 210, 500, 180], [640, 500, 500, 180], [1200, 500, 500, 180]], titleColor: '#303f78', contentColor: '#303f78', align: 'center' },
+  stats: { title: LEFT_TITLE, items: [[640, 210, 500, 180], [1200, 210, 500, 180], [640, 500, 500, 180], [1200, 500, 500, 180]], titleColor: '#303f78', contentColor: '#303f78', narrationColor: '#493b18', align: 'center' },
   code: { title: LEFT_TITLE, items: [[725, 215, 940, 66], [725, 290, 940, 66], [725, 365, 940, 66], [725, 440, 940, 66], [725, 515, 940, 66]], titleColor: '#d9f2ef', contentColor: '#a5e0d9', mono: true, dark: true },
   terminal: { title: LEFT_TITLE, items: [[700, 215, 960, 66], [700, 290, 960, 66], [700, 365, 960, 66], [700, 440, 960, 66], [700, 515, 960, 66]], titleColor: '#d9f2ef', contentColor: '#a5e0d9', mono: true, dark: true },
   steps: { title: LEFT_TITLE, items: [[755, 165, 920, 75], [755, 295, 920, 75], [755, 425, 920, 75], [755, 555, 920, 75], [755, 685, 920, 75]], titleColor: '#592a1d', contentColor: '#74341f' },
-  question: { title: LEFT_TITLE, items: [[820, 320, 900, 300]], titleColor: '#ffffff', contentColor: '#ffffff', align: 'center', dark: true, contentPlate: true },
+  question: { title: LEFT_TITLE, items: [[820, 320, 900, 300]], titleColor: '#ffffff', contentColor: '#ffffff', narrationColor: '#17384b', align: 'center', dark: true, contentPlate: true },
   checklist: { title: LEFT_TITLE, items: [[755, 165, 920, 75], [755, 295, 920, 75], [755, 425, 920, 75], [755, 555, 920, 75], [755, 685, 920, 75]], titleColor: '#17384b', contentColor: '#17384b' },
   gallery: { title: LEFT_TITLE, items: [], media: [[760, 160, 490, 250], [1290, 160, 490, 250], [760, 450, 490, 250], [1290, 450, 490, 250]], titleColor: '#24445a', contentColor: '#24445a' },
   callout: { title: LEFT_TITLE, items: [[700, 270, 1000, 340]], titleColor: '#ffffff', contentColor: '#ffffff', align: 'center', dark: true, contentPlate: true },
   roadmap: { title: LEFT_TITLE, items: [[580, 560, 220, 95], [860, 300, 220, 95], [1140, 640, 220, 95], [1400, 275, 220, 95], [1620, 420, 220, 95]], titleColor: '#ffffff', contentColor: '#ffffff', align: 'center', dark: true, contentPlate: true },
   recap: { title: [640, 150, 1150, 90], items: [[690, 285, 460, 130], [1280, 285, 460, 130], [690, 495, 460, 130], [1280, 495, 460, 130]], titleColor: '#603419', contentColor: '#603419' },
-  outro: { title: [890, 300, 700, 200], items: [[990, 535, 500, 120]], titleColor: '#ffffff', contentColor: '#e8dcff', align: 'center', dark: true, contentPlate: true, noTitlePlate: true },
+  outro: { title: [890, 300, 700, 200], items: [[990, 535, 500, 120]], titleColor: '#ffffff', contentColor: '#e8dcff', narrationColor: '#55343a', align: 'center', dark: true, contentPlate: true, noTitlePlate: true },
 }
 
 function shortRectStyle([x, y, width, height]: ShortRect): CSSProperties {
@@ -290,6 +291,12 @@ function shortContentPool(scene: Scene, repository: Repository | null): string[]
   ;(repository?.topics ?? []).forEach((topic) => add(topic.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())))
   if (repository?.description) add(repository.description)
   return pool
+}
+
+function shortNarrationForScene(scene: Scene, repository: Repository | null): string {
+  const narration = scene.narration.trim().replace(/\s+/g, ' ')
+  if (narration) return narration
+  return shortContentPool(scene, repository).slice(0, 3).join(' ') || scene.title.trim() || repository?.description?.trim() || 'Repository overview'
 }
 
 // Fill every content slot of a template with as much dynamic repository text as fits.
@@ -913,6 +920,7 @@ function App() {
   const activeShortLayout = SHORT_TEMPLATE_LAYOUTS[activeShortTemplate.key]
   const activeShortAssets = activeShortScene.assets.length ? activeShortScene.assets.slice(0, 4) : activeShortScene.asset ? [activeShortScene.asset] : []
   const activeShortItems = shortItemsForLayout(activeShortScene, activeShortLayout.items.length, repository)
+  const activeShortNarration = shortNarrationForScene(activeShortScene, repository)
   // Auto-fit every preview text zone: shrink font until the text fits its shape (never clips/overflows).
   const shortStageRef = useRef<HTMLElement | null>(null)
   const shortBulletsKey = activeShortItems.join('|')
@@ -939,7 +947,7 @@ function App() {
     const observer = new ResizeObserver(fitAll)
     observer.observe(stage)
     return () => observer.disconnect()
-  }, [activeShortTemplate.key, shortPreviewBeatIdx, activeShortScene.title, activeShortScene.narration, shortBulletsKey])
+  }, [activeShortTemplate.key, shortPreviewBeatIdx, activeShortScene.title, activeShortNarration, shortBulletsKey])
   const shortAssetEntries = [
     { kind: 'cloudy', name: 'Cloudy', detail: 'Protagonist — flies through each world', image: null },
     { kind: 'concept', name: shortTopic.title, detail: 'Topic environment theme', image: null },
@@ -1828,9 +1836,10 @@ function App() {
       const t = elapsed
 
       // ── Narration sentences for subtitle sync ──
-      const narSentences = scene.narration.replace(/([.!?])\s+/g, '$1|').split('|').filter((s) => s.trim().length > 8)
+      const sceneNarration = shortNarrationForScene(scene, repository)
+      const narSentences = sceneNarration.replace(/([.!?])\s+/g, '$1|').split('|').filter((s) => s.trim().length > 8)
       const activeSentenceIdx = Math.min(narSentences.length - 1, Math.floor(sceneProgress * narSentences.length))
-      const activeSentence = narSentences[activeSentenceIdx] ?? scene.narration
+      const activeSentence = narSentences[activeSentenceIdx] ?? sceneNarration
 
       // Match the foreground composition to the content-selected background template.
       const selectedTemplate = SHORT_TEMPLATES[slideTemplateIndices[sceneIdx] ?? 0] ?? SHORT_TEMPLATES[0]
@@ -2464,7 +2473,8 @@ function App() {
       }
 
       // ── Narration text inside the template's reserved horizontal band ──
-      ctx.fillStyle = '#fff'
+      const narrationColor = SHORT_TEMPLATE_LAYOUTS[selectedTemplate.key].narrationColor ?? '#ffffff'
+      ctx.fillStyle = narrationColor
       const subLayout = fitCanvasText(ctx, activeSentence, 1600, 82, 28, 18)
       ctx.font = `400 ${subLayout.fontSize}px Manrope, sans-serif`
       subLayout.lines.forEach((line, i) => ctx.fillText(line, 142, 930 + i * subLayout.lineHeight))
@@ -2603,8 +2613,8 @@ function App() {
                       <p key={`${index}-${bullet}`} data-fit-frac="0.026" data-fit-cap="15" style={{ ...shortRectStyle(activeShortLayout.items[index]), color: activeShortLayout.contentColor, textAlign: activeShortLayout.align }}>{bullet}</p>
                     ))}
                   </div>
-                  <div className="short-stage-narration" data-fit-frac="0.022" data-fit-cap="14" style={shortRectStyle(SHORT_NARRATION_RECT)}>
-                    <p>{activeShortScene.narration ?? shortNarration}</p>
+                  <div className="short-stage-narration" data-fit-frac="0.022" data-fit-cap="14" style={{ ...shortRectStyle(SHORT_NARRATION_RECT), color: activeShortLayout.narrationColor ?? '#ffffff' }}>
+                    <p>{activeShortNarration}</p>
                   </div>
                   <span className="shorts-watermark" aria-hidden="true">Cloud2BR</span>
                 </article>
