@@ -1550,7 +1550,7 @@ function App() {
   async function loadRepository(value: string) {
     const parsed = parseRepositoryUrl(value)
     if (!parsed) {
-      setStatus('Paste a GitHub repository URL such as https://github.com/owner/repository.')
+      setStatus('Enter a GitHub repository URL in the format: https://github.com/owner/repository')
       return
     }
     repositoryLoadAbortRef.current?.abort()
@@ -1559,7 +1559,7 @@ function App() {
     repositoryLoadAbortRef.current = loadController
     const timeoutId = window.setTimeout(() => loadController.abort('timeout'), 60_000)
     setIsLoading(true)
-    setStatus('Reviewing the repository README, folders, and images.')
+    setStatus('Connecting to GitHub and validating repository access.')
     try {
       const [repositoryResponse, readmeResponse] = await Promise.all([
         fetchWithRetry(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, {
@@ -1568,10 +1568,18 @@ function App() {
         }),
         fetchWithRetry(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/readme`, { headers: apiHeaders, signal: loadController.signal }),
       ])
+      // Enhanced error handling: Better messages for common issues
       if (!repositoryResponse.ok) {
-        if (repositoryResponse.status === 404) throw new Error('Repository not found. Confirm that it is public and the URL is correct.')
-        if (repositoryResponse.status === 403) throw new Error('GitHub API access is temporarily limited. Wait a few minutes and try again.')
-        throw new Error(`GitHub could not read this repository (${repositoryResponse.status}).`)
+        if (repositoryResponse.status === 404) {
+          throw new Error('Repository not found. Verify the URL is correct and the repository is public. Private repositories are not supported in the browser version.')
+        }
+        if (repositoryResponse.status === 403 || repositoryResponse.status === 429) {
+          const retryAfter = repositoryResponse.headers.get('Retry-After')
+          const resetAt = repositoryResponse.headers.get('X-RateLimit-Reset')
+          const wait = retryAfter ? `${retryAfter} seconds` : resetAt ? `until ${new Date(Number(resetAt) * 1_000).toLocaleTimeString()}` : '5-10 minutes'
+          throw new Error(`GitHub API rate limit exceeded. Please wait ${wait} before trying again. Tip: Consider using fewer repositories in quick succession.`)
+        }
+        throw new Error(`GitHub returned status ${repositoryResponse.status}. The repository may be unavailable or access is restricted.`)
       }
       const data = (await repositoryResponse.json()) as {
         full_name: string
@@ -1582,21 +1590,30 @@ function App() {
         license: { spdx_id: string } | null
         stargazers_count: number
         open_issues_count: number
+        size: number
       }
-      if (!data.default_branch) throw new Error('This repository has no default branch. Check that it is not empty or unavailable.')
+      if (!data.default_branch) throw new Error('This repository has no default branch. It may be empty or newly created. Add a README and some documentation, then try again.')
+      // Repository quality validation
+      if (!readmeResponse.ok || data.size === 0) {
+        throw new Error('This repository has no README. Cloudy requires a README with substantive content to generate explainer videos. Add a README with at least 500 words and try again.')
+      }
       const readmeData = readmeResponse.ok ? ((await readmeResponse.json()) as { content?: string }) : null
       const readmeText = readmeData?.content ? decodeBase64(readmeData.content) : ''
+      const readmeWordCount = readmeText.split(/\s+/).filter(Boolean).length
+      if (readmeWordCount < 300) {
+        throw new Error(`This README is too short (${readmeWordCount} words). Cloudy needs at least 300 words of documentation to create meaningful explainer content. Expand your README with more detail about what the project does, how to use it, and what problems it solves.`)
+      }
+      setStatus('Repository validated. Reading documentation and extracting visuals.')
       const readmeImages = readmeText ? extractReadmeImageUrls(readmeText, parsed.owner, parsed.repo, data.default_branch) : []
-      setStatus('Repository found. Reading English documentation and visuals.')
       const treeResponse = await fetchWithRetry(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/${encodeURIComponent(data.default_branch)}?recursive=1`, { headers: apiHeaders, signal: loadController.signal })
       if (!treeResponse.ok) {
         if (treeResponse.status === 429 || treeResponse.status === 403) {
           const retryAfter = treeResponse.headers.get('Retry-After')
           const resetAt = treeResponse.headers.get('X-RateLimit-Reset')
-          const wait = retryAfter ? `${retryAfter} seconds` : resetAt ? `until ${new Date(Number(resetAt) * 1_000).toLocaleTimeString()}` : 'a few minutes'
-          throw new Error(`GitHub is rate limiting repository file requests. Wait ${wait} and try again.`)
+          const wait = retryAfter ? `${retryAfter} seconds` : resetAt ? `until ${new Date(Number(resetAt) * 1_000).toLocaleTimeString()}` : '5-10 minutes'
+          throw new Error(`GitHub API rate limit exceeded while reading repository files. Please wait ${wait} and try again.`)
         }
-        throw new Error(`GitHub could not read the repository files (${treeResponse.status}).`)
+        throw new Error(`GitHub could not read the repository file tree (status ${treeResponse.status}). The repository may be too large or temporarily unavailable.`)
       }
       const treeData = treeResponse.ok
         ? ((await treeResponse.json()) as {
@@ -1657,22 +1674,51 @@ function App() {
       setStatus(`Repository content loaded. Building up to ${settings.maxScenes} distinct slides.`)
       await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
       if (loadController.signal.aborted) throw new DOMException('Repository load aborted', 'AbortError')
-      const generatedScenes = buildScenes(newRepo, settings)
+      let generatedScenes: Scene[]
+      try {
+        generatedScenes = buildScenes(newRepo, settings)
+      } catch (error) {
+        // Enhanced error handling: Provide actionable guidance for content issues
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        if (message.includes('distinct material passages')) {
+          const currentCount = message.match(/\d+/)?.[0] || '0'
+          const requiredCount = Math.ceil(settings.maxScenes * 0.6)
+          throw new Error(`Not enough unique content found (${currentCount} passages found, ${requiredCount} required). Suggestions: 
+1. Add more detailed sections to your README
+2. Include documentation files in a docs/ folder
+3. Add examples, tutorials, or usage guides
+4. Explain features, architecture, and implementation details
+5. Try reducing maxScenes setting if content is intentionally concise`)
+        }
+        throw error
+      }
       setRepositoryUrl(`https://github.com/${data.full_name}`)
       setRepository(newRepo)
       setScenes(generatedScenes)
       setSelectedSceneId(generatedScenes[0].id)
       setShortTopicId(generatedScenes[0].id)
+      // Content quality warnings (non-blocking)
+      const warnings: string[] = []
+      if (documentation.length === 0) {
+        warnings.push('No documentation files found. Consider adding a docs/ folder with guides and examples for richer content.')
+      }
+      if (assets.length === 0) {
+        warnings.push('No images found. Add diagrams, screenshots, or illustrations to make videos more engaging.')
+      }
+      if (assets.length < 10 && generatedScenes.length >= 30) {
+        warnings.push(`Only ${assets.length} images found for ${generatedScenes.length} slides. More visuals will improve video quality.`)
+      }
       const matchedImageCount = generatedScenes.filter((scene) => scene.asset).length
       const imageNote = assets.length ? `${matchedImageCount} slide${matchedImageCount === 1 ? '' : 's'} received a verified topic-matched image; unmatched slides use the material-focused placeholder.` : 'No English or default-language images found — Cloudy will present with a branded placeholder.'
       const documentationNote = documentationFileCount ? `Grounded in the main README and ${documentationFileCount} English documentation file${documentationFileCount === 1 ? '' : 's'}.` : 'No English docs/ Markdown files were loaded; using the main README and repository structure.'
-      setStatus(`Storyboard ready: ${generatedScenes.length} unique slides, ${settings.slidesPerSection} per section, ${durationLabel(generatedScenes.reduce((total, scene) => total + scene.duration, 0))} total. ${documentationNote} ${imageNote}`)
+      const warningNote = warnings.length > 0 ? ` Suggestions: ${warnings.join(' ')}` : ''
+      setStatus(`Storyboard ready: ${generatedScenes.length} unique slides, ${settings.slidesPerSection} per section, ${durationLabel(generatedScenes.reduce((total, scene) => total + scene.duration, 0))} total. ${documentationNote} ${imageNote}${warningNote}`)
     } catch (error) {
       if (loadId !== repositoryLoadIdRef.current) return
       if (loadController.signal.reason === 'timeout') {
-        setStatus('GitHub took too long to respond. Check your connection and try again.')
+        setStatus('GitHub API request timed out after 60 seconds. This may indicate network issues or a very large repository. Try again with a stable connection.')
       } else if (!(error instanceof DOMException && error.name === 'AbortError')) {
-        setStatus(error instanceof Error ? error.message : 'The repository could not be read. Check repository access and try again.')
+        setStatus(error instanceof Error ? error.message : 'Unexpected error loading repository. Please verify the URL and try again.')
       }
     } finally {
       window.clearTimeout(timeoutId)
