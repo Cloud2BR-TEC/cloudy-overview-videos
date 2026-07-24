@@ -52,12 +52,12 @@ const LEFT_TITLE: ShortRect = [80, 120, 505, 175]
 
 const SHORT_TEMPLATE_LAYOUTS: Record<string, ShortTemplateLayout> = {
   hero: { title: [660, 300, 1120, 210], items: [[660, 560, 1060, 150]], titleColor: '#ffffff', contentColor: '#cceee8', align: 'center', dark: true, contentPlate: true, noTitlePlate: true },
-  intro: { title: [640, 150, 1165, 90], items: [[640, 285, 570, 92], [1235, 285, 570, 92], [640, 405, 570, 92], [1235, 405, 570, 92]], titleColor: '#153f39', contentColor: '#244b45' },
-  presenting: { title: LEFT_TITLE, items: [], media: [[760, 120, 1020, 600]], titleColor: '#17384b', contentColor: '#17384b' },
+  intro: { title: [640, 150, 1165, 90], items: [[640, 285, 570, 92], [1235, 285, 570, 92], [640, 405, 570, 92], [1235, 405, 570, 92], [690, 630, 1050, 60]], titleColor: '#153f39', contentColor: '#244b45' },
+  presenting: { title: LEFT_TITLE, items: [[808, 165, 710, 54], [808, 255, 900, 210]], media: [[760, 120, 1020, 600]], titleColor: '#17384b', contentColor: '#17384b', contentPlate: true },
   whiteboard: { title: LEFT_TITLE, items: [[690, 300, 215, 105], [1100, 300, 180, 105], [1450, 300, 270, 105], [690, 540, 370, 100], [1320, 540, 400, 100]], titleColor: '#203946', contentColor: '#17384b', align: 'center' },
   diagram: { title: LEFT_TITLE, items: [[620, 215, 210, 130], [620, 545, 210, 130], [1120, 360, 330, 175]], titleColor: '#173c30', contentColor: '#173c30', align: 'center' },
   timeline: { title: LEFT_TITLE, items: [[620, 205, 260, 150], [900, 555, 260, 150], [1240, 205, 260, 150], [1520, 555, 260, 150]], titleColor: '#f2fdff', contentColor: '#17475b', align: 'center', dark: true },
-  comparison: { title: LEFT_TITLE, items: [[645, 335, 415, 290], [1245, 335, 415, 290]], titleColor: '#303f78', contentColor: '#303f78', align: 'center' },
+  comparison: { title: LEFT_TITLE, items: [[665, 225, 470, 440], [1265, 225, 470, 440]], titleColor: '#303f78', contentColor: '#303f78', align: 'center' },
   quote: { title: LEFT_TITLE, items: [[700, 260, 1020, 360]], titleColor: '#eef5f2', contentColor: '#263f3d', align: 'center', dark: true },
   stats: { title: LEFT_TITLE, items: [[640, 210, 500, 180], [1200, 210, 500, 180], [640, 500, 500, 180], [1200, 500, 500, 180]], titleColor: '#303f78', contentColor: '#303f78', align: 'center' },
   code: { title: LEFT_TITLE, items: [[725, 215, 940, 66], [725, 290, 940, 66], [725, 365, 940, 66], [725, 440, 940, 66], [725, 515, 940, 66]], titleColor: '#d9f2ef', contentColor: '#a5e0d9', mono: true, dark: true },
@@ -65,7 +65,7 @@ const SHORT_TEMPLATE_LAYOUTS: Record<string, ShortTemplateLayout> = {
   steps: { title: LEFT_TITLE, items: [[755, 165, 920, 75], [755, 295, 920, 75], [755, 425, 920, 75], [755, 555, 920, 75], [755, 685, 920, 75]], titleColor: '#592a1d', contentColor: '#74341f' },
   question: { title: LEFT_TITLE, items: [[820, 320, 900, 300]], titleColor: '#ffffff', contentColor: '#ffffff', align: 'center', dark: true, contentPlate: true },
   checklist: { title: LEFT_TITLE, items: [[755, 165, 920, 75], [755, 295, 920, 75], [755, 425, 920, 75], [755, 555, 920, 75], [755, 685, 920, 75]], titleColor: '#17384b', contentColor: '#17384b' },
-  gallery: { title: LEFT_TITLE, items: [], media: [[760, 160, 490, 250], [1290, 160, 490, 250], [760, 450, 490, 250], [1290, 450, 490, 250]], titleColor: '#24445a', contentColor: '#24445a' },
+  gallery: { title: LEFT_TITLE, items: [[780, 350, 450, 46], [1310, 350, 450, 46], [780, 640, 450, 46], [1310, 640, 450, 46]], media: [[760, 160, 490, 176], [1290, 160, 490, 176], [760, 450, 490, 176], [1290, 450, 490, 176]], titleColor: '#24445a', contentColor: '#24445a', align: 'center', contentPlate: true },
   callout: { title: LEFT_TITLE, items: [[700, 270, 1000, 340]], titleColor: '#ffffff', contentColor: '#ffffff', align: 'center', dark: true, contentPlate: true },
   roadmap: { title: LEFT_TITLE, items: [[580, 560, 220, 95], [860, 300, 220, 95], [1140, 640, 220, 95], [1400, 275, 220, 95], [1620, 420, 220, 95]], titleColor: '#ffffff', contentColor: '#ffffff', align: 'center', dark: true, contentPlate: true },
   recap: { title: [640, 150, 1150, 90], items: [[690, 285, 460, 130], [1280, 285, 460, 130], [690, 495, 460, 130], [1280, 495, 460, 130]], titleColor: '#603419', contentColor: '#603419' },
@@ -2361,13 +2361,13 @@ function App() {
         const key = selectedTemplate.key
         const layout = SHORT_TEMPLATE_LAYOUTS[key]
         const titleSize = layout.title[2] > 700 ? 64 : 48
-        if (!layout.noTitlePlate) drawZonePlate(...layout.title, layout.dark)
-        if (layout.contentPlate) layout.items.forEach((slot) => drawZonePlate(...slot, layout.dark))
-        drawSlotText(scene.title, ...layout.title, titleSize, layout.titleColor, layout.align)
         layout.media?.forEach((slot, index) => {
           const image = sceneAssetImages[index]
           if (image) drawSlotImage(image, ...slot)
         })
+        if (!layout.noTitlePlate) drawZonePlate(...layout.title, layout.dark)
+        if (layout.contentPlate) layout.items.forEach((slot) => drawZonePlate(...slot, layout.dark))
+        drawSlotText(scene.title, ...layout.title, titleSize, layout.titleColor, layout.align)
         const slotItems = shortItemsForLayout(scene, layout.items.length, repository)
         slotItems.forEach((point, index) => {
           const slot = layout.items[index]
@@ -2760,15 +2760,15 @@ function App() {
               <section className="shorts-production-grid">
                 <article ref={shortStageRef} className={`short-stage template-${activeShortTemplate.key}`} aria-label={`Cloudy Short preview: ${shortTopic.title}`}>
                   <img className="short-stage-template" src={activeShortTemplate.url} alt="" aria-hidden="true" />
+                  <div className="short-stage-media" aria-label="Repository visuals">
+                    {activeShortAssets.slice(0, activeShortLayout.media?.length ?? 0).map((asset, index) => (
+                      <img key={asset} src={asset} alt={`${activeShortScene.assetLabel} ${index + 1}`} style={shortRectStyle(activeShortLayout.media?.[index] ?? [0, 0, 0, 0])} />
+                    ))}
+                  </div>
                   <div className="short-stage-plates" aria-hidden="true">
                     {!activeShortLayout.noTitlePlate && <span className={`zone-plate ${activeShortLayout.dark ? 'dark' : 'light'}`} style={shortRectStyle(activeShortLayout.title)} />}
                     {activeShortLayout.contentPlate && activeShortItems.map((_, index) => (
                       <span key={index} className={`zone-plate ${activeShortLayout.dark ? 'dark' : 'light'}`} style={shortRectStyle(activeShortLayout.items[index])} />
-                    ))}
-                  </div>
-                  <div className="short-stage-media" aria-label="Repository visuals">
-                    {activeShortAssets.slice(0, activeShortLayout.media?.length ?? 0).map((asset, index) => (
-                      <img key={asset} src={asset} alt={`${activeShortScene.assetLabel} ${index + 1}`} style={shortRectStyle(activeShortLayout.media?.[index] ?? [0, 0, 0, 0])} />
                     ))}
                   </div>
                   <div className="short-stage-cloudy" style={shortRectStyle(SHORT_CLOUDY_RECT)}>

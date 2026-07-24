@@ -9,8 +9,5 @@
   <text x="80" y="112" fill="#54705a" font-family="Segoe UI, sans-serif" font-size="22" font-weight="800" letter-spacing="4">SIDE BY SIDE</text>
   <!-- Comparison panels: x=620 y=180 width=560 height=540 and x=1220 y=180 width=560 height=540 -->
   <g filter="url(#comparison-shadow)" fill="#fff"><rect x="620" y="180" width="560" height="540" rx="22"/><rect x="1220" y="180" width="560" height="540" rx="22"/></g>
-  <path d="M620 202A22 22 0 01642 180H1158A22 22 0 011180 202V286H620Z" fill="#d06b51"/><path d="M1220 202A22 22 0 011242 180H1758A22 22 0 011780 202V286H1220Z" fill="#173e42"/>
-  <text x="900" y="248" text-anchor="middle" fill="#fff" font-family="Segoe UI, sans-serif" font-size="28" font-weight="800">OPTION A</text><text x="1500" y="248" text-anchor="middle" fill="#fff" font-family="Segoe UI, sans-serif" font-size="28" font-weight="800">OPTION B</text>
-  <g fill="#789083" opacity=".25"><rect x="680" y="345" width="425" height="22" rx="11"/><rect x="680" y="427" width="370" height="22" rx="11"/><rect x="680" y="509" width="400" height="22" rx="11"/><rect x="1280" y="345" width="425" height="22" rx="11"/><rect x="1280" y="427" width="370" height="22" rx="11"/><rect x="1280" y="509" width="400" height="22" rx="11"/></g>
   <circle cx="1200" cy="450" r="48" fill="#f4f6f0" stroke="#6c806f" stroke-width="3"/><text x="1200" y="462" text-anchor="middle" fill="#33483a" font-family="Segoe UI, sans-serif" font-size="30" font-weight="900">VS</text>
 </svg>

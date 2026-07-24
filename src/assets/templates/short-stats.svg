@@ -11,6 +11,5 @@
   <!-- Stats cards use the same 2x2 overall region: x=620..1780, y=180..720 -->
   <g filter="url(#stats-shadow)" fill="#323154" stroke="#4b4a70" stroke-width="2"><rect x="620" y="180" width="560" height="250" rx="22"/><rect x="1220" y="180" width="560" height="250" rx="22"/><rect x="620" y="470" width="560" height="250" rx="22"/><rect x="1220" y="470" width="560" height="250" rx="22"/></g>
   <g fill="#f7c948"><rect x="620" y="180" width="10" height="250" rx="5"/><rect x="1220" y="470" width="10" height="250" rx="5"/></g><g fill="#4fd1c5"><rect x="1220" y="180" width="10" height="250" rx="5"/><rect x="620" y="470" width="10" height="250" rx="5"/></g>
-  <g font-family="Segoe UI, sans-serif" fill="#aaa9c4" font-size="20" font-weight="700" letter-spacing="2"><text x="675" y="240">METRIC 01</text><text x="1275" y="240">METRIC 02</text><text x="675" y="530">METRIC 03</text><text x="1275" y="530">METRIC 04</text></g>
   <g fill="#fff" opacity=".15"><rect x="675" y="286" width="300" height="76" rx="12"/><rect x="1275" y="286" width="300" height="76" rx="12"/><rect x="675" y="576" width="300" height="76" rx="12"/><rect x="1275" y="576" width="300" height="76" rx="12"/></g>
 </svg>

@@ -9,6 +9,6 @@
   <text x="90" y="122" fill="#b94b3d" font-family="Segoe UI, sans-serif" font-size="24" font-weight="800" letter-spacing="4">GALLERY</text>
   <g filter="url(#gallery-shadow)" fill="#fff"><rect x="742" y="142" width="526" height="286" rx="18"/><rect x="1272" y="142" width="526" height="286" rx="18"/><rect x="742" y="432" width="526" height="286" rx="18"/><rect x="1272" y="432" width="526" height="286" rx="18"/></g>
   <!-- Gallery inner slots: (760,160,490,250), (1290,160,490,250), (760,450,490,250), (1290,450,490,250) -->
-  <rect x="760" y="160" width="490" height="250" rx="10" fill="#2a9d8f"/><rect x="1290" y="160" width="490" height="250" rx="10" fill="#264653"/><rect x="760" y="450" width="490" height="250" rx="10" fill="#e76f51"/><rect x="1290" y="450" width="490" height="250" rx="10" fill="#8f668f"/>
-  <g fill="#fff" opacity=".3"><path d="M760 388L900 250l92 92 74-70 184 116v22H760Z"/><path d="M1290 388l118-116 105 88 94-110 173 138v22h-490Z"/><path d="M760 678l116-120 105 86 94-116 175 150v22H760Z"/><path d="M1290 678l146-148 95 105 80-84 169 127v22h-490Z"/></g>
+  <rect x="760" y="160" width="490" height="176" rx="10" fill="#2a9d8f"/><rect x="1290" y="160" width="490" height="176" rx="10" fill="#264653"/><rect x="760" y="450" width="490" height="176" rx="10" fill="#e76f51"/><rect x="1290" y="450" width="490" height="176" rx="10" fill="#8f668f"/>
+  <g fill="#fff" opacity=".3"><path d="M760 314L900 218l92 64 74-50 184 82v22H760Z"/><path d="M1290 314l118-80 105 60 94-76 173 96v22h-490Z"/><path d="M760 604l116-84 105 60 94-82 175 106v22H760Z"/><path d="M1290 604l146-104 95 74 80-60 169 90v22h-490Z"/></g>
 </svg>
