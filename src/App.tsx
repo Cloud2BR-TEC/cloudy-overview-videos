@@ -248,6 +248,21 @@ function topicOverlap(value: string, topic: string) {
   if (!valueWords.size || !topicWords.size) return 0
   return Array.from(topicWords).filter((word) => valueWords.has(word)).length / topicWords.size
 }
+function hasDuplicateContent(candidate: string, existing: readonly string[]) {
+  const normalized = normalizedSentence(candidate)
+  return !normalized || existing.some((item) => {
+    const itemNormalized = normalizedSentence(item)
+    return itemNormalized === normalized || itemNormalized.includes(normalized) || normalized.includes(itemNormalized) || contentSimilarity(candidate, item) >= 0.72
+  })
+}
+function uniqueContentPoints(candidates: readonly string[], excluded: readonly string[] = []) {
+  const unique: string[] = []
+  candidates.forEach((candidate) => {
+    const text = candidate.trim().replace(/\s+/g, ' ')
+    if (text && !hasDuplicateContent(text, [...excluded, ...unique])) unique.push(text)
+  })
+  return unique
+}
 function isEditorialDirection(value: string) {
   return /^(?:begin|call attention|clarify|close|concentrate|connect|consolidate|define|describe|direct|distinguish|explain|focus|frame|highlight|identify|isolate|narrow|offer|orient|place|point|present|reduce|reinforce|relate|revisit|select|separate|show|shift|state|summarize|trace|treat|turn|use)\b/i.test(value.trim())
 }
@@ -274,8 +289,7 @@ function shortContentPool(scene: Scene, repository: Repository | null): string[]
   const add = (raw: string) => {
     const text = raw.trim().replace(/\s+/g, ' ')
     if (text.length < 14 || text.length > 220) return
-    const key = normalizedSentence(text)
-    if (!key || pool.some((point) => normalizedSentence(point) === key)) return
+    if (hasDuplicateContent(text, pool)) return
     pool.push(text)
   }
   ;(scene.bullets ?? []).forEach(add)
@@ -293,19 +307,17 @@ function shortContentPool(scene: Scene, repository: Repository | null): string[]
 
 function shortNarrationForScene(scene: Scene, repository: Repository | null): string {
   const narration = scene.narration.trim().replace(/\s+/g, ' ')
-  if (narration) return narration
+  if (narration) {
+    const sentences = narration.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [narration]
+    return uniqueContentPoints(sentences, [scene.title]).join(' ') || scene.title.trim()
+  }
   return shortContentPool(scene, repository).slice(0, 3).join(' ') || scene.title.trim() || repository?.description?.trim() || 'Repository overview'
 }
 
 function shortSpokenText(scene: Scene, layout: ShortTemplateLayout, repository: Repository | null): string {
-  const parts = [scene.title, shortNarrationForScene(scene, repository), ...shortItemsForLayout(scene, layout.items.length, repository)]
-  const unique: string[] = []
-  parts.forEach((part) => {
-    const text = part.trim().replace(/\s+/g, ' ')
-    const key = normalizedSentence(text)
-    if (key && !unique.some((item) => normalizedSentence(item) === key)) unique.push(text)
-  })
-  return unique.join('. ').replace(/\.{2,}/g, '.')
+  const narration = shortNarrationForScene(scene, repository)
+  const parts = uniqueContentPoints([scene.title, narration, ...shortItemsForLayout(scene, layout.items.length, repository)])
+  return parts.join('. ').replace(/\.{2,}/g, '.')
 }
 
 function shortSpokenSeconds(text: string, playbackSpeed: number) {
@@ -355,13 +367,14 @@ function concatenateAudioBuffers(audioContext: AudioContext, buffers: AudioBuffe
 // Fill every content slot of a template with as much dynamic repository text as fits.
 function shortItemsForLayout(scene: Scene, itemCount: number, repository: Repository | null): string[] {
   if (itemCount <= 0) return []
-  const pool = shortContentPool(scene, repository)
-  if (pool.length === 0) return Array.from({ length: itemCount }, () => scene.title)
-  // A single large box (quote/question/callout) is filled with a longer passage from the repo.
-  if (itemCount === 1) return [pool.slice(0, 5).join(' ')]
+  const narration = shortNarrationForScene(scene, repository)
+  const pool = uniqueContentPoints(shortContentPool(scene, repository), [scene.title, narration])
+  if (pool.length === 0) return []
+  // A single large box uses only distinct supporting points, never a repeated narration passage.
+  if (itemCount === 1) return [pool.slice(0, 3).join(' ')]
   const points: string[] = []
   for (let i = 0; i < itemCount && i < pool.length; i++) points.push(pool[i])
-  // Not enough whole sentences: split remaining pool text into clauses to fill more slots.
+  // Use only distinct clauses when the repository provides more unique detail for open slots.
   if (points.length < itemCount) {
     const clauses: string[] = []
     pool.forEach((sentence) =>
@@ -370,8 +383,7 @@ function shortItemsForLayout(scene: Scene, itemCount: number, repository: Reposi
         .map((clause) => clause.trim())
         .filter((clause) => clause.length >= 14)
         .forEach((clause) => {
-          const key = normalizedSentence(clause)
-          if (!points.some((p) => normalizedSentence(p) === key) && !clauses.some((p) => normalizedSentence(p) === key)) clauses.push(clause)
+          if (!hasDuplicateContent(clause, [...points, ...clauses, scene.title, narration])) clauses.push(clause)
         }),
     )
     for (let i = 0; points.length < itemCount && i < clauses.length; i++) points.push(clauses[i])
