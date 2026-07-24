@@ -403,6 +403,97 @@ function t(key: string, lang: string = 'en'): string {
   return UI_STRINGS[lang]?.[key] || UI_STRINGS.en[key] || key
 }
 
+// Analytics and quality metrics
+type AnalyticsEvent = {
+  timestamp: number
+  type: 'repository_loaded' | 'video_exported' | 'short_exported' | 'template_used' | 'error_occurred'
+  data: Record<string, any>
+}
+
+const ANALYTICS_STORAGE_KEY = 'cloudy-analytics'
+const MAX_ANALYTICS_EVENTS = 100
+
+function trackAnalytics(type: AnalyticsEvent['type'], data: Record<string, any>) {
+  try {
+    const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY)
+    const events: AnalyticsEvent[] = stored ? JSON.parse(stored) : []
+    events.push({ timestamp: Date.now(), type, data })
+    // Keep only last 100 events
+    const trimmed = events.slice(-MAX_ANALYTICS_EVENTS)
+    localStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(trimmed))
+  } catch (error) {
+    console.error('Failed to track analytics:', error)
+  }
+}
+
+function getAnalytics(): AnalyticsEvent[] {
+  try {
+    const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch (error) {
+    console.error('Failed to load analytics:', error)
+    return []
+  }
+}
+
+function calculateQualityScore(repository: Repository | null, scenes: Scene[]): { score: number; feedback: string[] } {
+  if (!repository) return { score: 0, feedback: ['No repository loaded'] }
+  
+  const feedback: string[] = []
+  let score = 0
+  
+  // Documentation quality (0-30 points)
+  const docLength = repository.readme.length + repository.documentation.length
+  if (docLength > 10000) {
+    score += 30
+    feedback.push('✓ Excellent documentation coverage')
+  } else if (docLength > 5000) {
+    score += 20
+    feedback.push('⚠ Good documentation, could be more detailed')
+  } else {
+    score += 10
+    feedback.push('⚠ Limited documentation, consider adding more content')
+  }
+  
+  // Visual assets (0-20 points)
+  if (repository.assets.length >= 10) {
+    score += 20
+    feedback.push('✓ Rich visual content')
+  } else if (repository.assets.length >= 5) {
+    score += 10
+    feedback.push('⚠ Some visuals present, more would improve quality')
+  } else {
+    feedback.push('⚠ Few or no visuals, add diagrams and screenshots')
+  }
+  
+  // Scene quality (0-30 points)
+  const avgSceneLength = scenes.reduce((sum, s) => sum + s.narration.length, 0) / scenes.length
+  if (avgSceneLength > 200) {
+    score += 30
+    feedback.push('✓ Detailed scene narrations')
+  } else if (avgSceneLength > 100) {
+    score += 20
+    feedback.push('⚠ Adequate scene detail')
+  } else {
+    score += 10
+    feedback.push('⚠ Brief scenes, could be more explanatory')
+  }
+  
+  // Content diversity (0-20 points)
+  const uniqueTemplates = new Set(scenes.map(s => s.visual)).size
+  if (uniqueTemplates > 10) {
+    score += 20
+    feedback.push('✓ Diverse content presentation')
+  } else if (uniqueTemplates > 5) {
+    score += 10
+    feedback.push('⚠ Some content variety')
+  } else {
+    feedback.push('⚠ Limited content variety')
+  }
+  
+  return { score, feedback }
+}
+
 // Persistent project storage for save/load functionality
 type SavedProject = {
   version: number
@@ -1926,6 +2017,13 @@ function App() {
       setShortTopicId(generatedScenes[0].id)
       // Performance optimization: Cache repository data for faster reloads
       cacheRepository(`https://github.com/${data.full_name}`, newRepo, generatedScenes)
+      // Analytics: Track successful repository load
+      trackAnalytics('repository_loaded', {
+        repositoryName: data.full_name,
+        sceneCount: generatedScenes.length,
+        assetCount: newRepo.assets.length,
+        documentationLength: documentation.length,
+      })
       // Content quality warnings (non-blocking)
       const warnings: string[] = []
       if (documentation.length === 0) {
@@ -3799,6 +3897,43 @@ function App() {
               </div>
             </details>
           </section>
+          {repository && (
+            <section className="projects-panel" aria-label="Quality metrics">
+              <details>
+                <summary><strong>📊 Content Quality & Analytics</strong></summary>
+                <div className="projects-controls">
+                  {(() => {
+                    const quality = calculateQualityScore(repository, scenes)
+                    return (
+                      <>
+                        <div style={{ padding: '15px', background: quality.score >= 70 ? '#e8f5e9' : quality.score >= 50 ? '#fff3e0' : '#ffebee', borderRadius: '8px', marginBottom: '15px' }}>
+                          <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1em' }}>
+                            Quality Score: {quality.score}/100
+                          </h3>
+                          <div style={{ width: '100%', height: '12px', background: '#ddd', borderRadius: '6px', overflow: 'hidden' }}>
+                            <div style={{ width: `${quality.score}%`, height: '100%', background: quality.score >= 70 ? '#4caf50' : quality.score >= 50 ? '#ff9800' : '#f44336', transition: 'width 0.3s' }} />
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>Feedback:</p>
+                          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.9em' }}>
+                            {quality.feedback.map((item, idx) => (
+                              <li key={idx} style={{ marginBottom: '4px' }}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div style={{ padding: '10px', background: '#f5f5f5', borderRadius: '4px', fontSize: '0.85em' }}>
+                          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>Session Stats:</p>
+                          <p style={{ margin: '4px 0' }}>Repositories loaded: {getAnalytics().filter(e => e.type === 'repository_loaded').length}</p>
+                          <p style={{ margin: '4px 0' }}>Total events tracked: {getAnalytics().length}</p>
+                        </div>
+                      </>
+                    )
+                  })()}
+                </div>
+              </details>
+            </section>
+          )}
           <section className="projects-panel" aria-label="Batch processing">
             <details>
               <summary><strong>📦 {t('batchProcessing', settings.uiLanguage)}</strong></summary>
