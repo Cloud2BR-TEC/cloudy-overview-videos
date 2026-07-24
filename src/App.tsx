@@ -340,6 +340,15 @@ function shortContentPool(scene: Scene, repository: Repository | null): string[]
     .filter((sentence) => sentence.length >= 14 && sentence.length < 220 && !isEditorialDirection(sentence))
     .forEach(add)
   scene.supportingPoints.forEach(add)
+  // A scene begins with one selected evidence passage; pull additional, title-relevant facts from
+  // the repository documentation so larger templates can use distinct supporting information.
+  if (repository) {
+    const sceneEvidence = `${scene.title}. ${scene.narration} ${scene.supportingPoints.join(' ')}`
+    const repositoryEvidence = rankedEvidenceSentences(sceneEvidence, `${repository.documentation}\n${repository.readme}`, scene.title, scene.assetLabel)
+      .filter((point) => topicOverlap(point, scene.title) >= 0.2 || topicOverlap(point, scene.narration) >= 0.2)
+      .slice(0, 8)
+    repositoryEvidence.forEach(add)
+  }
   ;(repository?.topics ?? []).forEach((topic) => add(topic.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())))
   if (repository?.description) add(repository.description)
   return pool
@@ -411,7 +420,7 @@ function shortItemsForLayout(scene: Scene, itemCount: number, repository: Reposi
   const pool = uniqueContentPoints(shortContentPool(scene, repository), [scene.title, narration])
   if (pool.length === 0) return []
   // A single large box uses only distinct supporting points, never a repeated narration passage.
-  if (itemCount === 1) return [pool.slice(0, 3).join(' ')]
+  if (itemCount === 1) return [pool.slice(0, 5).join(' ')]
   const points: string[] = []
   for (let i = 0; i < itemCount && i < pool.length; i++) points.push(pool[i])
   // Use only distinct clauses when the repository provides more unique detail for open slots.
