@@ -2,7 +2,7 @@ import { useRef, useState, useLayoutEffect, type CSSProperties } from 'react'
 import './App.css'
 import CloudyAvatar from './CloudyAvatar'
 
-// Every short slide is displayed for a fixed window so a new template appears on a steady cadence.
+// Every short slide remains visible for at least this long, then extends until Cloudy finishes speaking.
 const SHORT_SLIDE_SECONDS = 10
 
 // Full library of short-form background templates. Order here defines their index in templateImages.
@@ -295,6 +295,23 @@ function shortNarrationForScene(scene: Scene, repository: Repository | null): st
   const narration = scene.narration.trim().replace(/\s+/g, ' ')
   if (narration) return narration
   return shortContentPool(scene, repository).slice(0, 3).join(' ') || scene.title.trim() || repository?.description?.trim() || 'Repository overview'
+}
+
+function shortSpokenText(scene: Scene, layout: ShortTemplateLayout, repository: Repository | null): string {
+  const parts = [scene.title, shortNarrationForScene(scene, repository), ...shortItemsForLayout(scene, layout.items.length, repository)]
+  const unique: string[] = []
+  parts.forEach((part) => {
+    const text = part.trim().replace(/\s+/g, ' ')
+    const key = normalizedSentence(text)
+    if (key && !unique.some((item) => normalizedSentence(item) === key)) unique.push(text)
+  })
+  return unique.join('. ').replace(/\.{2,}/g, '.')
+}
+
+function shortSpokenSeconds(text: string, playbackSpeed: number) {
+  const words = text.trim().split(/\s+/).filter(Boolean).length
+  const spokenSeconds = (words / (BASE_NARRATION_WORDS_PER_MINUTE * VOICE_RATE * playbackSpeed)) * 60
+  return Math.max(shortSlideDuration(playbackSpeed), spokenSeconds + 0.6)
 }
 
 // Fill every content slot of a template with as much dynamic repository text as fits.
@@ -839,12 +856,12 @@ function StudioLanding({ onSelect }: { onSelect: (mode: Exclude<StudioMode, 'lan
             <div className="shorts-card-visual" aria-hidden="true">
               <span className="shorts-signal signal-one"></span>
               <span className="shorts-signal signal-two"></span>
-              <div className="shorts-phone"><CloudyAvatar size={76} /><span>60s</span></div>
+              <div className="shorts-phone"><CloudyAvatar size={76} /><span>FULL</span></div>
             </div>
             <div className="mode-card-copy">
               <p className="eyebrow">Short form</p>
               <h2>Cloudy Short Videos</h2>
-              <p>Create a one-minute, story-led explanation of a repository topic. Cloudy assembles a compact script and a reusable visual asset library from the documentation.</p>
+              <p>Create a concise, story-led explanation of a repository topic. Cloudy reads every generated point and assembles a reusable visual asset library from the documentation.</p>
               <button className="primary-button" type="button" onClick={() => onSelect('shorts')}>Open Shorts studio</button>
             </div>
           </article>
@@ -910,9 +927,13 @@ function App() {
   const presentedAsset = presentedScene.asset
   const shortTopic = scenes.find((scene) => scene.id === shortTopicId) ?? scenes[0]
   const shortSourceScenes = scenes.filter((scene) => scene.section === shortTopic.section).slice(0, 5)
-  const shortNarration = shortSourceScenes.map((scene) => shortNarrationForScene(scene, repository)).join(' ')
-  const shortRuntime = shortSourceScenes.reduce((total) => total + shortSlideDuration(playbackSpeed), 0)
   const shortTemplateIndices = planShortTemplateIndices(shortSourceScenes)
+  const shortSpokenScripts = shortSourceScenes.map((scene, index) => {
+    const template = SHORT_TEMPLATES[shortTemplateIndices[index] ?? 0] ?? SHORT_TEMPLATES[0]
+    return shortSpokenText(scene, SHORT_TEMPLATE_LAYOUTS[template.key], repository)
+  })
+  const shortNarration = shortSpokenScripts.join(' ')
+  const shortRuntime = shortSpokenScripts.reduce((total, script) => total + shortSpokenSeconds(script, playbackSpeed), 0)
   const activeShortTemplate = SHORT_TEMPLATES[shortTemplateIndices[shortPreviewBeatIdx] ?? 0] ?? SHORT_TEMPLATES[0]
   const activeShortScene = shortSourceScenes[shortPreviewBeatIdx] ?? shortTopic
   const activeShortLayout = SHORT_TEMPLATE_LAYOUTS[activeShortTemplate.key]
@@ -1643,29 +1664,32 @@ function App() {
     for (let i = startBeat; i < shortSourceScenes.length; i++) {
       if (shortPreviewAbortRef.current || runId !== shortPreviewRunIdRef.current) break
       setShortPreviewBeatIdx(i)
-      await new Promise<void>((resolve) => {
-        let settled = false
-        const finish = () => {
-          if (settled) return
-          settled = true
-          window.clearTimeout(slideTimer)
-          resolve()
-        }
-        window.speechSynthesis.cancel()
-        const utterance = new SpeechSynthesisUtterance(shortNarrationForScene(shortSourceScenes[i], repository))
-        utterance.voice = voice
-        utterance.lang = voice.lang ?? 'en-US'
-        utterance.rate = VOICE_RATE * playbackSpeed
-        utterance.pitch = 1
-        utterance.onend = finish
-        utterance.onerror = finish
-        // Advance to the next slide after a fixed 10-second window even if narration runs longer.
-        const slideTimer = window.setTimeout(() => {
-          window.speechSynthesis.cancel()
-          finish()
-        }, shortSlideDuration(playbackSpeed) * 1000)
-        window.speechSynthesis.speak(utterance)
-      })
+      const beatStartedAt = performance.now()
+      const speechChunks = shortSpokenScripts[i].match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((chunk) => chunk.trim()).filter(Boolean) ?? [shortSpokenScripts[i]]
+      for (const chunk of speechChunks) {
+        if (shortPreviewAbortRef.current || runId !== shortPreviewRunIdRef.current) break
+        await new Promise<void>((resolve) => {
+          let settled = false
+          const finish = () => {
+            if (settled) return
+            settled = true
+            resolve()
+          }
+          const utterance = new SpeechSynthesisUtterance(chunk)
+          utterance.voice = voice
+          utterance.lang = voice.lang ?? 'en-US'
+          utterance.rate = VOICE_RATE * playbackSpeed
+          utterance.pitch = 1
+          utterance.onend = finish
+          utterance.onerror = finish
+          window.speechSynthesis.speak(utterance)
+        })
+      }
+      const minimumBeatMs = shortSlideDuration(playbackSpeed) * 1000
+      const remainingMs = minimumBeatMs - (performance.now() - beatStartedAt)
+      if (remainingMs > 0 && !shortPreviewAbortRef.current && runId === shortPreviewRunIdRef.current) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, remainingMs))
+      }
       if (!shortPreviewAbortRef.current && runId === shortPreviewRunIdRef.current && i < shortSourceScenes.length - 1) {
         await new Promise<void>((resolve) => window.setTimeout(resolve, 150))
       }
@@ -1695,7 +1719,7 @@ function App() {
 
   function downloadShortScript() {
     if (!repository || !shortNarration) return
-    const beats = shortSourceScenes.map((scene, index) => `${index + 1}. ${scene.title}\n${scene.narration}`).join('\n\n')
+    const beats = shortSourceScenes.map((scene, index) => `${index + 1}. ${scene.title}\n${shortSpokenScripts[index]}`).join('\n\n')
     const assets = shortAssetEntries.map((asset) => `- ${asset.name}: ${asset.detail}`).join('\n')
     const content = `# Cloudy Short: ${shortTopic.title}\n\n- Repository: ${repository.fullName}\n- Runtime: ${durationLabel(shortRuntime)} at ${speedLabel(playbackSpeed)}\n- Format: Vertical short\n\n## Narration\n\n${shortNarration}\n\n## Story beats\n\n${beats}\n\n## Production assets\n\n${assets}\n`
     downloadFile(`cloudy-short-${normalizedSentence(shortTopic.title).replace(/\s+/g, '-') || 'topic'}.md`, content, 'text/markdown')
@@ -1759,7 +1783,7 @@ function App() {
     let narrationBuffers: AudioBuffer[]
     try {
       const narrationBlobs = await generateNarrationAudio(
-        shortSourceScenes.map((scene) => ({ ...scene, narration: shortNarrationForScene(scene, repository) })),
+        shortSourceScenes.map((scene, index) => ({ ...scene, narration: shortSpokenScripts[index] })),
         (phase, progress) => {
           if (phase === 'model') setStatus(`Preparing Cloudy's voice model ${Math.round(progress * 100)}%...`)
           if (phase === 'scene') {
@@ -1794,8 +1818,10 @@ function App() {
     const chunks: BlobPart[] = []
     recorder.addEventListener('dataavailable', (event) => { if (event.data.size) chunks.push(event.data) })
     const videoReady = new Promise<Blob>((resolve) => recorder.addEventListener('stop', () => resolve(new Blob(chunks, { type: 'video/webm' })), { once: true }))
-    const totalSeconds = shortSourceScenes.reduce((total) => total + shortSlideDuration(playbackSpeed), 0)
-    // Content-aware template per slide so every 10s window shows the most fitting background.
+    const narrationRate = VOICE_RATE * playbackSpeed
+    const sceneDurations = narrationBuffers.map((buffer) => Math.max(shortSlideDuration(playbackSpeed), buffer.duration / narrationRate + 0.35))
+    const totalSeconds = sceneDurations.reduce((total, duration) => total + duration, 0)
+    // Content-aware template per slide; each remains until its complete narration finishes.
     const slideTemplateIndices = planShortTemplateIndices(shortSourceScenes)
     const startedAt = performance.now()
     setShortRenderProgress(30)
@@ -1805,11 +1831,10 @@ function App() {
     let activeSource: AudioBufferSourceNode | null = null
 
     const drawShortFrame = (elapsed: number) => {
-      const slideDuration = shortSlideDuration(playbackSpeed)
       let offset = 0
       let sceneIdx = shortSourceScenes.length - 1
       const scene = shortSourceScenes.find((_item, i) => {
-        offset += slideDuration
+        offset += sceneDurations[i]
         if (elapsed < offset) { sceneIdx = i; return true }
         return false
       }) ?? shortSourceScenes[shortSourceScenes.length - 1]
@@ -1818,12 +1843,12 @@ function App() {
         try { activeSource?.stop() } catch { /* ended */ }
         const source = audioContext.createBufferSource()
         source.buffer = narrationBuffers[sceneIdx]
-        source.playbackRate.value = VOICE_RATE * playbackSpeed
+        source.playbackRate.value = narrationRate
         source.connect(audioDestination)
         activeSource = source
         source.start()
       }
-      const sceneDuration = shortSlideDuration(playbackSpeed)
+      const sceneDuration = sceneDurations[sceneIdx]
       const sceneElapsed = elapsed - (offset - sceneDuration)
       const sceneProgress = Math.min(1, sceneElapsed / sceneDuration)
       const entrance = Math.min(1, sceneElapsed / 0.6)
@@ -2536,7 +2561,7 @@ function App() {
           <div className="shorts-heading">
             <div>
               <p className="eyebrow">Short-form story studio</p>
-              <h1>Turn a documented topic into a one-minute Cloudy story.</h1>
+              <h1>Turn a documented topic into a complete Cloudy story.</h1>
             </div>
             {repository && <p className="status" aria-live="polite">{isRenderingShort ? `Rendering short video ${shortRenderProgress}%.` : isShortPreviewPlaying ? `Playing beat ${shortPreviewBeatIdx + 1} of ${shortSourceScenes.length}.` : `${shortSourceScenes.length} beats · ${durationLabel(shortRuntime)} at ${speedLabel(playbackSpeed)}.`}</p>}
           </div>
