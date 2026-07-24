@@ -423,16 +423,29 @@ function concatenateAudioBuffers(audioContext: AudioContext, buffers: AudioBuffe
 }
 
 function formatShortPoint(point: string, format: ShortTemplateLayout['format'], index: number) {
-  const clean = cleanRepositoryProse(point).replace(/^[\s>*#`\-+\d.)]+/, '').replace(/[.!?]+$/, '').trim()
-  if (format === 'caption') return limitWords(clean, 9)
-  if (format === 'code') return limitWords(clean.replace(/^run\s+/i, ''), 12)
+  const clean = cleanRepositoryProse(point).replace(/^[\s>*#`\-+\d.)]+/, '').trim()
+  if (format === 'code') return clean.replace(/^run\s+/i, '')
   if (format === 'metric') {
     const metric = clean.match(/(?:\$|€|£)?\d[\d,.]*(?:\s?(?:%|ms|s|sec|seconds?|minutes?|hours?|kb|mb|gb|stars?|issues?|files?|steps?|modules?|users?))?/i)?.[0]
-    return metric ? `${metric} — ${limitWords(clean.replace(metric, '').replace(/^\s*[:—-]\s*/, ''), 8)}` : limitWords(clean, 10)
+    return metric ? `${metric} — ${clean.replace(metric, '').replace(/^\s*[:—-]\s*/, '')}` : clean
   }
-  if (format === 'sequence') return `${index + 1}. ${limitWords(clean, 13)}`
-  if (format === 'statement') return limitWords(clean, 34)
-  return limitWords(clean, 22)
+  const complete = /[.!?]$/.test(clean) ? clean : `${clean}.`
+  if (format === 'sequence') return `${index + 1}. ${complete}`
+  return complete
+}
+
+function shortPointWordLimit(format: ShortTemplateLayout['format']) {
+  if (format === 'caption') return 12
+  if (format === 'code') return 16
+  if (format === 'metric') return 18
+  if (format === 'sequence') return 22
+  if (format === 'statement') return 42
+  return 30
+}
+
+function completePointsForLayout(pool: string[], layout: ShortTemplateLayout) {
+  const maxWords = shortPointWordLimit(layout.format)
+  return pool.filter((point) => point.split(/\s+/).length <= maxWords)
 }
 
 // Fill every content slot with repository evidence formatted for that template's visual grammar.
@@ -442,24 +455,11 @@ function shortItemsForLayout(scene: Scene, layout: ShortTemplateLayout, reposito
   const narration = shortNarrationForScene(scene, repository)
   const pool = uniqueContentPoints(shortContentPool(scene, repository), [scene.title, narration])
   if (pool.length === 0) return []
-  // A single large box uses only distinct supporting points, never a repeated narration passage.
-  if (itemCount === 1) return [formatShortPoint(pool.slice(0, 5).join(' '), layout.format, 0)]
+  const completePoints = completePointsForLayout(pool, layout)
+  // A single box receives one complete repository fact; it is never cut or joined mid-thought.
+  if (itemCount === 1) return [formatShortPoint(completePoints[0], layout.format, 0)]
   const points: string[] = []
-  for (let i = 0; i < itemCount && i < pool.length; i++) points.push(pool[i])
-  // Use only distinct clauses when the repository provides more unique detail for open slots.
-  if (points.length < itemCount) {
-    const clauses: string[] = []
-    pool.forEach((sentence) =>
-      sentence
-        .split(/[,;:]\s+/)
-        .map((clause) => clause.trim())
-        .filter((clause) => clause.length >= 14)
-        .forEach((clause) => {
-          if (!hasDuplicateContent(clause, [...points, ...clauses, scene.title, narration])) clauses.push(clause)
-        }),
-    )
-    for (let i = 0; points.length < itemCount && i < clauses.length; i++) points.push(clauses[i])
-  }
+  for (let i = 0; i < itemCount && i < completePoints.length; i++) points.push(completePoints[i])
   return points.map((point, index) => formatShortPoint(point, layout.format, index))
 }
 
