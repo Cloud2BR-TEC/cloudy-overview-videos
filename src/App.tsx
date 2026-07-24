@@ -990,7 +990,10 @@ function App() {
   const presentedScene = isVideoPreviewPlaying ? videoPreviewScene : selectedScene
   const presentedAsset = presentedScene.asset
   const shortTopic = scenes.find((scene) => scene.id === shortTopicId) ?? scenes[0]
-  const shortSourceScenes = scenes.filter((scene) => scene.section === shortTopic.section).slice(0, 5)
+  const shortTopicIndex = scenes.findIndex((scene) => scene.id === shortTopic.id)
+  const shortFollowingScenes = scenes.slice(Math.max(0, shortTopicIndex) + 1, Math.max(0, shortTopicIndex) + 5)
+  const shortLeadingScenes = scenes.slice(Math.max(0, shortTopicIndex - Math.max(0, 4 - shortFollowingScenes.length)), Math.max(0, shortTopicIndex))
+  const shortSourceScenes = [shortTopic, ...shortFollowingScenes, ...shortLeadingScenes]
   const shortTemplateIndices = planShortTemplateIndices(shortSourceScenes)
   const shortSpokenScripts = shortSourceScenes.map((scene, index) => {
     const template = SHORT_TEMPLATES[shortTemplateIndices[index] ?? 0] ?? SHORT_TEMPLATES[0]
@@ -2680,7 +2683,11 @@ function App() {
             <>
               <section className="shorts-controls" aria-label="Short video controls">
                 <label htmlFor="short-topic">Topic to explain</label>
-                <select id="short-topic" value={shortTopic.id} onChange={(event) => setShortTopicId(Number(event.target.value))} disabled={isShortPreviewPlaying || isRenderingShort}>
+                <select id="short-topic" value={shortTopic.id} onChange={(event) => {
+                  setShortTopicId(Number(event.target.value))
+                  setShortPreviewBeatIdx(0)
+                  setPausedShortBeatIndex(null)
+                }} disabled={isShortPreviewPlaying || isRenderingShort}>
                   {scenes.map((scene) => <option key={scene.id} value={scene.id}>{scene.title}</option>)}
                 </select>
                 <span className="shorts-runtime">{durationLabel(shortRuntime)} short</span>
